@@ -1,93 +1,365 @@
 export default {
-  // Navigation
-  "nav.home": "Home",
-  "nav.product": "Product",
-  "nav.pricing": "Pricing",
-  "nav.contact": "Contact",
-  "nav.login": "Login",
-  "nav.signup": "Sign Up",
-  "nav.dashboard": "Dashboard",
-  "nav.profile": "Profile",
-  "nav.settings": "Settings",
-  "nav.logout": "Logout",
-
-  // Hero Section
-  "hero.tagline": "Next-Gen Retail Digital Twin",
-  "hero.title": "NEURALTWIN",
-  "hero.subtitle": "Digital Intelligence, Real Results",
-  "hero.description": "Simulate and optimize your store perfectly with AI-powered digital twins.",
-  "hero.cta.start": "Get Started",
-  "hero.cta.demo": "View Demo",
-  "hero.headline1": "The Fastest Growing Store Operations Analytics Tool",
-  "hero.headline2": "NEURALTWIN",
-  "hero.subheadline1": "3x Operational Efficiency with Store Digital Twin",
-  "hero.subheadline2": "Deploy in 1 minute and request a meeting",
-  "hero.cta1": "Request Meeting",
-  "hero.cta2": "Explore Mini Features",
-
-  // Value Props
-  "value.realtime.title": "Real-time Analytics",
-  "value.realtime.desc": "Collect and analyze store data in real-time",
-  "value.prediction.title": "AI Prediction",
-  "value.prediction.desc": "Predict future trends with machine learning",
-  "value.optimization.title": "Store Optimization",
-  "value.optimization.desc": "Improve layout and operations with data-driven insights",
-  "value.integration.title": "Unified Management",
-  "value.integration.desc": "Manage all stores from one platform",
-  "valueProps.title1": "Real-time Data Analysis",
-  "valueProps.desc1": "Collect and analyze all store data in real-time",
-  "valueProps.title2": "Fast Decision Making",
-  "valueProps.desc2": "Make instant business decisions with AI-powered insights",
-  "valueProps.title3": "Customer-Centric Operations",
-  "valueProps.desc3": "Deliver optimal customer experience with behavioral analysis",
-  "valueProps.title4": "Intelligent Optimization",
-  "valueProps.desc4": "Automatically optimize store operations with machine learning",
-
-  // Vision Section
-  "vision.title": "Our Vision",
-  "vision.subtitle": "Building the Future of Retail",
-  "vision.description": "NEURALTWIN revolutionizes the retail industry with digital twin technology. Through real-time data and AI analysis, we optimize store operations, enhance customer experience, and accelerate business growth.",
-  "vision.desc1": "NEURALTWIN creates digital twins of stores to monitor and optimize operations in real-time.",
-  "vision.desc2": "AI-powered analytics automatically optimize customer flow, product placement, and inventory management to maximize revenue.",
-  "vision.desc3": "Combining decades of retail operations expertise with cutting-edge AI technology,",
-  "vision.desc4": "we deliver the most accurate and practical store operations solution.",
-
-  // CTA Section
-  "cta.title": "Get Started Today",
-  "cta.description": "Experience store innovation with NEURALTWIN",
-  "cta.button": "Start Free Trial",
-  "finalCta.title": "Get Started Now",
-  "finalCta.desc": "Experience a new standard in store operations with NEURALTWIN",
-  "finalCta.button": "Request Meeting",
-
-  // Footer
-  "footer.product": "Product",
-  "footer.company": "Company",
-  "footer.support": "Support",
-  "footer.legal": "Legal",
-  "footer.features": "Features",
-  "footer.pricing": "Pricing",
-  "footer.enterprise": "Enterprise",
-  "footer.about": "About",
-  "footer.careers": "Careers",
-  "footer.blog": "Blog",
-  "footer.docs": "Documentation",
-  "footer.help": "Help",
-  "footer.contact": "Contact",
-  "footer.privacy": "Privacy Policy",
-  "footer.terms": "Terms of Service",
-  "footer.copyright": "© 2024 NEURALTWIN. All rights reserved.",
-
-  // Common
-  "common.loading": "Loading...",
-  "common.error": "An error occurred",
-  "common.success": "Success",
-  "common.cancel": "Cancel",
-  "common.confirm": "Confirm",
-  "common.save": "Save",
-  "common.delete": "Delete",
-  "common.edit": "Edit",
-  "common.back": "Back",
-  "common.next": "Next",
-  "common.submit": "Submit",
+  nav: {
+    product: "Product",
+    pricing: "Pricing",
+    contact: "Contact",
+    login: "Login",
+    signup: "Sign Up"
+  },
+  hero: {
+    badge: "AI-Powered Retail Intelligence",
+    title: "Transform Your Store into a",
+    subtitle: "Digital Twin",
+    description: "NEURALTWIN uses AI and IoT to fully understand and optimize your physical stores. From real-time customer flow to inventory optimization, maximize revenue with data-driven decisions.",
+    cta: {
+      demo: "Try Demo",
+      contact: "Contact Sales"
+    },
+    metrics: {
+      accuracy: "Accuracy",
+      stores: "Active Stores",
+      data: "Data Points/Day"
+    },
+    headline1: "The Fastest Growing Store Operations Analytics Tool",
+    headline2: "NEURALTWIN",
+    subheadline1: "3x Operational Efficiency with Store Digital Twin",
+    subheadline2: "Deploy in 1 minute and request a meeting",
+    cta1: "Request Meeting",
+    cta2: "Explore Mini Features",
+    tagline: "Next-Gen Retail Digital Twin"
+  },
+  benefits: {
+    title: "Proven Business Impact",
+    subtitle: "with Real Results",
+    timeReduction: {
+      title: "Time Saved",
+      description: "From data collection to analysis"
+    },
+    revenueIncrease: {
+      title: "Revenue Growth",
+      description: "Through optimized operations"
+    },
+    costReduction: {
+      title: "Cost Reduction",
+      description: "Efficient inventory & staff management"
+    }
+  },
+  valueProps: {
+    title1: "Real-time Data Analysis",
+    desc1: "Collect and analyze all store data in real-time",
+    title2: "Fast Decision Making",
+    desc2: "Make instant business decisions with AI-powered insights",
+    title3: "Customer-Centric Operations",
+    desc3: "Deliver optimal customer experience with behavioral analysis",
+    title4: "Intelligent Optimization",
+    desc4: "Automatically optimize store operations with machine learning"
+  },
+  vision: {
+    title: "Our Vision",
+    subtitle: "Building the Future of Retail",
+    description: "NEURALTWIN revolutionizes the retail industry with digital twin technology. Through real-time data and AI analysis, we optimize store operations, enhance customer experience, and accelerate business growth.",
+    desc1: "NEURALTWIN creates digital twins of stores to monitor and optimize operations in real-time.",
+    desc2: "AI-powered analytics automatically optimize customer flow, product placement, and inventory management to maximize revenue.",
+    desc3: "Combining decades of retail operations expertise with cutting-edge AI technology,",
+    desc4: "we deliver the most accurate and practical store operations solution."
+  },
+  finalCta: {
+    title: "Get Started Now",
+    desc: "Experience a new standard in store operations with NEURALTWIN",
+    button: "Request Meeting"
+  },
+  features: {
+    neuralsense: {
+      badge: "NEURALSENSE",
+      title: "IoT Sensor Network",
+      subtitle: "Detecting Everything in Your Store",
+      description: "Capture all in-store activities in real-time with cameras, beacons, POS, and more.",
+      features: {
+        realtime: {
+          title: "Real-time Data Collection",
+          description: "Instantly track customer flow, dwell time, and product interactions"
+        },
+        integration: {
+          title: "Unified Sensor Management",
+          description: "Seamlessly integrate with existing infrastructure"
+        },
+        privacy: {
+          title: "Privacy Protection",
+          description: "Fully compliant with privacy regulations"
+        }
+      }
+    },
+    neuralmind: {
+      badge: "NEURALMIND",
+      title: "AI Analytics Engine",
+      subtitle: "Turning Data into Insights",
+      description: "Analyze collected data with AI to derive actionable insights.",
+      features: {
+        prediction: {
+          title: "Demand Forecasting",
+          description: "AI accurately predicts sales and inventory demand"
+        },
+        optimization: {
+          title: "Layout Optimization",
+          description: "Suggest optimal product placement based on customer flow"
+        },
+        automation: {
+          title: "Automated Reports",
+          description: "Automatically analyze daily performance and generate reports"
+        }
+      }
+    },
+    neuraltwin: {
+      badge: "NEURALTWIN",
+      title: "3D Digital Twin",
+      subtitle: "See Your Store at a Glance",
+      description: "Recreate your physical store in 3D to visually explore all data.",
+      features: {
+        visualization: {
+          title: "3D Visualization",
+          description: "View and analyze your entire store in 3D"
+        },
+        simulation: {
+          title: "Simulation",
+          description: "Test changes in advance and predict outcomes"
+        },
+        collaboration: {
+          title: "Collaboration Tools",
+          description: "HQ and stores communicate with shared data"
+        }
+      }
+    }
+  },
+  useCases: {
+    title: "Optimized Solutions",
+    subtitle: "for Various Retail Environments",
+    fashion: {
+      title: "Fashion Retail",
+      description: "Optimize store layout and measure VMD effectiveness with customer flow analysis"
+    },
+    grocery: {
+      title: "Grocery Distribution",
+      description: "Real-time monitoring for inventory turnover and freshness management"
+    },
+    electronics: {
+      title: "Electronics",
+      description: "Optimize product display and promotions by analyzing customer dwell time"
+    },
+    convenience: {
+      title: "Convenience Store",
+      description: "Automate staff allocation and inventory management with time-based demand forecasting"
+    }
+  },
+  cta: {
+    title: "Start the Future of Retail",
+    subtitle: "Today",
+    description: "Experience data-driven store operations with NEURALTWIN. See the difference with a 14-day free trial.",
+    demo: "Request Free Demo",
+    contact: "Contact Sales"
+  },
+  footer: {
+    description: "AI-Powered Retail Intelligence Platform",
+    product: {
+      title: "Product",
+      features: "Features",
+      pricing: "Pricing",
+      demo: "Demo"
+    },
+    company: {
+      title: "Company",
+      about: "About",
+      blog: "Blog",
+      careers: "Careers"
+    },
+    support: {
+      title: "Support",
+      docs: "Documentation",
+      contact: "Contact",
+      status: "System Status"
+    },
+    legal: {
+      title: "Legal",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service"
+    },
+    copyright: "© 2024 NEURALTWIN. All rights reserved."
+  },
+  product: {
+    hero: {
+      badge: "Product Overview",
+      title: "Complete Digital",
+      subtitle: "Transformation for Physical Stores",
+      description: "NEURALTWIN collects, analyzes, and visualizes all data from physical stores using AI and IoT technology."
+    },
+    benefits: {
+      timeReduction: "Time Saved",
+      timeDesc: "From data collection to analysis",
+      revenueIncrease: "Revenue Growth",
+      revenueDesc: "Through optimized operations",
+      costReduction: "Cost Reduction",
+      costDesc: "Efficient inventory & staff management"
+    }
+  },
+  pricing: {
+    title: "Choose the Right Plan",
+    subtitle: "for Your Business",
+    description: "Flexible options based on your store size and needs",
+    monthly: "Monthly",
+    annual: "Annual",
+    savePercent: "Save 20%",
+    store: {
+      name: "Store",
+      description: "Essential solution for individual stores",
+      price: "₩500,000",
+      period: "/store/month",
+      cta: "14-Day Free Trial",
+      features: [
+        "NEURALSENSE sensor integration",
+        "Real-time customer flow analysis",
+        "Heatmap visualization",
+        "Daily reports",
+        "Up to 5 IoT sensors",
+        "Email support"
+      ]
+    },
+    enterprise: {
+      name: "Enterprise",
+      description: "Integrated solution for multi-store operations",
+      price: "₩3,000,000",
+      period: "/HQ/month",
+      cta: "Contact Sales",
+      popular: "Popular",
+      features: [
+        "All Store plan features",
+        "HQ integrated dashboard",
+        "Multi-store comparison analysis",
+        "AI-based demand forecasting",
+        "Layout simulation",
+        "3D digital twin",
+        "Unlimited IoT sensors",
+        "Dedicated customer support",
+        "Custom onboarding"
+      ]
+    },
+    faq: {
+      title: "Frequently Asked Questions",
+      q1: {
+        question: "Can I use all features during the free trial?",
+        answer: "Yes, you can use all features of your chosen plan without restrictions during the 14-day free trial period."
+      },
+      q2: {
+        question: "How does IoT sensor installation work?",
+        answer: "Our professional engineers visit your location and support the entire process from sensor installation to configuration. Integration with existing infrastructure is also included."
+      },
+      q3: {
+        question: "What happens to pricing when I add more stores?",
+        answer: "The Enterprise plan operates with an HQ license, and separate licenses are required for each additional store. Please contact our sales team for detailed quotes."
+      },
+      q4: {
+        question: "What is the contract period?",
+        answer: "The minimum contract period is 1 year, with a 20% discount for annual payment. Monthly payment is also available."
+      }
+    }
+  },
+  contact: {
+    title: "Contact NEURALTWIN",
+    description: "Our retail experts will propose a solution optimized for your business",
+    form: {
+      name: "Name",
+      namePlaceholder: "John Doe",
+      email: "Email",
+      emailPlaceholder: "john@company.com",
+      phone: "Phone",
+      phonePlaceholder: "+1 (555) 123-4567",
+      company: "Company",
+      companyPlaceholder: "Enter company name",
+      stores: "Number of Stores",
+      storesPlaceholder: "e.g., 10",
+      timeline: "Desired Timeline",
+      timelineOptions: {
+        immediate: "Immediately",
+        month1: "Within 1 month",
+        month3: "Within 3 months",
+        month6: "Within 6 months",
+        planning: "Under review"
+      },
+      features: "Features of Interest",
+      featureOptions: {
+        footfall: "Customer Flow Analysis",
+        heatmap: "Heatmap",
+        forecast: "Demand Forecasting",
+        layout: "Layout Optimization",
+        digitaltwin: "3D Digital Twin",
+        integration: "Data Integration"
+      },
+      message: "Message",
+      messagePlaceholder: "Please feel free to write any inquiries or questions about implementation",
+      submit: "Send Inquiry",
+      submitting: "Sending..."
+    },
+    success: "Inquiry sent successfully!",
+    successDesc: "Our sales team will contact you soon.",
+    error: "Failed to send inquiry",
+    errorDesc: "Please try again"
+  },
+  auth: {
+    signupTitle: "Get Started with NEURALTWIN",
+    signupDescription: "Experience retail innovation with a 14-day free trial",
+    loginTitle: "Login",
+    loginDescription: "Login to your account",
+    form: {
+      email: "Email",
+      emailPlaceholder: "your@email.com",
+      password: "Password",
+      passwordPlaceholder: "Enter your password",
+      signup: "Sign Up",
+      login: "Login",
+      signingUp: "Signing up...",
+      loggingIn: "Logging in...",
+      switchToLogin: "Already have an account?",
+      switchToSignup: "Don't have an account?",
+      loginLink: "Login",
+      signupLink: "Sign Up"
+    },
+    success: {
+      title: "Welcome!",
+      description: "You are now logged in"
+    },
+    error: {
+      title: "Error occurred",
+      description: "Please try again"
+    }
+  },
+  subscribe: {
+    title: "Choose a Plan",
+    description: "Select the plan that fits your business",
+    store: {
+      name: "Store",
+      description: "For individual stores",
+      price: "₩500,000/month"
+    },
+    enterprise: {
+      name: "Enterprise",
+      description: "For multi-store",
+      price: "₩3,000,000/month"
+    },
+    selectPlan: "Select",
+    processing: "Processing..."
+  },
+  profile: {
+    title: "Profile",
+    displayName: "Display Name",
+    email: "Email",
+    save: "Save",
+    saving: "Saving...",
+    logout: "Logout",
+    success: "Profile updated",
+    error: "Failed to update profile"
+  },
+  settings: {
+    title: "Settings",
+    account: "Account",
+    notifications: "Notifications",
+    billing: "Billing"
+  }
 };
