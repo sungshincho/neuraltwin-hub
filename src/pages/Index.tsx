@@ -6,7 +6,6 @@ import { ArrowRight, BarChart3, Brain, Target, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { trackPageView, trackCTAClick, trackFunnelStep } from "@/lib/analytics";
-import heroMainBuilding from "@/assets/hero-main-building.png";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -33,19 +32,18 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Image */}
+        {/* Background Gradient */}
         <div className="absolute inset-0 z-0">
-          <img
-            src={heroMainBuilding}
-            alt="NeuralTwin Building - Digital Twin Technology"
-            className="w-full h-full object-cover"
-          />
-          {/* Gradient overlay that appears on scroll */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-background" />
+          {/* Animated gradient overlay */}
           <div
-            className={`absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-background/90 transition-opacity duration-500 ${
-              scrolled ? "opacity-100" : "opacity-0"
+            className={`absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background transition-opacity duration-500 ${
+              scrolled ? "opacity-100" : "opacity-60"
             }`}
           />
+          {/* Decorative elements */}
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
 
         {/* Content */}
