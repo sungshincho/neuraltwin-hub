@@ -1,111 +1,88 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Link } from "react-router-dom";
+import { Mail, Linkedin, Twitter } from "lucide-react";
 
 export const Footer = () => {
-  const { t } = useTranslation();
-
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-1">
-            <h3 className="text-xl font-bold gradient-text mb-4">NEURALTWIN</h3>
-            <p className="text-sm text-muted-foreground">
-              {t('hero.tagline')}
+    <footer className="bg-background border-t border-border/50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          {/* Company Info */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold gradient-text">
+              NEURALTWIN
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              오프라인 리테일을 위한<br />
+              궁극의 AI OS
             </p>
           </div>
 
           {/* Product */}
-          <div>
-            <h4 className="font-semibold mb-4">{t('footer.product')}</h4>
-            <ul className="space-y-2">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">제품</h4>
+            <ul className="space-y-3">
               <li>
-                <Link
-                  to="/product"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.features')}
+                <Link to="/product" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  기능
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/pricing"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.pricing')}
+                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  가격
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/pricing"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.enterprise')}
+                <Link to="/product" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  기술
                 </Link>
               </li>
             </ul>
           </div>
 
           {/* Company */}
-          <div>
-            <h4 className="font-semibold mb-4">{t('footer.company')}</h4>
-            <ul className="space-y-2">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">회사</h4>
+            <ul className="space-y-3">
               <li>
-                <a
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.about')}
-                </a>
+                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  팀
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.blog')}
-                </a>
+                <Link to="/cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  케이스
+                </Link>
               </li>
               <li>
-                <Link
-                  to="/contact"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.contact')}
+                <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  문의
                 </Link>
               </li>
             </ul>
           </div>
 
           {/* Legal */}
-          <div>
-            <h4 className="font-semibold mb-4">{t('footer.legal')}</h4>
-            <ul className="space-y-2">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">법적 고지</h4>
+            <ul className="space-y-3">
               <li>
-                <Link
-                  to="/privacy"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.privacy')}
+                <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  개인정보처리방침
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/terms"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {t('footer.terms')}
+                <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  이용약관
                 </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="mt-12 pt-8 border-t border-border">
+        {/* Bottom Section */}
+        <div className="mt-12 pt-8 border-t border-border/50">
           <p className="text-sm text-muted-foreground text-center">
-            {t('footer.copyright')}
+            © 2025 NEURALTWIN. All rights reserved.
           </p>
         </div>
       </div>
