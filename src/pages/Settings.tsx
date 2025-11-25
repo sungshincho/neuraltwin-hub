@@ -22,6 +22,9 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [organization, setOrganization] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [licenses, setLicenses] = useState<any[]>([]);
   
   // Form states
   const [displayName, setDisplayName] = useState("");
@@ -53,7 +56,55 @@ const Settings = () => {
       
       if (profileData) {
         setProfile(profileData);
-        setDisplayName(profileData.display_name || "");
+        setDisplayName(profileData.display_name || session.user.user_metadata?.display_name || "");
+      } else {
+        setDisplayName(session.user.user_metadata?.display_name || session.user.user_metadata?.name || "");
+      }
+
+      // Fetch organization and subscription info
+      const { data: orgMember } = await supabase
+        .from('organization_members')
+        .select(`
+          org_id, 
+          role, 
+          license_id,
+          organizations(id, org_name, metadata),
+          licenses(license_type, status, monthly_price)
+        `)
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (orgMember && orgMember.organizations) {
+        const orgData: any = typeof orgMember.organizations === 'object' ? orgMember.organizations : {};
+        setOrganization({
+          ...orgData,
+          role: orgMember.role,
+          license: orgMember.licenses,
+        });
+
+        // Fetch subscription for organization
+        if (orgData.id) {
+          const { data: subData } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('org_id', orgData.id)
+            .maybeSingle();
+
+          if (subData) {
+            setSubscription(subData);
+
+            // Fetch all licenses for this subscription
+            const { data: licenseData } = await supabase
+              .from('licenses')
+              .select('*')
+              .eq('subscription_id', subData.id)
+              .order('created_at', { ascending: false });
+
+            if (licenseData) {
+              setLicenses(licenseData);
+            }
+          }
+        }
       }
       
       setLoading(false);
@@ -234,91 +285,132 @@ const Settings = () => {
 
             {/* Subscription Tab */}
             <TabsContent value="subscription" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>구독 정보</CardTitle>
-                  <CardDescription>
-                    현재 구독 플랜 및 결제 정보
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h3 className="font-semibold text-lg">Pro 플랜</h3>
-                      <p className="text-sm text-muted-foreground">
-                        월 ₩99,000
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-green-600">활성</p>
-                      <p className="text-sm text-muted-foreground">
-                        다음 결제: 2025년 12월 17일
-                      </p>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-medium">포함된 기능</h4>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        무제한 프로젝트
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        고급 분석 대시보드
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        3D 시뮬레이션
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        우선 고객 지원
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => navigate("/pricing")}>
-                      플랜 변경
-                    </Button>
-                    <Button variant="outline" className="text-destructive">
-                      구독 취소
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>결제 내역</CardTitle>
-                  <CardDescription>
-                    최근 결제 기록을 확인하세요
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {[
-                      { date: "2024년 11월 17일", amount: "₩99,000", status: "완료" },
-                      { date: "2024년 10월 17일", amount: "₩99,000", status: "완료" },
-                      { date: "2024년 9월 17일", amount: "₩99,000", status: "완료" },
-                    ].map((payment, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+              {subscription ? (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>구독 정보</CardTitle>
+                      <CardDescription>
+                        현재 구독 플랜 및 결제 정보
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div>
-                          <p className="font-medium">{payment.date}</p>
-                          <p className="text-sm text-muted-foreground">{payment.amount}</p>
+                          <h3 className="font-semibold text-lg">
+                            {subscription.subscription_type === 'LICENSE_BASED' ? '라이선스 기반 플랜' : '엔터프라이즈 계약'}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            월 ${subscription.monthly_cost || 0}
+                          </p>
                         </div>
-                        <span className="text-sm px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                          {payment.status}
-                        </span>
+                        <div className="text-right">
+                          <p className={`text-sm font-medium ${
+                            subscription.status === 'active' ? 'text-green-600' :
+                            subscription.status === 'suspended' ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {subscription.status === 'active' ? '활성' :
+                             subscription.status === 'suspended' ? '일시정지' :
+                             subscription.status === 'cancelled' ? '취소됨' :
+                             subscription.status === 'expired' ? '만료' :
+                             subscription.status}
+                          </p>
+                          {subscription.current_period_end && (
+                            <p className="text-sm text-muted-foreground">
+                              다음 결제: {new Date(subscription.current_period_end).toLocaleDateString('ko-KR')}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+
+                      <Separator />
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium">라이선스 현황</h4>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="p-3 border rounded-lg">
+                            <p className="text-sm text-muted-foreground">HQ 라이선스</p>
+                            <p className="text-2xl font-bold">{subscription.hq_license_count || 0}</p>
+                          </div>
+                          <div className="p-3 border rounded-lg">
+                            <p className="text-sm text-muted-foreground">Store 라이선스</p>
+                            <p className="text-2xl font-bold">{subscription.store_license_count || 0}</p>
+                          </div>
+                          <div className="p-3 border rounded-lg">
+                            <p className="text-sm text-muted-foreground">Viewer</p>
+                            <p className="text-2xl font-bold">{subscription.viewer_count || 0}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => navigate("/pricing")}>
+                          라이선스 추가 구매
+                        </Button>
+                        {subscription.status === 'active' && (
+                          <Button variant="outline" className="text-destructive">
+                            구독 취소
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {licenses.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>라이선스 목록</CardTitle>
+                        <CardDescription>
+                          보유한 라이선스 정보입니다
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {licenses.map((license, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div>
+                                <p className="font-medium">
+                                  {license.license_type === 'HQ_SEAT' ? 'HQ 라이선스' : 'Store 라이선스'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  월 ${license.monthly_price || 0}
+                                </p>
+                              </div>
+                              <span className={`text-sm px-2 py-1 rounded-full ${
+                                license.status === 'active' || license.status === 'assigned' ? 'bg-green-100 text-green-700' :
+                                license.status === 'suspended' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {license.status === 'active' ? '활성' :
+                                 license.status === 'assigned' ? '할당됨' :
+                                 license.status === 'suspended' ? '일시정지' :
+                                 license.status === 'expired' ? '만료' :
+                                 license.status === 'revoked' ? '취소됨' :
+                                 license.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>구독 정보 없음</CardTitle>
+                    <CardDescription>
+                      아직 구독하지 않으셨습니다
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button onClick={() => navigate("/subscribe")}>
+                      구독 시작하기
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Notifications Tab */}

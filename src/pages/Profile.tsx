@@ -21,6 +21,7 @@ const Profile = () => {
     avatar_url: "",
   });
   const [organization, setOrganization] = useState<any>(null);
+  const [userMetadata, setUserMetadata] = useState<any>(null);
 
   useEffect(() => {
     checkAuth();
@@ -36,32 +37,48 @@ const Profile = () => {
       }
 
       setUser(user);
+      setUserMetadata(user.user_metadata);
 
       // Get profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileData) {
         setProfile({
-          display_name: profileData.display_name || "",
+          display_name: profileData.display_name || user.user_metadata?.display_name || user.user_metadata?.name || "",
           avatar_url: profileData.avatar_url || "",
+        });
+      } else {
+        // Use metadata if profile doesn't exist
+        setProfile({
+          display_name: user.user_metadata?.display_name || user.user_metadata?.name || "",
+          avatar_url: "",
         });
       }
 
-      // Get organization
+      // Get organization with subscription info
       const { data: orgMember } = await supabase
         .from("organization_members")
-        .select("org_id, role, organizations(id, org_name, country, metadata)")
+        .select(`
+          org_id, 
+          role, 
+          license_id,
+          organizations(id, org_name, metadata),
+          licenses(license_type, status, monthly_price)
+        `)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (orgMember && orgMember.organizations) {
+        const orgData = typeof orgMember.organizations === 'object' ? orgMember.organizations : {};
         setOrganization({
-          ...(typeof orgMember.organizations === 'object' ? orgMember.organizations : {}),
+          ...orgData,
           role: orgMember.role,
+          license_id: orgMember.license_id,
+          license: orgMember.licenses,
         });
       }
     } catch (error) {
@@ -150,7 +167,7 @@ const Profile = () => {
               <CardHeader>
                 <CardTitle>계정 정보</CardTitle>
                 <CardDescription>
-                  로그인한 계정의 기본 정보입니다
+                  회원가입 시 입력한 정보입니다
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -158,6 +175,28 @@ const Profile = () => {
                   <Label>이메일</Label>
                   <Input value={user?.email || ""} disabled className="mt-2" />
                 </div>
+                <div>
+                  <Label>이름</Label>
+                  <Input value={userMetadata?.name || userMetadata?.display_name || ""} disabled className="mt-2" />
+                </div>
+                {userMetadata?.company && (
+                  <div>
+                    <Label>회사명</Label>
+                    <Input value={userMetadata.company} disabled className="mt-2" />
+                  </div>
+                )}
+                {userMetadata?.phone && (
+                  <div>
+                    <Label>전화번호</Label>
+                    <Input value={userMetadata.phone} disabled className="mt-2" />
+                  </div>
+                )}
+                {userMetadata?.roleType && (
+                  <div>
+                    <Label>선택한 라이선스 타입</Label>
+                    <Input value={userMetadata.roleType === 'HQ' ? 'HQ 라이선스' : 'Store 라이선스'} disabled className="mt-2" />
+                  </div>
+                )}
                 <div>
                   <Label>가입일</Label>
                   <Input
@@ -226,12 +265,58 @@ const Profile = () => {
                   </div>
                   <div>
                     <Label>역할</Label>
-                    <Input value={organization.role || ""} disabled className="mt-2" />
+                    <Input 
+                      value={
+                        organization.role === 'ORG_HQ' ? 'HQ 관리자' :
+                        organization.role === 'ORG_STORE' ? 'Store 관리자' :
+                        organization.role === 'ORG_VIEWER' ? 'Viewer' :
+                        organization.role === 'NEURALTWIN_MASTER' ? 'NEURALTWIN Master' :
+                        organization.role
+                      } 
+                      disabled 
+                      className="mt-2" 
+                    />
                   </div>
-                  {organization.country && (
+                  {organization.license && (
+                    <>
+                      <div>
+                        <Label>라이선스 타입</Label>
+                        <Input 
+                          value={organization.license.license_type === 'HQ_SEAT' ? 'HQ 라이선스' : 'Store 라이선스'} 
+                          disabled 
+                          className="mt-2" 
+                        />
+                      </div>
+                      <div>
+                        <Label>라이선스 상태</Label>
+                        <Input 
+                          value={
+                            organization.license.status === 'active' ? '활성' :
+                            organization.license.status === 'assigned' ? '할당됨' :
+                            organization.license.status === 'suspended' ? '일시정지' :
+                            organization.license.status === 'expired' ? '만료' :
+                            organization.license.status
+                          } 
+                          disabled 
+                          className="mt-2" 
+                        />
+                      </div>
+                      {organization.license.monthly_price && (
+                        <div>
+                          <Label>월 요금</Label>
+                          <Input 
+                            value={`$${organization.license.monthly_price}`} 
+                            disabled 
+                            className="mt-2" 
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {organization.metadata?.country && (
                     <div>
                       <Label>국가</Label>
-                      <Input value={organization.country} disabled className="mt-2" />
+                      <Input value={organization.metadata.country} disabled className="mt-2" />
                     </div>
                   )}
                 </CardContent>
