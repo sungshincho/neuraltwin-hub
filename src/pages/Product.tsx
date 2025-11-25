@@ -11,14 +11,9 @@ import { ConversionFunnel } from "@/components/features/ConversionFunnel";
 import { ProductPerformance } from "@/components/features/ProductPerformance";
 import { InventoryOptimizer } from "@/components/features/InventoryOptimizer";
 import { StaffEfficiency } from "@/components/features/StaffEfficiency";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect } from "react";
 import { trackPageView, trackMiniFeature, trackFunnelStep } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
-
-// Lazy load 3D components to prevent initialization errors
-const FootfallVisualizer3D = lazy(() => import("@/components/features/FootfallVisualizer3D").then(m => ({ default: m.FootfallVisualizer3D })));
-const LayoutSimulator3D = lazy(() => import("@/components/features/LayoutSimulator3D").then(m => ({ default: m.LayoutSimulator3D })));
-const TrafficHeatmap3D = lazy(() => import("@/components/features/TrafficHeatmap3D").then(m => ({ default: m.TrafficHeatmap3D })));
 
 import dashboardStoreImage from "@/assets/dashboard-store-license.png";
 import dashboardHQImage from "@/assets/dashboard-hq-license.png";
@@ -501,16 +496,13 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.footfall.description")}
                     </p>
                   </div>
-                  <Suspense fallback={
-                    <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p className="text-muted-foreground">Loading 3D viewer...</p>
-                      </div>
+                  <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
+                    <div className="text-center">
+                      <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
+                      <p className="text-lg font-semibold">3D Footfall Visualizer</p>
+                      <p className="text-muted-foreground">Coming soon - Interactive 3D customer traffic analysis</p>
                     </div>
-                  }>
-                    <FootfallVisualizer3D />
-                  </Suspense>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="layout" className="space-y-6">
@@ -520,16 +512,13 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.layout.description")}
                     </p>
                   </div>
-                  <Suspense fallback={
-                    <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p className="text-muted-foreground">Loading 3D viewer...</p>
-                      </div>
+                  <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
+                    <div className="text-center">
+                      <Layers className="w-16 h-16 text-primary mx-auto mb-4" />
+                      <p className="text-lg font-semibold">3D Layout Simulator</p>
+                      <p className="text-muted-foreground">Coming soon - AI-powered store layout optimization</p>
                     </div>
-                  }>
-                    <LayoutSimulator3D />
-                  </Suspense>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="heatmap" className="space-y-6">
@@ -539,16 +528,13 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.heatmap.description")}
                     </p>
                   </div>
-                  <Suspense fallback={
-                    <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p className="text-muted-foreground">Loading 3D viewer...</p>
-                      </div>
+                  <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
+                    <div className="text-center">
+                      <TrendingUp className="w-16 h-16 text-primary mx-auto mb-4" />
+                      <p className="text-lg font-semibold">3D Traffic Heatmap</p>
+                      <p className="text-muted-foreground">Coming soon - Real-time customer movement heatmaps</p>
                     </div>
-                  }>
-                    <TrafficHeatmap3D />
-                  </Suspense>
+                  </div>
                 </TabsContent>
               </Tabs>
 
