@@ -1370,6 +1370,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          member_count: number | null
           metadata: Json | null
           org_name: string
           updated_at: string
@@ -1378,6 +1379,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          member_count?: number | null
           metadata?: Json | null
           org_name: string
           updated_at?: string
@@ -1386,6 +1388,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          member_count?: number | null
           metadata?: Json | null
           org_name?: string
           updated_at?: string
@@ -2006,6 +2009,10 @@ export type Database = {
         Returns: boolean
       }
       is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_org_member_simple: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
