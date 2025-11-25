@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Globe } from 'lucide-react';
+import { Languages } from 'lucide-react';
 
 export const LanguageToggle = () => {
   const { i18n } = useTranslation();
@@ -16,10 +16,11 @@ export const LanguageToggle = () => {
       size="sm"
       onClick={toggleLanguage}
       className="gap-2"
+      aria-label="Toggle language"
     >
-      <Globe size={16} />
-      <span className="text-xs font-medium">
-        {i18n.language === 'ko' ? 'EN' : 'KO'}
+      <Languages className="w-4 h-4" />
+      <span className="text-sm font-medium">
+        {i18n.language === 'ko' ? 'EN' : 'KR'}
       </span>
     </Button>
   );
