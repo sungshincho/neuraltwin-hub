@@ -51,6 +51,7 @@ const Auth = () => {
             .insert({
               org_name: defaultOrgName,
               created_by: session.user.id,
+              country: 'KR',
             })
             .select('id')
             .maybeSingle();
