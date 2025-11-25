@@ -492,5 +492,35 @@ export default {
     account: "계정",
     notifications: "알림",
     billing: "결제"
+  },
+  dashboardFeatures: {
+    conversionFunnel: {
+      title: "전환 퍼널 분석",
+      timeRanges: {
+        today: "오늘",
+        week: "이번 주",
+        month: "이번 달"
+      },
+      stages: {
+        visit: "방문",
+        interest: "관심",
+        stay: "체류",
+        purchase: "구매"
+      },
+      metrics: {
+        totalVisitors: "총 방문객",
+        purchasers: "구매자",
+        conversionRate: "전환율",
+        totalRevenue: "총 매출"
+      },
+      funnelTitle: "전환 퍼널",
+      conversionRateTitle: "단계별 전환율",
+      optimizationTitle: "최적화 제안",
+      optimizationItems: [
+        "입구 근처 프로모션 강화로 관심 단계 전환율 개선",
+        "체류 시간 증가를 위한 매장 레이아웃 최적화",
+        "구매 유도를 위한 직원 배치 및 동선 개선"
+      ]
+    }
   }
 };

@@ -361,5 +361,35 @@ export default {
     account: "Account",
     notifications: "Notifications",
     billing: "Billing"
+  },
+  dashboardFeatures: {
+    conversionFunnel: {
+      title: "Conversion Funnel Analysis",
+      timeRanges: {
+        today: "Today",
+        week: "This Week",
+        month: "This Month"
+      },
+      stages: {
+        visit: "Visit",
+        interest: "Interest",
+        stay: "Stay",
+        purchase: "Purchase"
+      },
+      metrics: {
+        totalVisitors: "Total Visitors",
+        purchasers: "Purchasers",
+        conversionRate: "Conversion Rate",
+        totalRevenue: "Total Revenue"
+      },
+      funnelTitle: "Conversion Funnel",
+      conversionRateTitle: "Stage Conversion Rates",
+      optimizationTitle: "Optimization Recommendations",
+      optimizationItems: [
+        "Enhance promotions near entrance to improve interest stage conversion",
+        "Optimize store layout to increase dwell time",
+        "Improve staff placement and customer flow to drive purchases"
+      ]
+    }
   }
 };
