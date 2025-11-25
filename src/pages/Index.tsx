@@ -6,6 +6,7 @@ import { ArrowRight, BarChart3, Brain, Target, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { trackPageView, trackCTAClick, trackFunnelStep } from "@/lib/analytics";
+import heroMainBuilding from "@/assets/hero-main-building.png";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -13,8 +14,8 @@ const Index = () => {
 
   useEffect(() => {
     // Track page view with funnel step 1 (visit)
-    trackPageView("Home", 1);
-    trackFunnelStep(1, "visit_home");
+    trackPageView('Home', 1);
+    trackFunnelStep(1, 'visit_home');
 
     // Handle scroll event
     const handleScroll = () => {
@@ -22,8 +23,8 @@ const Index = () => {
       setScrolled(scrollPosition > 100);
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
@@ -32,18 +33,19 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Gradient */}
+        {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-background" />
-          {/* Animated gradient overlay */}
-          <div
-            className={`absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background transition-opacity duration-500 ${
-              scrolled ? "opacity-100" : "opacity-60"
-            }`}
+          <img
+            src={heroMainBuilding}
+            alt="NeuralTwin Building - Digital Twin Technology"
+            className="w-full h-full object-cover"
           />
-          {/* Decorative elements */}
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
+          {/* Gradient overlay that appears on scroll */}
+          <div 
+            className={`absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-background/90 transition-opacity duration-500 ${
+              scrolled ? 'opacity-100' : 'opacity-0'
+            }`} 
+          />
         </div>
 
         {/* Content */}
@@ -65,25 +67,25 @@ const Index = () => {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
-              <Button
-                asChild
-                size="default"
+              <Button 
+                asChild 
+                size="default" 
                 className="text-sm px-5 py-4 bg-white text-black hover:bg-white/90"
-                onClick={() => trackCTAClick("meeting_request_hero", "/contact", 1)}
+                onClick={() => trackCTAClick('meeting_request_hero', '/contact', 1)}
               >
                 <Link to="/contact">
                   {t("hero.cta1")}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="default"
+              <Button 
+                asChild 
+                variant="outline" 
+                size="default" 
                 className="text-sm px-5 py-4 border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
                 onClick={() => {
-                  trackCTAClick("mini_features_hero", "/product#mini", 2);
-                  trackFunnelStep(2, "click_mini_features");
+                  trackCTAClick('mini_features_hero', '/product#mini', 2);
+                  trackFunnelStep(2, 'click_mini_features');
                 }}
               >
                 <Link to="/product#mini">{t("hero.cta2")}</Link>
@@ -101,23 +103,23 @@ const Index = () => {
               {
                 icon: BarChart3,
                 title: t("valueProps.title1"),
-                description: t("valueProps.desc1"),
+                description: t("valueProps.desc1")
               },
               {
                 icon: Zap,
                 title: t("valueProps.title2"),
-                description: t("valueProps.desc2"),
+                description: t("valueProps.desc2")
               },
               {
                 icon: Users,
                 title: t("valueProps.title3"),
-                description: t("valueProps.desc3"),
+                description: t("valueProps.desc3")
               },
               {
                 icon: Brain,
                 title: t("valueProps.title4"),
-                description: t("valueProps.desc4"),
-              },
+                description: t("valueProps.desc4")
+              }
             ].map((item, index) => (
               <div
                 key={index}
@@ -145,16 +147,19 @@ const Index = () => {
                 <Target className="w-4 h-4 text-primary" />
                 <span className="text-xs font-medium">{t("vision.title")}</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold">{t("vision.subtitle")}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold">
+                {t("vision.subtitle")}
+              </h2>
             </div>
 
             {/* Description */}
-            <div
-              className="glass p-8 md:p-12 rounded-3xl mb-12 space-y-5 animate-fade-in-up"
-              style={{ animationDelay: "0.1s" }}
-            >
-              <p className="text-base md:text-lg text-foreground/90 leading-relaxed">{t("vision.desc1")}</p>
-              <p className="text-base text-muted-foreground leading-relaxed">{t("vision.desc2")}</p>
+            <div className="glass p-8 md:p-12 rounded-3xl mb-12 space-y-5 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <p className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                {t("vision.desc1")}
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                {t("vision.desc2")}
+              </p>
               <div className="pt-5 border-t border-border/50">
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("vision.desc3")}
@@ -163,6 +168,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -171,13 +177,17 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="glass p-12 rounded-3xl text-center space-y-5 glow">
-            <h2 className="text-2xl md:text-3xl font-bold">{t("finalCta.title")}</h2>
-            <p className="text-base text-muted-foreground max-w-2xl mx-auto">{t("finalCta.desc")}</p>
-            <Button
-              asChild
-              size="default"
+            <h2 className="text-2xl md:text-3xl font-bold">
+              {t("finalCta.title")}
+            </h2>
+            <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+              {t("finalCta.desc")}
+            </p>
+            <Button 
+              asChild 
+              size="default" 
               className="text-base px-6 py-5"
-              onClick={() => trackCTAClick("meeting_request_final", "/contact", 3)}
+              onClick={() => trackCTAClick('meeting_request_final', '/contact', 3)}
             >
               <Link to="/contact">
                 {t("finalCta.button")}
