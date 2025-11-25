@@ -5,16 +5,15 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { BarChart3, Brain, TrendingUp, Zap, LineChart, ArrowRight, Database, Clock, Layers, Network, Shield } from "lucide-react";
-// TODO: Create these feature components
-// import { FootfallVisualizer3D } from "@/components/features/FootfallVisualizer3D";
-// import { LayoutSimulator3D } from "@/components/features/LayoutSimulator3D";
-// import { TrafficHeatmap3D } from "@/components/features/TrafficHeatmap3D";
-// import { DemandForecast } from "@/components/features/DemandForecast";
-// import { HQStoreSync } from "@/components/features/HQStoreSync";
-// import { ConversionFunnel } from "@/components/features/ConversionFunnel";
-// import { ProductPerformance } from "@/components/features/ProductPerformance";
-// import { InventoryOptimizer } from "@/components/features/InventoryOptimizer";
-// import { StaffEfficiency } from "@/components/features/StaffEfficiency";
+import { FootfallVisualizer3D } from "@/components/features/FootfallVisualizer3D";
+import { LayoutSimulator3D } from "@/components/features/LayoutSimulator3D";
+import { TrafficHeatmap3D } from "@/components/features/TrafficHeatmap3D";
+import { DemandForecast } from "@/components/features/DemandForecast";
+import { HQStoreSync } from "@/components/features/HQStoreSync";
+import { ConversionFunnel } from "@/components/features/ConversionFunnel";
+import { ProductPerformance } from "@/components/features/ProductPerformance";
+import { InventoryOptimizer } from "@/components/features/InventoryOptimizer";
+import { StaffEfficiency } from "@/components/features/StaffEfficiency";
 import { useEffect } from "react";
 import { trackPageView, trackMiniFeature, trackFunnelStep } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
@@ -499,9 +498,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.footfall.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <FootfallVisualizer3D />
                 </TabsContent>
 
                 <TabsContent value="layout" className="space-y-6">
@@ -511,9 +508,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.layout.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <LayoutSimulator3D />
                 </TabsContent>
 
                 <TabsContent value="heatmap" className="space-y-6">
@@ -523,9 +518,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.heatmap.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <TrafficHeatmap3D />
                 </TabsContent>
               </Tabs>
 
@@ -581,9 +574,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.demand.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <DemandForecast />
                 </TabsContent>
 
                 <TabsContent value="funnel" className="space-y-6">
@@ -593,9 +584,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.funnel.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <ConversionFunnel />
                 </TabsContent>
 
                 <TabsContent value="product" className="space-y-6">
@@ -605,9 +594,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.product.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <ProductPerformance />
                 </TabsContent>
 
                 <TabsContent value="inventory" className="space-y-6">
@@ -617,9 +604,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.inventory.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <InventoryOptimizer />
                 </TabsContent>
 
                 <TabsContent value="staff" className="space-y-6">
@@ -629,9 +614,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.staff.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <StaffEfficiency />
                 </TabsContent>
 
                 <TabsContent value="hq" className="space-y-6">
@@ -641,9 +624,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.hq.description")}
                     </p>
                   </div>
-                  <div className="glass p-8 rounded-lg text-center">
-                    <p className="text-muted-foreground">Feature component coming soon</p>
-                  </div>
+                  <HQStoreSync />
                 </TabsContent>
               </Tabs>
 
