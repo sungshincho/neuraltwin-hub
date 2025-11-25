@@ -180,9 +180,14 @@ const Auth = () => {
       if (data.user) {
         toast({
           title: "회원가입 완료!",
-          description: "환영합니다! 구독 플랜을 선택해주세요.",
+          description: "환영합니다!",
         });
         trackFunnelStep(2, 'signup_completed');
+        
+        // If session exists (email confirmation disabled), navigate to home
+        if (data.session) {
+          navigate("/");
+        }
       }
     } catch (error: any) {
       console.error("Signup error:", error);
