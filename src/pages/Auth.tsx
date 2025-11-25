@@ -18,6 +18,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
@@ -128,7 +129,7 @@ const Auth = () => {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !name || !company) {
+    if (!email || !password || !passwordConfirm || !name || !company || !phone) {
       toast({
         title: "입력 오류",
         description: "모든 필수 필드를 입력해주세요.",
@@ -141,6 +142,15 @@ const Auth = () => {
       toast({
         title: "비밀번호 오류",
         description: "비밀번호는 최소 6자 이상이어야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      toast({
+        title: "비밀번호 불일치",
+        description: "비밀번호가 일치하지 않습니다.",
         variant: "destructive",
       });
       return;
@@ -160,7 +170,7 @@ const Auth = () => {
             name: name,
             full_name: name,
             company: company,
-            phone: phone || null,
+            phone: phone,
           }
         },
       });
@@ -337,6 +347,44 @@ const Auth = () => {
               <TabsContent value="signup" className="space-y-4 mt-4">
                 <form onSubmit={handleEmailSignUp} className="space-y-4">
                   <div className="space-y-2">
+                    <Label htmlFor="signup-email">이메일 (ID) *</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">비밀번호 *</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="최소 6자 이상"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password-confirm">비밀번호 확인 *</Label>
+                    <Input
+                      id="signup-password-confirm"
+                      type="password"
+                      placeholder="비밀번호를 다시 입력하세요"
+                      value={passwordConfirm}
+                      onChange={(e) => setPasswordConfirm(e.target.value)}
+                      disabled={loading}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="signup-name">이름 *</Label>
                     <Input
                       id="signup-name"
@@ -361,39 +409,15 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-phone">연락처</Label>
+                    <Label htmlFor="signup-phone">전화번호 *</Label>
                     <Input
                       id="signup-phone"
                       type="tel"
-                      placeholder="010-1234-5678 (선택)"
+                      placeholder="010-1234-5678"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       disabled={loading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">이메일 *</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading}
                       required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">비밀번호 *</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="최소 6자 이상"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={loading}
-                      required
-                      minLength={6}
                     />
                   </div>
                   <Button type="submit" className="w-full glow" disabled={loading}>
