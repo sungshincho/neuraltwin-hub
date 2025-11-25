@@ -24,6 +24,107 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [roleType, setRoleType] = useState<"HQ" | "STORE">("HQ");
 
+  const ensureOrganizationAndNavigate = async (session: any) => {
+    try {
+      const { data: orgMember, error: orgMemberError } = await supabase
+        .from('organization_members')
+        .select('org_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (orgMemberError) {
+        console.error("Error fetching organization member:", orgMemberError);
+      }
+
+      let orgId = orgMember?.org_id;
+
+      // If no organization exists, find or create organization
+      if (!orgId) {
+        const companyName = session.user.user_metadata?.company || 
+          session.user.user_metadata?.name ||
+          session.user.user_metadata?.full_name ||
+          (session.user.email ? session.user.email.split("@")[0] : "내 조직");
+
+        // Check if organization with this name already exists
+        const { data: existingOrg, error: searchError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('org_name', companyName)
+          .maybeSingle();
+
+        if (searchError && searchError.code !== 'PGRST116') {
+          console.error("Error searching organization:", searchError);
+        }
+
+        if (existingOrg) {
+          // Join existing organization
+          orgId = existingOrg.id;
+        } else {
+          // Create new organization
+          const { data: newOrg, error: orgError } = await supabase
+            .from('organizations')
+            .insert({
+              org_name: companyName,
+              created_by: session.user.id,
+              metadata: { country: 'KR' },
+            })
+            .select('id')
+            .maybeSingle();
+
+          if (orgError || !newOrg) {
+            console.error("Error creating organization:", orgError);
+            throw orgError || new Error('조직 생성에 실패했습니다.');
+          }
+
+          orgId = newOrg.id;
+        }
+
+        // Determine role from user metadata
+        const userRoleType = session.user.user_metadata?.roleType || 'HQ';
+        const userRole = userRoleType === 'HQ' ? 'ORG_HQ' : 'ORG_STORE';
+
+        // Add user to organization with selected role
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({
+            user_id: session.user.id,
+            org_id: orgId,
+            role: userRole,
+          });
+
+        if (memberError) {
+          console.error("Error creating organization member:", memberError);
+          throw memberError;
+        }
+      }
+
+      // Check if user has an active subscription
+      const { data: subscription, error: subError } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (subError) {
+        console.error("Error fetching subscription:", subError);
+      }
+
+      if (subscription) {
+        navigate("/dashboard");
+      } else {
+        navigate("/subscribe");
+      }
+    } catch (error) {
+      console.error("Error ensuring organization and subscription:", error);
+      toast({
+        title: "오류 발생",
+        description: "조직 또는 구독 정보를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     trackPageView('Auth');
     trackFunnelStep(2, 'view_auth');
@@ -128,12 +229,16 @@ const Auth = () => {
         });
       }
     };
+    
+    const ensureOrganizationAndNavigateWrapper = (session: any) => {
+      ensureOrganizationAndNavigate(session);
+    };
 
     // Check if user is already logged in on mount
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        await ensureOrganizationAndNavigate(session);
+        await ensureOrganizationAndNavigateWrapper(session);
       }
     };
     checkSession();
@@ -141,7 +246,7 @@ const Auth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        ensureOrganizationAndNavigate(session);
+        ensureOrganizationAndNavigateWrapper(session);
       }
     });
 
@@ -180,7 +285,7 @@ const Auth = () => {
 
     try {
       setLoading(true);
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -201,15 +306,22 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        toast({
-          title: "회원가입 완료!",
-          description: "환영합니다!",
-        });
-        trackFunnelStep(2, 'signup_completed');
-        
-        // If session exists (email confirmation disabled), navigate to home
+        // If session exists (email confirmation disabled), ensure organization and auto-login
         if (data.session) {
-          navigate("/");
+          toast({
+            title: "회원가입 완료!",
+            description: "환영합니다!",
+          });
+          trackFunnelStep(2, 'signup_completed');
+          
+          // Ensure organization is created before navigation
+          await ensureOrganizationAndNavigate(data.session);
+        } else {
+          // Email confirmation required
+          toast({
+            title: "회원가입 완료!",
+            description: "이메일로 전송된 확인 링크를 클릭해주세요.",
+          });
         }
       }
     } catch (error: any) {
