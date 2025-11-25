@@ -5,6 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { BarChart3, Brain, TrendingUp, Zap, LineChart, ArrowRight, Database, Clock, Layers, Network, Shield } from "lucide-react";
+import { FootfallVisualizer3D } from "@/components/features/FootfallVisualizer3D";
+import { LayoutSimulator3D } from "@/components/features/LayoutSimulator3D";
+import { TrafficHeatmap3D } from "@/components/features/TrafficHeatmap3D";
 import { DemandForecast } from "@/components/features/DemandForecast";
 import { HQStoreSync } from "@/components/features/HQStoreSync";
 import { ConversionFunnel } from "@/components/features/ConversionFunnel";
@@ -496,13 +499,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.footfall.description")}
                     </p>
                   </div>
-                  <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
-                      <p className="text-lg font-semibold">3D Footfall Visualizer</p>
-                      <p className="text-muted-foreground">Coming soon - Interactive 3D customer traffic analysis</p>
-                    </div>
-                  </div>
+                  <FootfallVisualizer3D />
                 </TabsContent>
 
                 <TabsContent value="layout" className="space-y-6">
@@ -512,13 +509,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.layout.description")}
                     </p>
                   </div>
-                  <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <Layers className="w-16 h-16 text-primary mx-auto mb-4" />
-                      <p className="text-lg font-semibold">3D Layout Simulator</p>
-                      <p className="text-muted-foreground">Coming soon - AI-powered store layout optimization</p>
-                    </div>
-                  </div>
+                  <LayoutSimulator3D />
                 </TabsContent>
 
                 <TabsContent value="heatmap" className="space-y-6">
@@ -528,13 +519,7 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.heatmap.description")}
                     </p>
                   </div>
-                  <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <TrendingUp className="w-16 h-16 text-primary mx-auto mb-4" />
-                      <p className="text-lg font-semibold">3D Traffic Heatmap</p>
-                      <p className="text-muted-foreground">Coming soon - Real-time customer movement heatmaps</p>
-                    </div>
-                  </div>
+                  <TrafficHeatmap3D />
                 </TabsContent>
               </Tabs>
 
