@@ -187,9 +187,135 @@ export default {
   product: {
     hero: {
       badge: "제품 소개",
-      title: "오프라인 매장을 위한",
-      subtitle: "완전한 디지털 전환",
-      description: "NEURALTWIN은 AI와 IoT 기술로 오프라인 매장의 모든 데이터를 수집, 분석, 시각화합니다."
+      title: "오프라인 매장의 완전한 디지털 전환",
+      subtitle: "은(는) AI와 IoT 센서로 오프라인 매장의 모든 데이터를 실시간으로 수집하고",
+      subtitle2: "3D 디지털 트윈",
+      subtitle3: "으로 시각화하여",
+      subtitle4: "AI 기반 인사이트",
+      subtitle5: "를 제공합니다.",
+      description: "매장 운영의 모든 의사결정을 데이터 기반으로 전환하여",
+      description2: "매출 극대화와 비용 최적화",
+      description3: "를 동시에 달성하세요.",
+      benefits: {
+        sales: {
+          value: "+28%",
+          title: "매출 성장",
+          description: "데이터 기반 매장 최적화로 평균 28% 매출 증가"
+        },
+        realtime: {
+          value: "실시간",
+          title: "즉시 분석",
+          description: "고객 행동과 매장 상황을 실시간으로 파악"
+        },
+        visibility: {
+          value: "100%",
+          title: "완전한 가시성",
+          description: "매장 전체를 3D로 시각화하여 모든 데이터 확인"
+        }
+      }
+    },
+    pillars: {
+      analyze: "분석",
+      predict: "예측",
+      forecast: "예보",
+      simulate: "시뮬레이션",
+      optimize: "최적화"
+    },
+    licenses: {
+      dashboardFeatures: {
+        title: "라이선스별 대시보드 기능",
+        subtitle: "Store 라이선스와 HQ/Enterprise 라이선스가 제공하는 핵심 워크플로우"
+      }
+    },
+    miniFeatures: {
+      title: "인터랙티브 미니 기능",
+      subtitle: "직접 체험해보세요",
+      sections: {
+        spatial: {
+          title: "3D 공간 분석",
+          subtitle: "매장을 3D로 시각화하고 고객 행동을 분석합니다",
+          cta: "전체 기능 체험하기"
+        },
+        analytics: {
+          title: "2D 데이터 분석",
+          subtitle: "비즈니스 인사이트를 한눈에 파악합니다"
+        }
+      },
+      tabs: {
+        footfall: {
+          title: "고객 동선 3D",
+          description: "매장 내 고객 이동 경로를 3D로 시각화하고 시간대별 유입률과 체류 시간을 분석합니다."
+        },
+        layout: {
+          title: "레이아웃 시뮬레이터",
+          description: "AI 기반 레이아웃 최적화 제안으로 매장 배치 변경 효과를 사전에 시뮬레이션합니다."
+        },
+        heatmap: {
+          title: "트래픽 히트맵",
+          description: "시간대별 매장 내 고객 밀집도를 히트맵으로 시각화하여 핫스팟을 파악합니다."
+        },
+        demand: {
+          title: "수요 예측",
+          description: "날씨, 이벤트, 요일 등의 외부 요인을 고려하여 매출과 전환율을 예측합니다."
+        },
+        funnel: {
+          title: "전환 퍼널",
+          description: "방문객의 구매 전환 과정을 단계별로 분석하여 이탈 지점을 파악합니다."
+        },
+        performance: {
+          title: "상품 성과",
+          description: "상품별 매출, 재고, 관심도를 추적하여 베스트셀러와 주목 상품을 식별합니다."
+        },
+        inventory: {
+          title: "재고 최적화",
+          description: "AI 기반으로 재고 수준을 최적화하고 발주 타이밍을 자동으로 제안합니다."
+        },
+        staff: {
+          title: "직원 효율",
+          description: "직원 배치와 매출의 상관관계를 분석하여 최적의 인력 운영 방안을 제시합니다."
+        },
+        sync: {
+          title: "HQ-매장 동기화",
+          description: "본부와 매장 간 실시간 데이터 공유 및 의사결정 자동화로 운영 효율을 극대화합니다."
+        }
+      }
+    },
+    technology: {
+      title: "3단계 기술 파이프라인",
+      subtitle: "데이터 수집부터 인사이트 도출까지",
+      neuralsense: {
+        title: "NEURALSENSE",
+        subtitle: "IoT 데이터 수집",
+        description: "매장 내 다양한 IoT 센서를 통해 고객 동선, 상품 인터랙션, 환경 데이터를 실시간으로 수집합니다.",
+        features: [
+          "WiFi 프로브 센서",
+          "카메라 비전 AI",
+          "POS 시스템 연동",
+          "환경 센서 (온도, 습도)"
+        ]
+      },
+      neuralmind: {
+        title: "NEURALMIND",
+        subtitle: "AI 분석 엔진",
+        description: "수집된 데이터를 AI로 분석하여 고객 행동 패턴, 수요 예측, 재고 최적화 인사이트를 도출합니다.",
+        features: [
+          "고객 행동 패턴 분석",
+          "수요 예측 모델",
+          "재고 최적화 AI",
+          "레이아웃 최적화 제안"
+        ]
+      },
+      neuraltwin: {
+        title: "NEURALTWIN",
+        subtitle: "3D 디지털 트윈",
+        description: "매장을 3D로 재현하여 모든 데이터를 시각화하고 시뮬레이션을 통해 의사결정을 지원합니다.",
+        features: [
+          "실시간 3D 시각화",
+          "인터랙티브 대시보드",
+          "시뮬레이션 기능",
+          "HQ 통합 관리"
+        ]
+      }
     },
     benefits: {
       timeReduction: "시간 단축",
@@ -208,7 +334,7 @@ export default {
     annual: "연간",
     savePercent: "20% 절약",
     store: {
-      name: "Store",
+      name: "Store 라이선스",
       description: "개별 매장을 위한 기본 솔루션",
       price: "₩500,000",
       period: "/매장/월",
@@ -221,6 +347,10 @@ export default {
         "최대 5개 IoT 센서",
         "이메일 지원"
       ]
+    },
+    hq: {
+      name: "HQ/Enterprise 라이선스",
+      description: "다점포 운영을 위한 통합 솔루션"
     },
     enterprise: {
       name: "Enterprise",
@@ -346,6 +476,7 @@ export default {
     selectPlan: "선택하기",
     processing: "처리 중..."
   },
+  welcome: "환영합니다",
   profile: {
     title: "프로필",
     displayName: "표시 이름",
