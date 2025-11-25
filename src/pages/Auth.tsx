@@ -22,6 +22,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
+  const [roleType, setRoleType] = useState<"HQ" | "STORE">("HQ");
 
   useEffect(() => {
     trackPageView('Auth');
@@ -41,43 +42,64 @@ const Auth = () => {
 
         let orgId = orgMember?.org_id;
 
-        // If no organization exists, create a default one and add the user as ORG_OWNER
+        // If no organization exists, find or create organization
         if (!orgId) {
-          const defaultOrgName =
-            session.user.user_metadata?.company ||
+          const companyName = session.user.user_metadata?.company || 
             session.user.user_metadata?.name ||
             session.user.user_metadata?.full_name ||
             (session.user.email ? session.user.email.split("@")[0] : "내 조직");
 
-          const { data: newOrg, error: orgError } = await supabase
+          // Check if organization with this name already exists
+          const { data: existingOrg, error: searchError } = await supabase
             .from('organizations')
-            .insert({
-              org_name: defaultOrgName,
-              created_by: session.user.id,
-              country: 'KR',
-            })
             .select('id')
+            .eq('org_name', companyName)
             .maybeSingle();
 
-          if (orgError || !newOrg) {
-            console.error("Error creating organization:", orgError);
-            throw orgError || new Error('조직 생성에 실패했습니다.');
+          if (searchError && searchError.code !== 'PGRST116') {
+            console.error("Error searching organization:", searchError);
           }
 
+          if (existingOrg) {
+            // Join existing organization
+            orgId = existingOrg.id;
+          } else {
+            // Create new organization
+            const { data: newOrg, error: orgError } = await supabase
+              .from('organizations')
+              .insert({
+                org_name: companyName,
+                created_by: session.user.id,
+                metadata: { country: 'KR' },
+              })
+              .select('id')
+              .maybeSingle();
+
+            if (orgError || !newOrg) {
+              console.error("Error creating organization:", orgError);
+              throw orgError || new Error('조직 생성에 실패했습니다.');
+            }
+
+            orgId = newOrg.id;
+          }
+
+          // Determine role from user metadata
+          const userRoleType = session.user.user_metadata?.roleType || 'HQ';
+          const userRole = userRoleType === 'HQ' ? 'ORG_HQ' : 'ORG_STORE';
+
+          // Add user to organization with selected role
           const { error: memberError } = await supabase
             .from('organization_members')
             .insert({
               user_id: session.user.id,
-              org_id: newOrg.id,
-              role: 'ORG_OWNER',
+              org_id: orgId,
+              role: userRole,
             });
 
           if (memberError) {
             console.error("Error creating organization member:", memberError);
             throw memberError;
           }
-
-          orgId = newOrg.id;
         }
 
         // Check if user has an active subscription
@@ -129,7 +151,7 @@ const Auth = () => {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !passwordConfirm || !name || !company || !phone) {
+    if (!email || !password || !passwordConfirm || !name || !company || !phone || !roleType) {
       toast({
         title: "입력 오류",
         description: "모든 필수 필드를 입력해주세요.",
@@ -171,6 +193,7 @@ const Auth = () => {
             full_name: name,
             company: company,
             phone: phone,
+            roleType: roleType,
           }
         },
       });
@@ -432,6 +455,35 @@ const Auth = () => {
                       disabled={loading}
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>역할 선택 *</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="roleType"
+                          value="HQ"
+                          checked={roleType === "HQ"}
+                          onChange={(e) => setRoleType(e.target.value as "HQ" | "STORE")}
+                          disabled={loading}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">본사 (HQ)</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="roleType"
+                          value="STORE"
+                          checked={roleType === "STORE"}
+                          onChange={(e) => setRoleType(e.target.value as "HQ" | "STORE")}
+                          disabled={loading}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">매장 (Store)</span>
+                      </label>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full glow" disabled={loading}>
                     {loading ? "가입 중..." : "회원가입"}
