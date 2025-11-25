@@ -4,10 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
-import { BarChart3, Brain, TrendingUp, Zap, LineChart, ArrowRight, Database, Clock, Layers, Network, Shield } from "lucide-react";
-import { FootfallVisualizer3D } from "@/components/features/FootfallVisualizer3D";
-import { LayoutSimulator3D } from "@/components/features/LayoutSimulator3D";
-import { TrafficHeatmap3D } from "@/components/features/TrafficHeatmap3D";
+import { BarChart3, Brain, TrendingUp, Zap, LineChart, ArrowRight, Database, Clock, Layers, Network, Shield, Box } from "lucide-react";
 import { DemandForecast } from "@/components/features/DemandForecast";
 import { HQStoreSync } from "@/components/features/HQStoreSync";
 import { ConversionFunnel } from "@/components/features/ConversionFunnel";
@@ -499,7 +496,32 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.footfall.description")}
                     </p>
                   </div>
-                  <FootfallVisualizer3D />
+                  <Card className="glass w-full h-[600px] rounded-xl flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <Box className="w-20 h-20 text-primary mx-auto animate-pulse" />
+                      <div>
+                        <p className="text-2xl font-bold gradient-text mb-2">3D 고객 동선 시각화</p>
+                        <p className="text-muted-foreground max-w-md">
+                          매장 내 고객 이동 경로를 3D로 실시간 추적하고<br/>
+                          시간대별 유입률과 체류 시간을 분석합니다
+                        </p>
+                      </div>
+                      <div className="flex gap-4 justify-center pt-4">
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">실시간 추적</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">히트맵</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">시간대 분석</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 </TabsContent>
 
                 <TabsContent value="layout" className="space-y-6">
@@ -509,7 +531,32 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.layout.description")}
                     </p>
                   </div>
-                  <LayoutSimulator3D />
+                  <Card className="glass w-full h-[600px] rounded-xl flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <Layers className="w-20 h-20 text-primary mx-auto animate-pulse" />
+                      <div>
+                        <p className="text-2xl font-bold gradient-text mb-2">AI 레이아웃 시뮬레이터</p>
+                        <p className="text-muted-foreground max-w-md">
+                          매장 배치를 3D로 시뮬레이션하고<br/>
+                          AI가 최적 레이아웃을 자동으로 제안합니다
+                        </p>
+                      </div>
+                      <div className="flex gap-4 justify-center pt-4">
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">AI 제안</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">매출 예측</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">3D 시뮬레이션</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 </TabsContent>
 
                 <TabsContent value="heatmap" className="space-y-6">
@@ -519,7 +566,32 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.heatmap.description")}
                     </p>
                   </div>
-                  <TrafficHeatmap3D />
+                  <Card className="glass w-full h-[600px] rounded-xl flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <TrendingUp className="w-20 h-20 text-primary mx-auto animate-pulse" />
+                      <div>
+                        <p className="text-2xl font-bold gradient-text mb-2">3D 트래픽 히트맵</p>
+                        <p className="text-muted-foreground max-w-md">
+                          시간대별 고객 밀집도를 3D 히트맵으로<br/>
+                          시각화하여 핫스팟 구역을 즉시 파악합니다
+                        </p>
+                      </div>
+                      <div className="flex gap-4 justify-center pt-4">
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">실시간 히트맵</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">시간대 분석</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg">
+                          <div className="text-xs text-muted-foreground">핫스팟 탐지</div>
+                          <div className="text-lg font-bold text-primary">✓</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 </TabsContent>
               </Tabs>
 
