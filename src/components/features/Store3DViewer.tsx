@@ -1,7 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere } from "@react-three/drei";
-import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { Suspense } from "react";
 
 interface Store3DViewerProps {
   mode: "footfall" | "layout" | "heatmap";
@@ -395,39 +394,41 @@ const StoreModel = ({
 export const Store3DViewer = (props: Store3DViewerProps) => {
   return (
     <div className="w-full h-[600px] rounded-xl overflow-hidden bg-gradient-to-b from-muted/20 to-muted/40">
-      <Canvas shadows>
-        <PerspectiveCamera makeDefault position={[15, 12, 15]} />
-        <OrbitControls 
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={10}
-          maxDistance={40}
-          maxPolarAngle={Math.PI / 2.2}
-        />
-        
-        {/* 조명 - 더 현실적인 매장 조명 */}
-        <ambientLight intensity={0.4} />
-        <directionalLight 
-          position={[10, 15, 8]} 
-          intensity={0.8} 
-          castShadow 
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-        />
-        {/* 천장 조명들 */}
-        <pointLight position={[-5, 3.5, -3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
-        <pointLight position={[0, 3.5, -3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
-        <pointLight position={[5, 3.5, -3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
-        <pointLight position={[-5, 3.5, 3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
-        <pointLight position={[0, 3.5, 3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
-        <pointLight position={[5, 3.5, 3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
-        {/* 진열대 조명 */}
-        <pointLight position={[-5, 2.5, 0]} intensity={0.4} distance={6} decay={2} color="#ffffff" />
-        <pointLight position={[5, 2.5, 0]} intensity={0.4} distance={6} decay={2} color="#ffffff" />
-        
-        {/* 3D 매장 모델 */}
-        <StoreModel {...props} />
+      <Canvas shadows gl={{ preserveDrawingBuffer: true }}>
+        <Suspense fallback={null}>
+          <PerspectiveCamera makeDefault position={[15, 12, 15]} />
+          <OrbitControls 
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            minDistance={10}
+            maxDistance={40}
+            maxPolarAngle={Math.PI / 2.2}
+          />
+          
+          {/* 조명 - 더 현실적인 매장 조명 */}
+          <ambientLight intensity={0.4} />
+          <directionalLight 
+            position={[10, 15, 8]} 
+            intensity={0.8} 
+            castShadow 
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+          />
+          {/* 천장 조명들 */}
+          <pointLight position={[-5, 3.5, -3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
+          <pointLight position={[0, 3.5, -3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
+          <pointLight position={[5, 3.5, -3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
+          <pointLight position={[-5, 3.5, 3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
+          <pointLight position={[0, 3.5, 3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
+          <pointLight position={[5, 3.5, 3]} intensity={0.6} distance={8} decay={2} color="#fff8dc" />
+          {/* 진열대 조명 */}
+          <pointLight position={[-5, 2.5, 0]} intensity={0.4} distance={6} decay={2} color="#ffffff" />
+          <pointLight position={[5, 2.5, 0]} intensity={0.4} distance={6} decay={2} color="#ffffff" />
+          
+          {/* 3D 매장 모델 */}
+          <StoreModel {...props} />
+        </Suspense>
       </Canvas>
     </div>
   );
