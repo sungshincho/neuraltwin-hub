@@ -139,41 +139,11 @@ const Subscribe = () => {
           store_quota: storeQuota,
           hq_seat_quota: hqSeatQuota,
           status: "active",
-          start_date: new Date().toISOString(),
         })
         .select()
         .single();
 
       if (subError) throw subError;
-
-      // Create licenses for stores
-      const licenses = [];
-      for (let i = 0; i < storeQuota; i++) {
-        licenses.push({
-          org_id: userOrgId,
-          subscription_id: subscription.id,
-          license_type: "STORE",
-          license_key: `STORE-${userOrgId.substring(0, 8)}-${i + 1}`,
-          status: "active",
-        });
-      }
-
-      // Create licenses for HQ seats
-      for (let i = 0; i < hqSeatQuota; i++) {
-        licenses.push({
-          org_id: userOrgId,
-          subscription_id: subscription.id,
-          license_type: "HQ",
-          license_key: `HQ-${userOrgId.substring(0, 8)}-${i + 1}`,
-          status: "active",
-        });
-      }
-
-      const { error: licenseError } = await supabase
-        .from("licenses")
-        .insert(licenses);
-
-      if (licenseError) throw licenseError;
 
       toast({
         title: "구독 완료!",
