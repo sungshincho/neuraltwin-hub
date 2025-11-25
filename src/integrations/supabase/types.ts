@@ -277,6 +277,45 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          company: string
+          created_at: string
+          email: string
+          features: string[] | null
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          stores: number | null
+          timeline: string | null
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          email: string
+          features?: string[] | null
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          stores?: number | null
+          timeline?: string | null
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          email?: string
+          features?: string[] | null
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          stores?: number | null
+          timeline?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           created_at: string
