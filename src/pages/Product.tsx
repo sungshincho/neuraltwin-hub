@@ -5,18 +5,21 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { BarChart3, Brain, TrendingUp, Zap, LineChart, ArrowRight, Database, Clock, Layers, Network, Shield } from "lucide-react";
-import { FootfallVisualizer3D } from "@/components/features/FootfallVisualizer3D";
-import { LayoutSimulator3D } from "@/components/features/LayoutSimulator3D";
-import { TrafficHeatmap3D } from "@/components/features/TrafficHeatmap3D";
 import { DemandForecast } from "@/components/features/DemandForecast";
 import { HQStoreSync } from "@/components/features/HQStoreSync";
 import { ConversionFunnel } from "@/components/features/ConversionFunnel";
 import { ProductPerformance } from "@/components/features/ProductPerformance";
 import { InventoryOptimizer } from "@/components/features/InventoryOptimizer";
 import { StaffEfficiency } from "@/components/features/StaffEfficiency";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { trackPageView, trackMiniFeature, trackFunnelStep } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
+
+// Lazy load 3D components to prevent initialization errors
+const FootfallVisualizer3D = lazy(() => import("@/components/features/FootfallVisualizer3D").then(m => ({ default: m.FootfallVisualizer3D })));
+const LayoutSimulator3D = lazy(() => import("@/components/features/LayoutSimulator3D").then(m => ({ default: m.LayoutSimulator3D })));
+const TrafficHeatmap3D = lazy(() => import("@/components/features/TrafficHeatmap3D").then(m => ({ default: m.TrafficHeatmap3D })));
+
 import dashboardStoreImage from "@/assets/dashboard-store-license.png";
 import dashboardHQImage from "@/assets/dashboard-hq-license.png";
 import dashboardEnterpriseImage from "@/assets/dashboard-enterprise-license.png";
@@ -498,7 +501,16 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.footfall.description")}
                     </p>
                   </div>
-                  <FootfallVisualizer3D />
+                  <Suspense fallback={
+                    <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading 3D viewer...</p>
+                      </div>
+                    </div>
+                  }>
+                    <FootfallVisualizer3D />
+                  </Suspense>
                 </TabsContent>
 
                 <TabsContent value="layout" className="space-y-6">
@@ -508,7 +520,16 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.layout.description")}
                     </p>
                   </div>
-                  <LayoutSimulator3D />
+                  <Suspense fallback={
+                    <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading 3D viewer...</p>
+                      </div>
+                    </div>
+                  }>
+                    <LayoutSimulator3D />
+                  </Suspense>
                 </TabsContent>
 
                 <TabsContent value="heatmap" className="space-y-6">
@@ -518,7 +539,16 @@ const Product = () => {
                       {t("product.miniFeatures.tabs.heatmap.description")}
                     </p>
                   </div>
-                  <TrafficHeatmap3D />
+                  <Suspense fallback={
+                    <div className="w-full h-[600px] rounded-xl bg-muted/20 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading 3D viewer...</p>
+                      </div>
+                    </div>
+                  }>
+                    <TrafficHeatmap3D />
+                  </Suspense>
                 </TabsContent>
               </Tabs>
 
