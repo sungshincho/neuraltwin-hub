@@ -1,33 +1,122 @@
-// Analytics tracking utilities for NEURALTWIN
+// Google Analytics 4 & Meta Pixel Event Tracking
 
-export const trackPageView = (pageName: string, funnelStep?: number) => {
-  if (typeof window !== 'undefined') {
-    console.log(`[Analytics] Page View: ${pageName}`, funnelStep ? `Step ${funnelStep}` : '');
-    // Future: Add Google Analytics, Mixpanel, or other tracking
+declare global {
+  interface Window {
+    gtag?: (command: string, ...args: any[]) => void;
+    fbq?: (command: string, ...args: any[]) => void;
+    dataLayer?: any[];
   }
+}
+
+export type FunnelStep = 1 | 2 | 3 | 4;
+
+interface EventProperties {
+  [key: string]: any;
+  funnel_step?: FunnelStep;
+}
+
+/**
+ * Track event to Google Analytics 4
+ */
+export const trackEvent = (eventName: string, properties?: EventProperties) => {
+  // GA4
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, properties);
+  }
+
+  // Meta Pixel
+  if (typeof window !== 'undefined' && window.fbq) {
+    // Map GA4 events to Meta Pixel standard events
+    const metaEventMap: { [key: string]: string } = {
+      'submit_contact': 'Contact',
+      'view_pricing': 'ViewContent',
+      'meeting_booked': 'Schedule',
+      'click_mini_features': 'ViewContent',
+      'mini_feature_used': 'ViewContent',
+    };
+
+    const metaEvent = metaEventMap[eventName] || 'CustomEvent';
+    window.fbq('track', metaEvent, properties);
+  }
+
+  // Console log for debugging (remove in production)
+  console.log('[Analytics Event]', eventName, properties);
 };
 
-export const trackFunnelStep = (step: number | string, action?: string) => {
-  if (typeof window !== 'undefined') {
-    console.log(`[Analytics] Funnel Step ${step}:`, action);
-    // Future: Add conversion funnel tracking
+/**
+ * Track page view
+ */
+export const trackPageView = (pageName: string, funnelStep?: FunnelStep) => {
+  const properties: EventProperties = {
+    page_title: pageName,
+  };
+
+  if (funnelStep !== undefined) {
+    properties.funnel_step = funnelStep;
   }
+
+  trackEvent('page_view', properties);
 };
 
-export const trackCTAClick = (ctaName: string, destination: string, funnelStep?: number) => {
-  if (typeof window !== 'undefined') {
-    console.log(`[Analytics] CTA Click: ${ctaName} -> ${destination}`, funnelStep ? `Step ${funnelStep}` : '');
-    // Future: Add CTA tracking
-  }
+/**
+ * Track funnel progression
+ */
+export const trackFunnelStep = (step: FunnelStep, stepName: string) => {
+  trackEvent('funnel_progress', {
+    funnel_step: step,
+    step_name: stepName,
+  });
 };
 
-export const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-  if (typeof window !== 'undefined') {
-    console.log(`[Analytics] Event: ${eventName}`, properties);
-    // Future: Add event tracking
-  }
+/**
+ * Track CTA button clicks
+ */
+export const trackCTAClick = (ctaName: string, destination: string, funnelStep?: FunnelStep) => {
+  trackEvent('cta_click', {
+    cta_name: ctaName,
+    destination,
+    funnel_step: funnelStep,
+  });
 };
 
-export const trackButtonClick = (buttonName: string, location: string) => {
-  trackEvent('button_click', { buttonName, location });
+/**
+ * Track mini-feature interactions
+ */
+export const trackMiniFeature = (featureId: string, action: 'view' | 'interact') => {
+  trackEvent('mini_feature_used', {
+    feature_id: featureId,
+    action,
+    funnel_step: 2,
+  });
+};
+
+/**
+ * Track contact form events
+ */
+export const trackContactForm = (action: 'start' | 'submit' | 'error', errorMessage?: string) => {
+  const eventName = action === 'start' ? 'start_contact' : 'submit_contact';
+  trackEvent(eventName, {
+    funnel_step: 3,
+    form_action: action,
+    error_message: errorMessage,
+  });
+};
+
+/**
+ * Track meeting booking
+ */
+export const trackMeetingBooked = (source: string) => {
+  trackEvent('meeting_booked', {
+    source,
+    funnel_step: 4,
+  });
+};
+
+/**
+ * Initialize analytics on app load
+ */
+export const initAnalytics = () => {
+  // GA4 initialization is handled in index.html
+  // This function can be used for any additional setup
+  console.log('[Analytics] Initialized');
 };
