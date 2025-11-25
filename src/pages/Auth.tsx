@@ -186,9 +186,17 @@ const Auth = () => {
       }
     } catch (error: any) {
       console.error("Signup error:", error);
+      
+      let errorMessage = error.message || "회원가입 중 오류가 발생했습니다.";
+      
+      // Handle specific error cases
+      if (error.code === 'user_already_exists' || error.message === 'User already registered') {
+        errorMessage = "이미 가입된 이메일입니다. 로그인 탭에서 로그인해주세요.";
+      }
+      
       toast({
         title: "회원가입 실패",
-        description: error.message || "회원가입 중 오류가 발생했습니다.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
