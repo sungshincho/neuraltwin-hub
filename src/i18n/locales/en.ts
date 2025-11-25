@@ -201,45 +201,50 @@ export default {
     }
   },
   pricing: {
-    title: "Choose the Right Plan",
-    subtitle: "for Your Business",
-    description: "Flexible options based on your store size and needs",
-    monthly: "Monthly",
-    annual: "Annual",
-    savePercent: "Save 20%",
+    title: "License-Based Pricing",
+    subtitle: "Pay for What You Need",
+    licenseBasedNote: "Purchase individual licenses • Add/remove anytime",
+    perLicenseMonth: "per license/month",
+    invitationOnly: "invitation only",
+    free: "Free",
+    recommended: "Recommended",
+    cta: "Get Started",
+    inviteOnlyCta: "Invitation Only",
+    annually: "Annual",
+    annualSave: "Save 20%",
+    hq: {
+      name: "HQ License",
+      description: "HQ Manager • Full Feature Access",
+      feature1: "✅ Organization management",
+      feature2: "✅ Unlimited store creation",
+      feature3: "✅ Advanced analytics & AI",
+      feature4: "✅ Unlimited member invites",
+      feature5: "✅ ETL pipelines",
+      feature6: "✅ Custom reports",
+      feature7: "✅ API access",
+      feature8: "✅ Priority support"
+    },
     store: {
-      name: "Store",
-      description: "Essential solution for individual stores",
-      price: "₩500,000",
-      period: "/store/month",
-      cta: "14-Day Free Trial",
-      features: [
-        "NEURALSENSE sensor integration",
-        "Real-time customer flow analysis",
-        "Heatmap visualization",
-        "Daily reports",
-        "Up to 5 IoT sensors",
-        "Email support"
-      ]
+      name: "Store License",
+      description: "Store Manager • Store Management + Mid-tier Features",
+      feature1: "✅ Manage 1 store",
+      feature2: "✅ Store data entry",
+      feature3: "✅ Intermediate analytics",
+      feature4: "✅ Basic AI recommendations",
+      feature5: "✅ Standard reports",
+      feature6: "✅ General support"
+    },
+    viewer: {
+      name: "Viewer",
+      description: "Read-Only User • View Data Only",
+      feature1: "👁️ View data only",
+      feature2: "👁️ Basic dashboard",
+      feature3: "👁️ Basic statistics",
+      feature4: "⚠️ Invitation only"
     },
     enterprise: {
       name: "Enterprise",
-      description: "Integrated solution for multi-store operations",
-      price: "₩3,000,000",
-      period: "/HQ/month",
-      cta: "Contact Sales",
-      popular: "Popular",
-      features: [
-        "All Store plan features",
-        "HQ integrated dashboard",
-        "Multi-store comparison analysis",
-        "AI-based demand forecasting",
-        "Layout simulation",
-        "3D digital twin",
-        "Unlimited IoT sensors",
-        "Dedicated customer support",
-        "Custom onboarding"
-      ]
+      description: "Custom contract • Dedicated support"
     },
     faq: {
       title: "Frequently Asked Questions",
