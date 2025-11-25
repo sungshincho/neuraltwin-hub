@@ -1,25 +1,30 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Check, Store, Building2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Check, Building2, Store, Eye, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { trackPageView, trackFunnelStep } from "@/lib/analytics";
-
-type PlanType = "FREE" | "BASIC" | "PRO" | "ENTERPRISE";
+import type { LicenseType } from "@/types/auth";
 
 const Subscribe = () => {
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>("BASIC");
-  const [storeQuota, setStoreQuota] = useState(1);
-  const [hqSeatQuota, setHqSeatQuota] = useState(1);
+  const [searchParams] = useSearchParams();
+  const licenseTypeParam = searchParams.get('type') as LicenseType | null;
+  
+  const [selectedLicense, setSelectedLicense] = useState<LicenseType>(
+    licenseTypeParam === 'STORE' ? 'STORE' : 'HQ_SEAT'
+  );
+  const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [userOrgId, setUserOrgId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,65 +46,65 @@ const Subscribe = () => {
       return;
     }
 
+    setUserEmail(user.email || "");
+
     // Get user's organization
     const { data: membership } = await supabase
       .from("organization_members")
       .select("org_id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (membership) {
       setUserOrgId(membership.org_id);
     }
   };
 
-  const plans = [
-    {
-      type: "FREE" as PlanType,
-      name: "Free",
-      price: 0,
-      features: ["1개 매장", "1개 HQ 시트", "기본 분석", "커뮤니티 지원"],
-      maxStores: 1,
-      maxSeats: 1,
+  const LICENSE_PRICING = {
+    HQ_SEAT: {
+      name: 'HQ License',
+      price: 500,
+      description: '본사 관리자 • 모든 기능',
+      icon: Building2,
+      features: [
+        '조직 전체 관리',
+        '무제한 매장 추가',
+        '고급 분석 & AI',
+        '멤버 초대 무제한',
+        'ETL 파이프라인',
+        '커스텀 리포트',
+        'API 접근',
+        '우선 지원'
+      ]
     },
-    {
-      type: "BASIC" as PlanType,
-      name: "Basic",
-      price: 300,
-      features: ["최대 5개 매장", "최대 3개 HQ 시트", "고급 분석", "이메일 지원"],
-      maxStores: 5,
-      maxSeats: 3,
-    },
-    {
-      type: "PRO" as PlanType,
-      name: "Pro",
-      price: 600,
-      features: ["최대 20개 매장", "최대 10개 HQ 시트", "실시간 분석", "우선 지원", "AI 시뮬레이션"],
-      maxStores: 20,
-      maxSeats: 10,
-      recommended: true,
-    },
-    {
-      type: "ENTERPRISE" as PlanType,
-      name: "Enterprise",
-      price: null,
-      features: ["무제한 매장", "무제한 HQ 시트", "맞춤형 솔루션", "전담 지원", "온프레미스 옵션"],
-      maxStores: 999,
-      maxSeats: 999,
-    },
-  ];
-
-  const selectedPlanData = plans.find((p) => p.type === selectedPlan);
-
-  const calculateTotal = () => {
-    if (!selectedPlanData?.price) return null;
-    const basePrice = selectedPlanData.price;
-    const storePrice = storeQuota > 1 ? (storeQuota - 1) * 100 : 0;
-    const seatPrice = hqSeatQuota > 1 ? (hqSeatQuota - 1) * 50 : 0;
-    return basePrice + storePrice + seatPrice;
+    STORE: {
+      name: 'Store License',
+      price: 250,
+      description: '매장 관리자 • 매장 관리 + 중급 기능',
+      icon: Store,
+      features: [
+        '1개 매장 관리',
+        '매장 데이터 입력',
+        '중급 분석',
+        '기본 AI 추천',
+        '표준 리포트',
+        '일반 지원'
+      ]
+    }
   };
 
-  const handleSubscribe = async () => {
+  const selectedLicenseData = LICENSE_PRICING[selectedLicense];
+  const totalCost = selectedLicenseData.price * quantity;
+  const monthlyCost = totalCost;
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 1 && value <= 999) {
+      setQuantity(value);
+    }
+  };
+
+  const handleCheckout = async () => {
     if (!userOrgId) {
       toast({
         title: "오류",
@@ -109,54 +114,40 @@ const Subscribe = () => {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Check if subscription already exists
-      const { data: existingSub } = await supabase
-        .from("subscriptions")
-        .select("id")
-        .eq("org_id", userOrgId)
-        .eq("status", "active")
-        .single();
+      setIsLoading(true);
 
-      if (existingSub) {
-        toast({
-          title: "이미 구독 중",
-          description: "이미 활성 구독이 있습니다.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+      // TODO: Stripe 결제 연동 (DB 마이그레이션 후 구현)
+      // const { data, error } = await supabase.functions.invoke('create-checkout', {
+      //   body: {
+      //     org_id: userOrgId,
+      //     license_type: selectedLicense,
+      //     quantity: quantity,
+      //     price: selectedLicenseData.price
+      //   }
+      // });
 
-      // Create subscription
-      const { data: subscription, error: subError } = await supabase
-        .from("subscriptions")
-        .insert({
-          org_id: userOrgId,
-          plan_type: selectedPlan,
-          store_quota: storeQuota,
-          hq_seat_quota: hqSeatQuota,
-          status: "active",
-        })
-        .select()
-        .single();
+      // if (error) throw error;
+      // if (data?.checkoutUrl) {
+      //   window.location.href = data.checkoutUrl;
+      // }
 
-      if (subError) throw subError;
-
+      // 임시: 결제 페이지 준비 중 메시지
       toast({
-        title: "구독 완료!",
-        description: "구독이 성공적으로 생성되었습니다.",
+        title: "준비 중입니다",
+        description: "결제 시스템이 곧 준비됩니다. 현재는 데모 모드로 운영됩니다.",
       });
+      
+      // 임시로 대시보드로 이동
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
 
-      trackFunnelStep(4, 'subscription_completed');
-      navigate("/dashboard");
     } catch (error: any) {
-      console.error("Subscription error:", error);
+      console.error("Checkout error:", error);
       toast({
-        title: "오류",
-        description: error.message || "구독 생성 중 오류가 발생했습니다.",
+        title: "결제 오류",
+        description: error.message || "결제 처리 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     } finally {
@@ -165,165 +156,227 @@ const Subscribe = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-
-      <section className="pt-32 pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="gradient-text">플랜 선택</span>
+      
+      <main className="flex-1 pt-24 pb-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-12 space-y-4">
+            <h1 className="text-4xl md:text-5xl font-bold">
+              <span className="gradient-text">라이선스 구매</span>
             </h1>
-            <p className="text-xl text-muted-foreground">
-              비즈니스에 맞는 플랜을 선택하고 구독하세요
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              필요한 라이선스를 선택하고 수량을 지정하세요
             </p>
           </div>
 
-          {/* Plan Selection */}
-          <div className="mb-12">
-            <RadioGroup value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as PlanType)}>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {plans.map((plan) => (
-                  <Card
-                    key={plan.type}
-                    className={`glass p-6 cursor-pointer transition-all relative ${
-                      selectedPlan === plan.type ? "border-2 border-primary glow" : ""
-                    }`}
-                    onClick={() => setSelectedPlan(plan.type)}
+          <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+            {/* License Selection */}
+            <div className="md:col-span-2 space-y-6">
+              {/* License Type Selection */}
+              <Card className="glass">
+                <CardHeader>
+                  <CardTitle>1. 라이선스 타입 선택</CardTitle>
+                  <CardDescription>
+                    HQ 라이선스는 본사 관리자용, Store 라이선스는 매장 관리자용입니다
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup
+                    value={selectedLicense}
+                    onValueChange={(value) => setSelectedLicense(value as LicenseType)}
+                    className="space-y-4"
                   >
-                    {plan.recommended && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
-                        추천
-                      </div>
-                    )}
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
-                        <div className="text-2xl font-bold gradient-text">
-                          {plan.price !== null ? `$${plan.price}` : "문의"}
+                    {(Object.keys(LICENSE_PRICING) as LicenseType[]).map((type) => {
+                      const license = LICENSE_PRICING[type];
+                      const Icon = license.icon;
+                      
+                      return (
+                        <div key={type} className="relative">
+                          <RadioGroupItem
+                            value={type}
+                            id={type}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={type}
+                            className="flex cursor-pointer rounded-lg border-2 border-border p-6 hover:border-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all"
+                          >
+                            <div className="flex-1 flex items-start gap-4">
+                              <div className="rounded-lg p-3 bg-primary/10">
+                                <Icon className="w-6 h-6 text-primary" />
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h3 className="font-semibold text-lg">{license.name}</h3>
+                                    <p className="text-sm text-muted-foreground">{license.description}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-2xl font-bold gradient-text">
+                                      ${license.price}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">/ 라이선스 / 월</div>
+                                  </div>
+                                </div>
+                                <ul className="grid grid-cols-2 gap-2 text-sm mt-4">
+                                  {license.features.map((feature, idx) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                      <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                                      <span>{feature}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </Label>
                         </div>
-                        {plan.price !== null && (
-                          <span className="text-sm text-muted-foreground">/ 월</span>
-                        )}
+                      );
+                    })}
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+
+              {/* Quantity Selection */}
+              <Card className="glass">
+                <CardHeader>
+                  <CardTitle>2. 라이선스 수량 선택</CardTitle>
+                  <CardDescription>
+                    구매할 라이선스 개수를 입력하세요 (나중에 추가 구매 가능)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Label htmlFor="quantity" className="w-20">수량</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={quantity}
+                        onChange={handleQuantityChange}
+                        className="max-w-[120px]"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        개 × ${selectedLicenseData.price} = ${totalCost}/월
+                      </span>
+                    </div>
+                    
+                    {quantity > 1 && (
+                      <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                        <p className="text-sm">
+                          <span className="font-semibold">{quantity}개</span>의 {selectedLicenseData.name}를 구매합니다.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          라이선스는 구매 후 조직 멤버에게 할당할 수 있습니다.
+                        </p>
                       </div>
-                      <RadioGroupItem value={plan.type} />
-                    </div>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                ))}
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Quota Configuration */}
-          {selectedPlan !== "ENTERPRISE" && (
-            <Card className="glass p-8 mb-8">
-              <h2 className="text-2xl font-bold mb-6">리소스 구성</h2>
-
-              <div className="space-y-8">
-                {/* Store Quota */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Store className="w-5 h-5 text-primary" />
-                      <Label className="text-lg font-semibold">매장 수</Label>
-                    </div>
-                    <span className="text-2xl font-bold gradient-text">{storeQuota}</span>
-                  </div>
-                  <Slider
-                    value={[storeQuota]}
-                    onValueChange={(v) => setStoreQuota(v[0])}
-                    min={1}
-                    max={selectedPlanData?.maxStores || 1}
-                    step={1}
-                    className="mb-2"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    최대 {selectedPlanData?.maxStores}개 매장
-                    {storeQuota > 1 && ` (추가 매장: +$${(storeQuota - 1) * 100}/월)`}
-                  </p>
-                </div>
-
-                {/* HQ Seat Quota */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="w-5 h-5 text-primary" />
-                      <Label className="text-lg font-semibold">HQ 시트 수</Label>
-                    </div>
-                    <span className="text-2xl font-bold gradient-text">{hqSeatQuota}</span>
-                  </div>
-                  <Slider
-                    value={[hqSeatQuota]}
-                    onValueChange={(v) => setHqSeatQuota(v[0])}
-                    min={1}
-                    max={selectedPlanData?.maxSeats || 1}
-                    step={1}
-                    className="mb-2"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    최대 {selectedPlanData?.maxSeats}개 시트
-                    {hqSeatQuota > 1 && ` (추가 시트: +$${(hqSeatQuota - 1) * 50}/월)`}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Summary & Checkout */}
-          <Card className="glass p-8">
-            <h2 className="text-2xl font-bold mb-6">주문 요약</h2>
-
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">플랜</span>
-                <span className="font-semibold">{selectedPlanData?.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">매장 수</span>
-                <span className="font-semibold">{storeQuota}개</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">HQ 시트</span>
-                <span className="font-semibold">{hqSeatQuota}개</span>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">총 금액</span>
-                  <span className="text-3xl font-bold gradient-text">
-                    {calculateTotal() !== null ? `$${calculateTotal()}` : "문의"}
-                    {calculateTotal() !== null && (
-                      <span className="text-base text-muted-foreground ml-2">/ 월</span>
                     )}
-                  </span>
-                </div>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Viewer Info */}
+              <Card className="glass border-primary/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-lg p-3 bg-primary/10">
+                      <Eye className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Viewer는 무료입니다</h3>
+                      <p className="text-sm text-muted-foreground">
+                        HQ 또는 Store 라이선스 보유자는 읽기 전용 Viewer를 무료로 초대할 수 있습니다.
+                        Viewer는 데이터 조회만 가능하며, 수정 권한은 없습니다.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <Button
-              onClick={handleSubscribe}
-              disabled={isLoading || selectedPlan === "ENTERPRISE"}
-              className="w-full glow"
-              size="lg"
-            >
-              {isLoading ? "처리 중..." : selectedPlan === "ENTERPRISE" ? "영업팀 문의" : "구독하기"}
-            </Button>
+            {/* Order Summary */}
+            <div className="md:col-span-1">
+              <Card className="glass sticky top-24">
+                <CardHeader>
+                  <CardTitle>주문 요약</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">라이선스 타입</span>
+                      <span className="font-medium">{selectedLicenseData.name}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">단가</span>
+                      <span className="font-medium">${selectedLicenseData.price}/월</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">수량</span>
+                      <span className="font-medium">{quantity}개</span>
+                    </div>
+                  </div>
 
-            {selectedPlan === "ENTERPRISE" && (
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Enterprise 플랜은 영업팀과 상담이 필요합니다.
+                  <div className="h-px bg-border" />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="font-semibold">월 비용</span>
+                      <span className="text-2xl font-bold gradient-text">
+                        ${monthlyCost}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      매월 자동 청구됩니다
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleCheckout}
+                    disabled={isLoading}
+                    className="w-full glow"
+                    size="lg"
+                  >
+                    {isLoading ? "처리 중..." : (
+                      <>
+                        결제하기
+                        <ArrowRight className="ml-2 w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <p>✓ 언제든지 취소 가능</p>
+                    <p>✓ 라이선스 추가/제거 가능</p>
+                    <p>✓ 안전한 결제 (Stripe)</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Enterprise Contact */}
+          <div className="max-w-4xl mx-auto mt-16">
+            <Card className="glass text-center p-8">
+              <h2 className="text-2xl font-bold mb-4">
+                <span className="gradient-text">Enterprise</span>
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                대규모 조직을 위한 맞춤형 계약 및 전담 지원이 필요하신가요?
               </p>
-            )}
-          </Card>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate("/contact")}
+              >
+                Enterprise 문의하기
+              </Button>
+            </Card>
+          </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>

@@ -19,6 +19,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
+  const [phone, setPhone] = useState("");
 
   useEffect(() => {
     trackPageView('Auth');
@@ -126,10 +128,10 @@ const Auth = () => {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !company) {
       toast({
         title: "입력 오류",
-        description: "모든 필드를 입력해주세요.",
+        description: "모든 필수 필드를 입력해주세요.",
         variant: "destructive",
       });
       return;
@@ -154,8 +156,11 @@ const Auth = () => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
+            display_name: name,
             name: name,
             full_name: name,
+            company: company,
+            phone: phone || null,
           }
         },
       });
@@ -332,7 +337,7 @@ const Auth = () => {
               <TabsContent value="signup" className="space-y-4 mt-4">
                 <form onSubmit={handleEmailSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">이름</Label>
+                    <Label htmlFor="signup-name">이름 *</Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -344,7 +349,30 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">이메일</Label>
+                    <Label htmlFor="signup-company">회사명 (조직명) *</Label>
+                    <Input
+                      id="signup-company"
+                      type="text"
+                      placeholder="주식회사 TCAG"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">연락처</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="010-1234-5678 (선택)"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">이메일 *</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -356,7 +384,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">비밀번호</Label>
+                    <Label htmlFor="signup-password">비밀번호 *</Label>
                     <Input
                       id="signup-password"
                       type="password"
