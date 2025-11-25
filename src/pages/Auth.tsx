@@ -287,6 +287,7 @@ const Auth = () => {
       setLoading(true);
       const redirectUrl = `${window.location.origin}/auth`;
       
+      // Step 1: Sign up the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -305,24 +306,96 @@ const Auth = () => {
 
       if (error) throw error;
 
-      if (data.user) {
-        // If session exists (email confirmation disabled), ensure organization and auto-login
-        if (data.session) {
-          toast({
-            title: "회원가입 완료!",
-            description: "환영합니다!",
-          });
-          trackFunnelStep(2, 'signup_completed');
-          
-          // Ensure organization is created before navigation
-          await ensureOrganizationAndNavigate(data.session);
-        } else {
-          // Email confirmation required
-          toast({
-            title: "회원가입 완료!",
-            description: "이메일로 전송된 확인 링크를 클릭해주세요.",
-          });
+      if (data.user && data.session) {
+        console.log("User created, creating organization...");
+        
+        // Step 2: Check if organization with this name already exists
+        const { data: existingOrg, error: searchError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('org_name', company)
+          .maybeSingle();
+
+        if (searchError && searchError.code !== 'PGRST116') {
+          console.error("Error searching organization:", searchError);
+          throw searchError;
         }
+
+        let orgId: string;
+
+        if (existingOrg) {
+          // Join existing organization
+          orgId = existingOrg.id;
+          console.log("Joining existing organization:", orgId);
+        } else {
+          // Step 3: Create new organization
+          const { data: newOrg, error: orgError } = await supabase
+            .from('organizations')
+            .insert({
+              org_name: company,
+              created_by: data.user.id,
+              metadata: { country: 'KR' },
+            })
+            .select('id')
+            .single();
+
+          if (orgError) {
+            console.error("Error creating organization:", orgError);
+            throw orgError;
+          }
+
+          if (!newOrg) {
+            throw new Error('조직 생성에 실패했습니다.');
+          }
+
+          orgId = newOrg.id;
+          console.log("Created new organization:", orgId);
+        }
+
+        // Step 4: Determine role based on license type selection
+        const userRole = roleType === 'HQ' ? 'ORG_HQ' : 'ORG_STORE';
+        
+        // Step 5: Create organization member entry
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({
+            user_id: data.user.id,
+            org_id: orgId,
+            role: userRole,
+          });
+
+        if (memberError) {
+          console.error("Error creating organization member:", memberError);
+          throw memberError;
+        }
+
+        console.log("Organization member created successfully");
+
+        toast({
+          title: "회원가입 완료!",
+          description: "환영합니다!",
+        });
+        trackFunnelStep(2, 'signup_completed');
+        
+        // Step 6: Check for active subscription and navigate
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('org_id', orgId)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subscription) {
+          navigate("/dashboard");
+        } else {
+          navigate("/subscribe");
+        }
+      } else if (data.user && !data.session) {
+        // Email confirmation required
+        toast({
+          title: "회원가입 완료!",
+          description: "이메일로 전송된 확인 링크를 클릭해주세요.",
+        });
       }
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -332,6 +405,10 @@ const Auth = () => {
       // Handle specific error cases
       if (error.code === 'user_already_exists' || error.message === 'User already registered') {
         errorMessage = "이미 가입된 이메일입니다. 로그인 탭에서 로그인해주세요.";
+      } else if (error.message?.includes('organization')) {
+        errorMessage = "조직 생성 중 오류가 발생했습니다. 다시 시도해주세요.";
+      } else if (error.message?.includes('member')) {
+        errorMessage = "조직 멤버 등록 중 오류가 발생했습니다. 다시 시도해주세요.";
       }
       
       toast({
