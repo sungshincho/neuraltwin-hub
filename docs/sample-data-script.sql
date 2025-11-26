@@ -36,21 +36,22 @@ BEGIN
   RAISE NOTICE '✓ Profile: 조성신';
 
   -- STEP 3: 조직 생성 (TCAG)
-  INSERT INTO public.organizations (org_name, created_by, metadata)
-  VALUES (
-    'TCAG',
-    v_user_id,
-    jsonb_build_object(
-      'country', 'South Korea',
-      'industry', 'Retail',
-      'company_size', 'medium'
-    )
-  )
-  ON CONFLICT (org_name) DO NOTHING
-  RETURNING id INTO v_org_id;
-
+  -- 기존 조직 확인
+  SELECT id INTO v_org_id FROM public.organizations WHERE org_name = 'TCAG' LIMIT 1;
+  
+  -- 조직이 없으면 생성
   IF v_org_id IS NULL THEN
-    SELECT id INTO v_org_id FROM public.organizations WHERE org_name = 'TCAG' LIMIT 1;
+    INSERT INTO public.organizations (org_name, created_by, metadata)
+    VALUES (
+      'TCAG',
+      v_user_id,
+      jsonb_build_object(
+        'country', 'South Korea',
+        'industry', 'Retail',
+        'company_size', 'medium'
+      )
+    )
+    RETURNING id INTO v_org_id;
   END IF;
 
   RAISE NOTICE '✓ Organization: TCAG (ID: %)', v_org_id;
