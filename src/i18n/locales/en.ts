@@ -576,6 +576,15 @@ export default {
         sales: "Sales",
         conversion: "Conversion Rate",
       },
+      dayLabels: {
+        mon: "Mon",
+        tue: "Tue",
+        wed: "Wed",
+        thu: "Thu",
+        fri: "Fri",
+        sat: "Sat",
+        sun: "Sun",
+      },
     },
   },
 };

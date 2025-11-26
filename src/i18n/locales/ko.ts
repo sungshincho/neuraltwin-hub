@@ -591,6 +591,15 @@ export default {
         sales: "매출",
         conversion: "전환율",
       },
+      dayLabels: {
+        mon: "월",
+        tue: "화",
+        wed: "수",
+        thu: "목",
+        fri: "금",
+        sat: "토",
+        sun: "일",
+      },
     },
   },
 };
