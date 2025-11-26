@@ -231,7 +231,6 @@ export default {
           },
         },
       },
-      // 나중에 원하면 여기 아래에 neuralmind, neuraltwin 도 같은 구조로 추가 가능
     },
   },
   pricing: {
