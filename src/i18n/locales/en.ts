@@ -398,6 +398,19 @@ export default {
       name: "Enterprise",
       description: "Custom contract • Dedicated support",
     },
+    addons: {
+      title: "Add-on Services",
+      subtitle: "Extend your plan with expert consulting and advanced AI simulations.",
+      consulting: "Implementation Consulting",
+      consultingDesc: "End-to-end support for deployment, data integration, and store operations setup.",
+      consultingPrice: "Custom project-based pricing",
+      aiSimulation: "AI Simulation Package",
+      aiSimulationDesc: "Scenario-based simulations using digital twins to validate layout and staffing decisions.",
+      aiSimulationPrice: "Per scenario • contact sales",
+      decisionAssist: "Decision Assist",
+      decisionAssistDesc: "Regular insight reviews and optimization recommendations for HQ and stores.",
+      decisionAssistPrice: "Monthly retainer • contact sales",
+    },
     faq: {
       title: "Frequently Asked Questions",
       q1: {

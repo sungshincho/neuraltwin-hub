@@ -414,6 +414,19 @@ export default {
       name: "Enterprise",
       description: "맞춤형 계약 • 전담 지원",
     },
+    addons: {
+      title: "추가 서비스",
+      subtitle: "기본 라이선스에 전문가 컨설팅과 AI 시뮬레이션을 더해보세요.",
+      consulting: "도입 컨설팅",
+      consultingDesc: "센서 설치, 데이터 연동, 운영 프로세스 설계를 처음부터 끝까지 함께 지원합니다.",
+      consultingPrice: "프로젝트 단위 맞춤 견적",
+      aiSimulation: "AI 시뮬레이션 패키지",
+      aiSimulationDesc: "디지털 트윈 기반 시나리오 시뮬레이션으로 레이아웃·인력·재고 전략을 사전 검증합니다.",
+      aiSimulationPrice: "시나리오 단위 견적 (영업팀 문의)",
+      decisionAssist: "의사결정 어시스트",
+      decisionAssistDesc: "본부·매장을 대상으로 주기적인 인사이트 리뷰와 최적화 제안을 제공합니다.",
+      decisionAssistPrice: "월 단위 컨설팅 (영업팀 문의)",
+    },
     faq: {
       title: "자주 묻는 질문",
       q1: {
