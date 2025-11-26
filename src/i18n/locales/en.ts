@@ -204,6 +204,74 @@ export default {
       costReduction: "Cost Reduction",
       costDesc: "Efficient inventory & staff management",
     },
+    pillars: {
+      analyze: "Analyze",
+      predict: "Predict",
+      forecast: "Forecast",
+      simulate: "Simulate",
+      optimize: "Optimize",
+    },
+    licenses: {
+      dashboardFeatures: {
+        title: "Dashboard Features by License",
+        subtitle: "Core workflows provided by Store and HQ/Enterprise licenses",
+      },
+    },
+    miniFeatures: {
+      title: "Interactive Mini Features",
+      subtitle: "Try them yourself",
+      sections: {
+        spatial: {
+          title: "3D Space Analytics",
+          subtitle: "Visualize your store in 3D and analyze customer behavior",
+          cta: "Explore full features",
+        },
+        analytics: {
+          title: "2D Data Analytics",
+          subtitle: "See key business insights at a glance",
+        },
+      },
+      tabs: {
+        footfall: {
+          title: "3D Footfall",
+          description: "Visualize customer movement paths in 3D and analyze traffic and dwell time by time of day.",
+        },
+        layout: {
+          title: "Layout Simulator",
+          description: "Simulate layout changes in advance with AI-powered optimization suggestions.",
+        },
+        heatmap: {
+          title: "Traffic Heatmap",
+          description: "Visualize in-store crowd density by time of day as a heatmap to identify hotspots.",
+        },
+        demand: {
+          title: "Demand Forecast",
+          description:
+            "Forecast sales and conversion by reflecting external factors such as weather, events, and weekdays.",
+        },
+        funnel: {
+          title: "Conversion Funnel",
+          description: "Analyze each stage of the customer journey to identify where drop-offs occur.",
+        },
+        product: {
+          title: "Product Performance",
+          description: "Track sales, inventory, and interest by product to identify bestsellers and attention items.",
+        },
+        inventory: {
+          title: "Inventory Optimization",
+          description: "Optimize inventory levels and automatically suggest reorder timing with AI.",
+        },
+        staff: {
+          title: "Staff Efficiency",
+          description: "Analyze relationships between staffing and sales to suggest optimal staffing strategies.",
+        },
+        hq: {
+          title: "HQ-Store Sync",
+          description:
+            "Maximize operational efficiency with real-time data sharing and automated decision-making between HQ and stores.",
+        },
+      },
+    },
     technology: {
       title: "3-Stage Technology Pipeline",
       subtitle: "From Data Collection to Insights",
@@ -228,6 +296,55 @@ export default {
           realtime: {
             title: "Real-time Monitoring",
             description: "Monitors in-store conditions in real time and detects anomalies instantly.",
+          },
+        },
+      },
+      neuralmind: {
+        title: "NEURALMIND",
+        subtitle: "AI Analytics Engine",
+        description:
+          "Analyzes collected data with AI to derive customer behavior patterns, demand forecasts, and optimization insights.",
+        features: {
+          demand: {
+            title: "Demand Forecasting",
+            description: "Predicts sales and inventory demand using factors such as weather, weekdays, and promotions.",
+          },
+          behavior: {
+            title: "Customer Behavior Analytics",
+            description: "Analyzes paths, dwell time, and product interactions to understand in-store behavior.",
+          },
+          optimization: {
+            title: "Operations Optimization",
+            description: "Recommends optimal inventory, staffing, and layout strategies based on AI models.",
+          },
+          anomaly: {
+            title: "Anomaly Detection",
+            description: "Automatically detects unusual patterns such as sudden sales changes or abnormal traffic.",
+          },
+        },
+      },
+      neuraltwin: {
+        title: "NEURALTWIN",
+        subtitle: "3D Digital Twin",
+        description:
+          "Recreates your store in 3D, visualizes all data, and supports decision-making through simulation.",
+        features: {
+          scenario: {
+            title: "Scenario Planning",
+            description:
+              "Compare scenarios such as promotions, layout changes, and new fixtures before applying them in-store.",
+          },
+          simulation: {
+            title: "3D Simulation",
+            description: "Simulates customer flow and operational changes in a 3D environment for pre-validation.",
+          },
+          enterprise: {
+            title: "Enterprise / Chain Management",
+            description: "Supports HQ and multi-store operations with integrated data across all stores.",
+          },
+          report: {
+            title: "Insight Reports",
+            description: "Generates simulation summaries and KPI impact reports for decision makers.",
           },
         },
       },
