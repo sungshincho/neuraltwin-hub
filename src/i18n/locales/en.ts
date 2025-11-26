@@ -552,5 +552,25 @@ export default {
         "Improve staff placement and customer flow to drive purchases",
       ],
     },
+    demandForecast: {
+      weather: "Weather",
+      weatherOptions: {
+        clear: "Clear",
+      },
+      event: "Event",
+      eventOptions: {
+        none: "None",
+      },
+      day: "Day",
+      dayOptions: {
+        weekday: "Weekday",
+      },
+      weeklyRevenue: "Weekly Revenue",
+      avgConversion: "Avg. Conversion Rate",
+      chartLabels: {
+        sales: "Sales",
+        conversion: "Conversion Rate",
+      },
+    },
   },
 };
