@@ -437,7 +437,12 @@ export default {
   },
   contact: {
     title: "Contact NEURALTWIN",
+    subtitle: "Tell us about your stores and goals. We'll follow up with a tailored proposal.",
     description: "Our retail experts will propose a solution optimized for your business",
+    info: {
+      email: "contact@neuraltwin.com",
+      address: "Seoul, Republic of Korea",
+    },
     form: {
       name: "Name",
       namePlaceholder: "John Doe",
