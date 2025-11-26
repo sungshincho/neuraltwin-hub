@@ -565,6 +565,7 @@ export type Database = {
           id: string
           indicator_type: string
           indicator_value: number
+          is_global: boolean
           metadata: Json | null
           org_id: string | null
           region: string | null
@@ -579,6 +580,7 @@ export type Database = {
           id?: string
           indicator_type: string
           indicator_value: number
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           region?: string | null
@@ -593,6 +595,7 @@ export type Database = {
           id?: string
           indicator_type?: string
           indicator_value?: number
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           region?: string | null
@@ -894,6 +897,7 @@ export type Database = {
           event_type: string
           id: string
           impact_level: string | null
+          is_global: boolean
           metadata: Json | null
           org_id: string | null
           store_id: string | null
@@ -908,6 +912,7 @@ export type Database = {
           event_type: string
           id?: string
           impact_level?: string | null
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           store_id?: string | null
@@ -922,6 +927,7 @@ export type Database = {
           event_type?: string
           id?: string
           impact_level?: string | null
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           store_id?: string | null
@@ -1489,6 +1495,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ontology_relation_inference_queue: {
+        Row: {
+          created_at: string
+          entity_id: string
+          error_message: string | null
+          id: string
+          org_id: string | null
+          processed_at: string | null
+          retry_count: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          error_message?: string | null
+          id?: string
+          org_id?: string | null
+          processed_at?: string | null
+          retry_count?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          error_message?: string | null
+          id?: string
+          org_id?: string | null
+          processed_at?: string | null
+          retry_count?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ontology_relation_inference_queue_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "graph_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ontology_relation_types: {
         Row: {
           created_at: string | null
@@ -1922,6 +1972,7 @@ export type Database = {
           date: string
           gdp: number | null
           id: string
+          is_global: boolean
           metadata: Json | null
           org_id: string | null
           population: number | null
@@ -1936,6 +1987,7 @@ export type Database = {
           date: string
           gdp?: number | null
           id?: string
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           population?: number | null
@@ -1950,6 +2002,7 @@ export type Database = {
           date?: string
           gdp?: number | null
           id?: string
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           population?: number | null
@@ -2581,6 +2634,7 @@ export type Database = {
           date: string
           humidity: number | null
           id: string
+          is_global: boolean
           metadata: Json | null
           org_id: string | null
           precipitation: number | null
@@ -2595,6 +2649,7 @@ export type Database = {
           date: string
           humidity?: number | null
           id?: string
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           precipitation?: number | null
@@ -2609,6 +2664,7 @@ export type Database = {
           date?: string
           humidity?: number | null
           id?: string
+          is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
           precipitation?: number | null
