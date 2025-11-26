@@ -633,6 +633,10 @@ export default {
           weak: "저조",
           critical: "긴급",
         },
+        values: {
+          sales: "{{value}}개",
+          stock: "{{value}}개",
+        },
       },
       categories: {
         title: "카테고리별 매출",

@@ -19,9 +19,9 @@ import { useTranslation } from "react-i18next";
 
 interface Product {
   id: string;
-  // 이름은 i18n으로 표시하므로 여기 name은 안 써도 되지만, 데이터 정의용으로 유지
+  // 이름은 i18n으로 표시하지만, 데이터 정의용으로 유지
   name: string;
-  // 카테고리 표시용 키 (i18n의 categories.outer / top / bottom / shoes / accessories 와 매칭)
+  // 카테고리 키 (i18n: categories.outer/top/bottom/shoes/accessories)
   categoryKey: "outer" | "top" | "bottom" | "shoes" | "accessories";
   sales: number;
   revenue: number;
@@ -244,7 +244,11 @@ export const ProductPerformance = () => {
                     <div className="text-muted-foreground text-xs">
                       {t("dashboardFeatures.productPerformance.table.columns.sales")}
                     </div>
-                    <div className="font-semibold">{product.sales}개</div>
+                    <div className="font-semibold">
+                      {t("dashboardFeatures.productPerformance.table.values.sales", {
+                        value: product.sales.toLocaleString(),
+                      })}
+                    </div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-xs">
@@ -256,7 +260,11 @@ export const ProductPerformance = () => {
                     <div className="text-muted-foreground text-xs">
                       {t("dashboardFeatures.productPerformance.table.columns.stock")}
                     </div>
-                    <div className={`font-semibold ${getStatusColor(product.status)}`}>{product.stock}개</div>
+                    <div className={`font-semibold ${getStatusColor(product.status)}`}>
+                      {t("dashboardFeatures.productPerformance.table.values.stock", {
+                        value: product.stock.toLocaleString(),
+                      })}
+                    </div>
                   </div>
                 </div>
 

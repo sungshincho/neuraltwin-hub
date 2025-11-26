@@ -618,6 +618,10 @@ export default {
           weak: "Low",
           critical: "Critical",
         },
+        values: {
+          sales: "{{value}} units",
+          stock: "{{value}} units",
+        },
       },
       categories: {
         title: "Revenue by Category",
