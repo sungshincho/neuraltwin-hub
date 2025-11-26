@@ -145,7 +145,7 @@ BEGIN
   RAISE NOTICE '===========================================';
   RAISE NOTICE '✅ 샘플 데이터 생성 완료!';
   RAISE NOTICE '===========================================';
-  RAISE NOTICE 'Email: seongsin.cho@tcag.com';
+  RAISE NOTICE 'Email: brrrshin@gmail.com';
   RAISE NOTICE 'Name: 조성신';
   RAISE NOTICE 'Organization: TCAG';
   RAISE NOTICE 'Role: ORG_HQ';
