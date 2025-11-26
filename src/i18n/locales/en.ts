@@ -216,6 +216,8 @@ export default {
         title: "Dashboard Features by License",
         subtitle: "Core workflows provided by Store and HQ/Enterprise licenses",
       },
+      consultCta: "Talk to a solution expert",
+      cta: "Request NEURALTWIN consultation",
     },
     miniFeatures: {
       title: "Interactive Mini Features",

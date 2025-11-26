@@ -229,7 +229,10 @@ export default {
         title: "라이선스별 대시보드 기능",
         subtitle: "Store 라이선스와 HQ/Enterprise 라이선스가 제공하는 핵심 워크플로우",
       },
+      consultCta: "라이선스 구성 상담하기",
+      cta: "전체 기능 도입 상담하기",
     },
+
     miniFeatures: {
       title: "인터랙티브 미니 기능",
       subtitle: "직접 체험해보세요",
