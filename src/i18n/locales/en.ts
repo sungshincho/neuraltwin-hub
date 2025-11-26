@@ -585,6 +585,54 @@ export default {
         sat: "Sat",
         sun: "Sun",
       },
+    productPerformance: {
+      title: "Product Performance",
+      subtitle:
+        "Track revenue, inventory, and interest by product to identify bestsellers and key items.",
+      metrics: {
+        totalRevenue: "Total Revenue",
+        totalRevenueHelp: "This week",
+        totalUnits: "Total Units Sold",
+        totalUnitsHelp: "This week",
+        avgGrowth: "Average Growth",
+        avgGrowthHelp: "Week-over-week",
+        stockAlerts: "Stock Alerts",
+        stockAlertsHelp: "Urgent restock required",
+      },
+      table: {
+        title: "Performance by Product",
+        columns: {
+          product: "Product",
+          category: "Category",
+          status: "Status",
+          sales: "Units Sold",
+          revenue: "Revenue",
+          stock: "Stock",
+          change: "vs last week",
+        },
+        status: {
+          best: "High",
+          normal: "Normal",
+          weak: "Low",
+          critical: "Critical",
+        },
+      },
+      categories: {
+        title: "Revenue by Category",
+        outer: "Outerwear",
+        top: "Tops",
+        bottom: "Bottoms",
+        shoes: "Shoes",
+        accessories: "Accessories",
+      },
+      topProducts: {
+        title: "Top 5 Products by Sales",
+      },
+      inventoryAlert: {
+        title: "Inventory Alert",
+        sneakersMessage:
+          "Sneaker stock is low (8 units). Based on an average daily sales of 14 units, stock is expected to run out within 3 days.",
+      },
     },
   },
 };

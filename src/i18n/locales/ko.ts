@@ -600,6 +600,54 @@ export default {
         sat: "토",
         sun: "일",
       },
+    productPerformance: {
+      title: "상품 성과",
+      subtitle:
+        "상품별 매출, 재고, 관심도를 추적하여 베스트셀러와 주목 상품을 식별합니다.",
+      metrics: {
+        totalRevenue: "총 매출",
+        totalRevenueHelp: "이번 주",
+        totalUnits: "총 판매량",
+        totalUnitsHelp: "이번 주",
+        avgGrowth: "평균 성장률",
+        avgGrowthHelp: "전주 대비",
+        stockAlerts: "재고 알림",
+        stockAlertsHelp: "긴급 보충 필요",
+      },
+      table: {
+        title: "상품별 실적",
+        columns: {
+          product: "상품",
+          category: "카테고리",
+          status: "상태",
+          sales: "판매량",
+          revenue: "매출",
+          stock: "재고",
+          change: "vs 지난주",
+        },
+        status: {
+          best: "우수",
+          normal: "보통",
+          weak: "저조",
+          critical: "긴급",
+        },
+      },
+      categories: {
+        title: "카테고리별 매출",
+        outer: "아우터",
+        top: "상의",
+        bottom: "하의",
+        shoes: "신발",
+        accessories: "악세사리",
+      },
+      topProducts: {
+        title: "상위 5개 상품 판매량",
+      },
+      inventoryAlert: {
+        title: "재고 관리 알림",
+        sneakersMessage:
+          "스니커즈 재고 부족 (8개). 평균 일 판매량 14개 기준 3일 내 재고 소진 예상.",
+      },
     },
   },
 };
