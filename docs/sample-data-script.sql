@@ -103,7 +103,7 @@ BEGIN
     v_subscription_id,
     'HQ_SEAT',
     'NT-HQ-' || substring(gen_random_uuid()::text, 1, 8),
-    'assigned',
+    'active',
     500.00,
     current_date,
     date_trunc('month', now()) + interval '1 month',
