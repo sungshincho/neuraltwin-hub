@@ -566,25 +566,26 @@ export default {
         "체류 시간 증가를 위한 매장 레이아웃 최적화",
         "구매 유도를 위한 직원 배치 및 동선 개선",
       ],
+    },
     demandForecast: {
       weather: "날씨",
       weatherOptions: {
-        clear: "맑음"
+        clear: "맑음",
       },
       event: "이벤트",
       eventOptions: {
-        none: "없음"
+        none: "없음",
       },
       day: "요일",
       dayOptions: {
-        weekday: "평일"
+        weekday: "평일",
       },
       weeklyRevenue: "주간 매출",
       avgConversion: "평균 전환율",
       chartLabels: {
         sales: "매출",
-        conversion: "전환율"
-      }
-    }
-  }
+        conversion: "전환율",
+      },
+    },
+  },
 };
