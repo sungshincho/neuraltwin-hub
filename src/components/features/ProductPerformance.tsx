@@ -19,8 +19,10 @@ import { useTranslation } from "react-i18next";
 
 interface Product {
   id: string;
+  // 이름은 i18n으로 표시하므로 여기 name은 안 써도 되지만, 데이터 정의용으로 유지
   name: string;
-  category: string;
+  // 카테고리 표시용 키 (i18n의 categories.outer / top / bottom / shoes / accessories 와 매칭)
+  categoryKey: "outer" | "top" | "bottom" | "shoes" | "accessories";
   sales: number;
   revenue: number;
   stock: number;
@@ -32,7 +34,7 @@ const products: Product[] = [
   {
     id: "P1",
     name: "데님 자켓",
-    category: "아우터",
+    categoryKey: "outer",
     sales: 145,
     revenue: 14500000,
     stock: 23,
@@ -42,7 +44,7 @@ const products: Product[] = [
   {
     id: "P2",
     name: "화이트 티셔츠",
-    category: "상의",
+    categoryKey: "top",
     sales: 320,
     revenue: 9600000,
     stock: 85,
@@ -52,7 +54,7 @@ const products: Product[] = [
   {
     id: "P3",
     name: "블랙 진",
-    category: "하의",
+    categoryKey: "bottom",
     sales: 210,
     revenue: 16800000,
     stock: 42,
@@ -62,7 +64,7 @@ const products: Product[] = [
   {
     id: "P4",
     name: "스니커즈",
-    category: "신발",
+    categoryKey: "shoes",
     sales: 98,
     revenue: 11760000,
     stock: 8,
@@ -72,7 +74,7 @@ const products: Product[] = [
   {
     id: "P5",
     name: "백팩",
-    category: "악세사리",
+    categoryKey: "accessories",
     sales: 67,
     revenue: 6700000,
     stock: 156,
@@ -170,7 +172,9 @@ export const ProductPerformance = () => {
           <div className="text-sm text-muted-foreground">
             {t("dashboardFeatures.productPerformance.metrics.totalUnits")}
           </div>
-          <div className="text-2xl font-bold">{totalSales}개</div>
+          <div className="text-2xl font-bold">
+            {t("dashboardFeatures.productPerformance.metrics.totalUnitsValue", { value: totalSales.toLocaleString() })}
+          </div>
           <div className="text-xs text-muted-foreground">
             {t("dashboardFeatures.productPerformance.metrics.totalUnitsHelp")}
           </div>
@@ -190,7 +194,11 @@ export const ProductPerformance = () => {
           <div className="text-sm text-muted-foreground">
             {t("dashboardFeatures.productPerformance.metrics.stockAlerts")}
           </div>
-          <div className="text-2xl font-bold text-red-500">{lowStockCount}개</div>
+          <div className="text-2xl font-bold text-red-500">
+            {t("dashboardFeatures.productPerformance.metrics.stockAlertsValue", {
+              value: lowStockCount.toLocaleString(),
+            })}
+          </div>
           <div className="text-xs text-muted-foreground">
             {t("dashboardFeatures.productPerformance.metrics.stockAlertsHelp")}
           </div>
@@ -224,8 +232,9 @@ export const ProductPerformance = () => {
                     <div className="font-semibold">
                       {t(`dashboardFeatures.productPerformance.products.${product.id}.name`)}
                     </div>
-                    {/* 카테고리는 지금은 한글 하드코딩 사용 */}
-                    <div className="text-xs text-muted-foreground">{product.category}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t(`dashboardFeatures.productPerformance.categories.${product.categoryKey}`)}
+                    </div>
                   </div>
                   {getStatusBadge(product.status)}
                 </div>

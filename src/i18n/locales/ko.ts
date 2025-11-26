@@ -613,6 +613,8 @@ export default {
         avgGrowthHelp: "전주 대비",
         stockAlerts: "재고 알림",
         stockAlertsHelp: "긴급 보충 필요",
+        totalUnitsValue: "{{value}}개",
+        stockAlertsValue: "{{value}}개",
       },
       table: {
         title: "상품별 실적",

@@ -598,6 +598,8 @@ export default {
         avgGrowthHelp: "Week-over-week",
         stockAlerts: "Stock Alerts",
         stockAlertsHelp: "Urgent restock required",
+        totalUnitsValue: "{{value}} units",
+        stockAlertsValue: "{{value}} item(s)",
       },
       table: {
         title: "Performance by Product",
