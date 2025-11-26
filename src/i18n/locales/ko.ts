@@ -600,10 +600,10 @@ export default {
         sat: "토",
         sun: "일",
       },
+    },
     productPerformance: {
       title: "상품 성과",
-      subtitle:
-        "상품별 매출, 재고, 관심도를 추적하여 베스트셀러와 주목 상품을 식별합니다.",
+      subtitle: "상품별 매출, 재고, 관심도를 추적하여 베스트셀러와 주목 상품을 식별합니다.",
       metrics: {
         totalRevenue: "총 매출",
         totalRevenueHelp: "이번 주",
@@ -645,8 +645,7 @@ export default {
       },
       inventoryAlert: {
         title: "재고 관리 알림",
-        sneakersMessage:
-          "스니커즈 재고 부족 (8개). 평균 일 판매량 14개 기준 3일 내 재고 소진 예상.",
+        sneakersMessage: "스니커즈 재고 부족 (8개). 평균 일 판매량 14개 기준 3일 내 재고 소진 예상.",
       },
     },
   },
