@@ -221,11 +221,11 @@ export const ProductPerformance = () => {
               <Card key={product.id} className="glass p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                  <div className="font-semibold">
-                    {t(`dashboardFeatures.productPerformance.products.${product.id}.name`)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {product.category} {/* 카테고리는 지금은 그대로 사용 */}
+                    <div className="font-semibold">
+                      {t(`dashboardFeatures.productPerformance.products.${product.id}.name`)}
+                    </div>
+                    {/* 카테고리는 지금은 한글 하드코딩 사용 */}
+                    <div className="text-xs text-muted-foreground">{product.category}</div>
                   </div>
                   {getStatusBadge(product.status)}
                 </div>
