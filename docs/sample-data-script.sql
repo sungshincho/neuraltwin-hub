@@ -1,13 +1,13 @@
 -- ============================================
 -- NEURALTWIN 최소 샘플 데이터 생성 스크립트
--- User: 조성신 (Cho Seongsin)
+-- User: 조성신 (Sungshin Cho)
 -- Organization: TCAG
 -- Role: ORG_HQ
 -- ============================================
 
 -- STEP 1: Supabase Auth UI에서 먼저 사용자 생성 필요
--- Email: seongsin.cho@tcag.com
--- Password: (원하는 비밀번호)
+-- Email: brrrshin@gmail.com
+-- Password: whtjdtls94
 
 DO $$
 DECLARE
@@ -17,10 +17,10 @@ DECLARE
   v_hq_license_id UUID;
 BEGIN
   -- 사용자 ID 조회
-  SELECT id INTO v_user_id FROM auth.users WHERE email = 'seongsin.cho@tcag.com' LIMIT 1;
+  SELECT id INTO v_user_id FROM auth.users WHERE email = 'brrrshin@gmail.com' LIMIT 1;
   
   IF v_user_id IS NULL THEN
-    RAISE EXCEPTION '❌ User not found! Supabase Auth UI에서 먼저 사용자를 생성하세요: seongsin.cho@tcag.com';
+    RAISE EXCEPTION '❌ User not found! Supabase Auth UI에서 먼저 사용자를 생성하세요: brrrshin@gmail.com';
   END IF;
 
   RAISE NOTICE '✓ User ID: %', v_user_id;
