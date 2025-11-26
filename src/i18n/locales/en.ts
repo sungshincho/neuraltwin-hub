@@ -625,6 +625,13 @@ export default {
         shoes: "Shoes",
         accessories: "Accessories",
       },
+      products: {
+        P1: { name: "Denim Jacket" },
+        P2: { name: "White T-shirt" },
+        P3: { name: "Black Jeans" },
+        P4: { name: "Sneakers" },
+        P5: { name: "Backpack" },
+      },
       topProducts: {
         title: "Top 5 Products by Sales",
       },

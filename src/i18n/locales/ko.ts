@@ -640,6 +640,13 @@ export default {
         shoes: "신발",
         accessories: "악세사리",
       },
+      products: {
+        P1: { name: "데님 자켓" },
+        P2: { name: "화이트 티셔츠" },
+        P3: { name: "블랙 진" },
+        P4: { name: "스니커즈" },
+        P5: { name: "백팩" },
+      },
       topProducts: {
         title: "상위 5개 상품 판매량",
       },
