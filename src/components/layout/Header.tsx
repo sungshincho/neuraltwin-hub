@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, User, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LanguageToggle } from "@/components/LanguageToggle";
+// import { LanguageToggle } from "@/components/LanguageToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,7 +33,9 @@ export const Header = () => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -46,12 +48,8 @@ export const Header = () => {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
+    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+
     if (data) {
       setProfile(data);
     }
@@ -106,7 +104,7 @@ export const Header = () => {
                 {item.name}
               </Link>
             ))}
-            <LanguageToggle />
+            {/* <LanguageToggle /> */}
           </div>
 
           {/* Auth Buttons */}
@@ -189,9 +187,7 @@ export const Header = () => {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-2 border-t border-border/50">
-              <LanguageToggle />
-            </div>
+            <div className="pt-2 border-t border-border/50">{/* <LanguageToggle /> */}</div>
             {user ? (
               <div className="pt-4 space-y-2">
                 <div className="flex items-center gap-2 px-4 py-2">
@@ -206,19 +202,14 @@ export const Header = () => {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  asChild
-                >
+                <Button variant="outline" className="w-full" asChild>
                   <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
-                    <User className="mr-2 h-4 w-4" />
-                    내 정보
+                    <User className="mr-2 h-4 w-4" />내 정보
                   </Link>
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
+                <Button
+                  variant="outline"
+                  className="w-full"
                   onClick={() => {
                     handleSignOut();
                     setMobileMenuOpen(false);
