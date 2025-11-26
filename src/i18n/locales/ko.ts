@@ -259,13 +259,13 @@ export default {
         },
         demand: {
           title: "수요 예측",
-          description: "날씨, 이벤트, 요일 등의 외부 요인을 고려하여 매출과 전환율을 예측합니다.",
+          description: "날씨, 이벤트, 요일 등의 외부 요인을 고려하여 매출과 전환율를 예측합니다.",
         },
         funnel: {
           title: "전환 퍼널",
           description: "방문객의 구매 전환 과정을 단계별로 분석하여 이탈 지점을 파악합니다.",
         },
-        performance: {
+        product: {
           title: "상품 성과",
           description: "상품별 매출, 재고, 관심도를 추적하여 베스트셀러와 주목 상품을 식별합니다.",
         },
@@ -277,7 +277,7 @@ export default {
           title: "직원 효율",
           description: "직원 배치와 매출의 상관관계를 분석하여 최적의 인력 운영 방안을 제시합니다.",
         },
-        sync: {
+        hq: {
           title: "HQ-매장 동기화",
           description: "본부와 매장 간 실시간 데이터 공유 및 의사결정 자동화로 운영 효율을 극대화합니다.",
         },
@@ -313,13 +313,47 @@ export default {
         title: "NEURALMIND",
         subtitle: "AI 분석 엔진",
         description: "수집된 데이터를 AI로 분석하여 고객 행동 패턴, 수요 예측, 재고 최적화 인사이트를 도출합니다.",
-        features: ["고객 행동 패턴 분석", "수요 예측 모델", "재고 최적화 AI", "레이아웃 최적화 제안"],
+        features: {
+          demand: {
+            title: "수요 예측",
+            description: "날씨, 요일, 프로모션 등 다양한 요인을 반영해 매출과 재고 수요를 예측합니다.",
+          },
+          behavior: {
+            title: "고객 행동 패턴 분석",
+            description: "고객 동선, 체류 시간, 상품 인터랙션 데이터를 기반으로 행동 패턴을 분석합니다.",
+          },
+          optimization: {
+            title: "운영 최적화 인사이트",
+            description: "재고, 인력, 레이아웃 등 핵심 운영 지표에 대해 AI 기반 최적화 전략을 제안합니다.",
+          },
+          anomaly: {
+            title: "이상 탐지",
+            description: "매출 급변, 비정상 트래픽 등 이상 패턴을 자동으로 감지해 알림을 제공합니다.",
+          },
+        },
       },
       neuraltwin: {
         title: "NEURALTWIN",
         subtitle: "3D 디지털 트윈",
         description: "매장을 3D로 재현하여 모든 데이터를 시각화하고 시뮬레이션을 통해 의사결정을 지원합니다.",
-        features: ["실시간 3D 시각화", "인터랙티브 대시보드", "시뮬레이션 기능", "HQ 통합 관리"],
+        features: {
+          scenario: {
+            title: "시나리오 플래닝",
+            description: "프로모션, 동선 변경, 신규 집기 배치 등 다양한 시나리오를 가정하고 결과를 비교합니다.",
+          },
+          simulation: {
+            title: "3D 시뮬레이션",
+            description: "3D 환경에서 고객 흐름과 매장 운영 변화를 시뮬레이션해 사전 검증합니다.",
+          },
+          enterprise: {
+            title: "체인/본사 통합 운영",
+            description: "본사와 다점포 데이터를 통합해 전사 관점에서 전략과 운영을 검증합니다.",
+          },
+          report: {
+            title: "인사이트 리포트",
+            description: "시뮬레이션 결과와 KPI 변화를 리포트 형태로 제공해 의사결정을 지원합니다.",
+          },
+        },
       },
     },
     benefits: {
