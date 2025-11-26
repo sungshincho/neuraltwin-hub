@@ -585,10 +585,10 @@ export default {
         sat: "Sat",
         sun: "Sun",
       },
+    },
     productPerformance: {
       title: "Product Performance",
-      subtitle:
-        "Track revenue, inventory, and interest by product to identify bestsellers and key items.",
+      subtitle: "Track revenue, inventory, and interest by product to identify bestsellers and key items.",
       metrics: {
         totalRevenue: "Total Revenue",
         totalRevenueHelp: "This week",
