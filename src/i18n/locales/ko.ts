@@ -571,14 +571,19 @@ export default {
       weather: "날씨",
       weatherOptions: {
         clear: "맑음",
+        sunny: "쾌청",
+        rainy: "비",
       },
       event: "이벤트",
       eventOptions: {
         none: "없음",
+        sale: "세일",
+        holiday: "공휴일",
       },
       day: "요일",
       dayOptions: {
         weekday: "평일",
+        weekend: "주말",
       },
       weeklyRevenue: "주간 매출",
       avgConversion: "평균 전환율",

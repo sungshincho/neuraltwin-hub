@@ -556,14 +556,19 @@ export default {
       weather: "Weather",
       weatherOptions: {
         clear: "Clear",
+        sunny: "Sunny",
+        rainy: "Rainy",
       },
       event: "Event",
       eventOptions: {
         none: "None",
+        sale: "Sale",
+        holiday: "Holiday",
       },
       day: "Day",
       dayOptions: {
         weekday: "Weekday",
+        weekend: "Weekend",
       },
       weeklyRevenue: "Weekly Revenue",
       avgConversion: "Avg. Conversion Rate",
