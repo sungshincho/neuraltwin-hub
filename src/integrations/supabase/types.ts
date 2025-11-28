@@ -890,6 +890,7 @@ export type Database = {
       }
       holidays_events: {
         Row: {
+          country_code: string | null
           created_at: string | null
           date: string
           description: string | null
@@ -900,11 +901,15 @@ export type Database = {
           is_global: boolean
           metadata: Json | null
           org_id: string | null
+          raw_payload: Json | null
+          region_code: string | null
+          source_provider: string | null
           store_id: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          country_code?: string | null
           created_at?: string | null
           date: string
           description?: string | null
@@ -915,11 +920,15 @@ export type Database = {
           is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
+          raw_payload?: Json | null
+          region_code?: string | null
+          source_provider?: string | null
           store_id?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          country_code?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
@@ -930,6 +939,9 @@ export type Database = {
           is_global?: boolean
           metadata?: Json | null
           org_id?: string | null
+          raw_payload?: Json | null
+          region_code?: string | null
+          source_provider?: string | null
           store_id?: string | null
           updated_at?: string | null
           user_id?: string
@@ -993,7 +1005,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_hq_guidelines_org_id"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hq_notifications: {
         Row: {
@@ -1035,7 +1055,15 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_hq_notifications_org_id"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hq_store_messages: {
         Row: {
@@ -1093,6 +1121,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_hq_messages_org_id"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_hq_messages_recipient_store_new"
+            columns: ["recipient_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "hq_store_messages_recipient_store_id_fkey"
             columns: ["recipient_store_id"]
@@ -1158,7 +1200,6 @@ export type Database = {
           id: string
           invited_by: string
           license_id: string | null
-          metadata: Json | null
           org_id: string
           role: Database["public"]["Enums"]["app_role"]
           status: string
@@ -1173,7 +1214,6 @@ export type Database = {
           id?: string
           invited_by: string
           license_id?: string | null
-          metadata?: Json | null
           org_id: string
           role: Database["public"]["Enums"]["app_role"]
           status?: string
@@ -1188,7 +1228,6 @@ export type Database = {
           id?: string
           invited_by?: string
           license_id?: string | null
-          metadata?: Json | null
           org_id?: string
           role?: Database["public"]["Enums"]["app_role"]
           status?: string
@@ -1212,21 +1251,64 @@ export type Database = {
           },
         ]
       }
+      license_billing_history: {
+        Row: {
+          amount: number
+          billing_date: string
+          created_at: string
+          id: string
+          license_id: string
+          notes: string | null
+          payment_method: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_date: string
+          created_at?: string
+          id?: string
+          license_id: string
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_date?: string
+          created_at?: string
+          id?: string
+          license_id?: string
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_billing_history_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       licenses: {
         Row: {
           activated_at: string | null
           assigned_store_id: string | null
           assigned_to: string | null
-          billing_history: Json | null
           created_at: string
           effective_date: string
           expiry_date: string | null
           id: string
-          issued_at: string | null
           last_used_at: string | null
-          license_key: string | null
           license_type: string
-          metadata: Json | null
           monthly_price: number | null
           next_billing_date: string | null
           org_id: string
@@ -1238,16 +1320,12 @@ export type Database = {
           activated_at?: string | null
           assigned_store_id?: string | null
           assigned_to?: string | null
-          billing_history?: Json | null
           created_at?: string
           effective_date: string
           expiry_date?: string | null
           id?: string
-          issued_at?: string | null
           last_used_at?: string | null
-          license_key?: string | null
           license_type: string
-          metadata?: Json | null
           monthly_price?: number | null
           next_billing_date?: string | null
           org_id: string
@@ -1259,16 +1337,12 @@ export type Database = {
           activated_at?: string | null
           assigned_store_id?: string | null
           assigned_to?: string | null
-          billing_history?: Json | null
           created_at?: string
           effective_date?: string
           expiry_date?: string | null
           id?: string
-          issued_at?: string | null
           last_used_at?: string | null
-          license_key?: string | null
           license_type?: string
-          metadata?: Json | null
           monthly_price?: number | null
           next_billing_date?: string | null
           org_id?: string
@@ -1660,12 +1734,9 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          invitation_accepted_at: string | null
-          invited_by: string | null
           joined_at: string
           license_id: string | null
           org_id: string | null
-          permissions: Json | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
@@ -1673,12 +1744,9 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          invitation_accepted_at?: string | null
-          invited_by?: string | null
           joined_at?: string
           license_id?: string | null
           org_id?: string | null
-          permissions?: Json | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
@@ -1686,12 +1754,9 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          invitation_accepted_at?: string | null
-          invited_by?: string | null
           joined_at?: string
           license_id?: string | null
           org_id?: string | null
-          permissions?: Json | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
@@ -1858,6 +1923,27 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_products_org_id"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_products_org_id_new"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_products_store_id_new"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_store_id_fkey"
             columns: ["store_id"]
@@ -2287,6 +2373,63 @@ export type Database = {
           },
         ]
       }
+      store_trade_area_context: {
+        Row: {
+          categories: Json | null
+          created_at: string | null
+          id: string
+          org_id: string | null
+          provider: string
+          radius_m: number
+          raw_payload: Json | null
+          stats: Json | null
+          store_id: string | null
+          total_pois: number
+          updated_at: string | null
+        }
+        Insert: {
+          categories?: Json | null
+          created_at?: string | null
+          id?: string
+          org_id?: string | null
+          provider: string
+          radius_m: number
+          raw_payload?: Json | null
+          stats?: Json | null
+          store_id?: string | null
+          total_pois?: number
+          updated_at?: string | null
+        }
+        Update: {
+          categories?: Json | null
+          created_at?: string | null
+          id?: string
+          org_id?: string | null
+          provider?: string
+          radius_m?: number
+          raw_payload?: Json | null
+          stats?: Json | null
+          store_id?: string | null
+          total_pois?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_trade_area_context_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_trade_area_context_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           address: string | null
@@ -2374,6 +2517,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_stores_license_id_new"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stores_org_id"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stores_org_id_new"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "stores_license_id_fkey"
             columns: ["license_id"]
             isOneToOne: false
@@ -2456,6 +2620,56 @@ export type Database = {
           },
         ]
       }
+      trend_signals: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          index_value: number
+          key: string
+          metadata: Json | null
+          org_id: string | null
+          raw_payload: Json | null
+          scope: string
+          source_provider: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          index_value: number
+          key: string
+          metadata?: Json | null
+          org_id?: string | null
+          raw_payload?: Json | null
+          scope: string
+          source_provider: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          index_value?: number
+          key?: string
+          metadata?: Json | null
+          org_id?: string | null
+          raw_payload?: Json | null
+          scope?: string
+          source_provider?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trend_signals_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       upload_sessions: {
         Row: {
           created_at: string
@@ -2499,6 +2713,54 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_activity_logs: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          org_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          org_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          org_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_activity_logs_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2643,6 +2905,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           weather_condition: string | null
+          wind_speed: number | null
         }
         Insert: {
           created_at?: string | null
@@ -2658,6 +2921,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           weather_condition?: string | null
+          wind_speed?: number | null
         }
         Update: {
           created_at?: string | null
@@ -2673,6 +2937,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           weather_condition?: string | null
+          wind_speed?: number | null
         }
         Relationships: [
           {
