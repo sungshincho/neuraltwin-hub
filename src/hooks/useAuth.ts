@@ -51,7 +51,6 @@ export const useAuth = () => {
           role,
           org_id,
           license_id,
-          permissions,
           organizations (
             org_name,
             metadata
@@ -72,26 +71,27 @@ export const useAuth = () => {
       
       if (!authUser) throw new Error('User not found');
 
-      const permissions = memberData.permissions as {
-        storeIds?: string[];
-        features?: string[];
-        canInvite?: boolean;
-        canExport?: boolean;
-      } | null;
+      // Extract role-based default permissions
+      const rolePermissions = {
+        storeIds: [] as string[],
+        features: [] as string[],
+        canInvite: memberData.role === 'ORG_HQ',
+        canExport: memberData.role === 'ORG_HQ' || memberData.role === 'ORG_STORE',
+      };
+
+      // If user has a store license, add assigned store to permissions
+      if (memberData.licenses?.assigned_store_id) {
+        rolePermissions.storeIds = [memberData.licenses.assigned_store_id];
+      }
 
       const context: UserAuthContext = {
         userId,
         email: authUser.email || '',
         role: memberData.role as AppRole,
         orgId: memberData.org_id,
-        orgName: (memberData.organizations as any)?.org_name || '',
+        orgName: (memberData.organizations as Organization)?.org_name || '',
         license: memberData.licenses as License | undefined,
-        permissions: permissions || {
-          storeIds: [],
-          features: [],
-          canInvite: false,
-          canExport: false,
-        },
+        permissions: rolePermissions,
       };
 
       setAuthContext(context);

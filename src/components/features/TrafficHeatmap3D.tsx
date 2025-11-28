@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Play, Pause, RotateCcw, Flame, Clock, TrendingUp, Target } from "lucide-react";
 import { Store3DViewer } from "./Store3DViewer";
 
 interface HeatmapCell {
@@ -12,20 +14,56 @@ interface HeatmapCell {
   intensity: number;
 }
 
+interface Hotspot {
+  x: number;
+  y: number;
+  intensity: number;
+  zone: string;
+}
+
 const generateHeatmapData = (timeOfDay: number): HeatmapCell[] => {
   const data: HeatmapCell[] = [];
   const gridSize = 10;
 
+  // 시간대별 패턴
+  const timeMultiplier = Math.sin((timeOfDay / 24) * Math.PI) * 0.5 + 0.5;
+  const isPeakHour = (timeOfDay >= 12 && timeOfDay <= 14) || (timeOfDay >= 18 && timeOfDay <= 20);
+  const peakBonus = isPeakHour ? 0.25 : 0;
+
   for (let x = 0; x < gridSize; x++) {
     for (let y = 0; y < gridSize; y++) {
-      const entranceBoost = y < 2 ? 0.5 : 0;
-      const aisleBoost = x > 3 && x < 6 ? 0.3 : 0;
-      const timeMultiplier = Math.sin((timeOfDay / 24) * Math.PI) * 0.5 + 0.5;
+      // 구역별 기본 강도
+      let zoneIntensity = 0;
       
-      const baseIntensity = Math.random() * 0.3;
+      // 입구 영역 (y > 7)
+      if (y > 7) {
+        zoneIntensity = 0.6;
+      }
+      // 계산대 영역 (y < 2, x 중앙)
+      else if (y < 2 && x > 3 && x < 7) {
+        zoneIntensity = 0.8;
+      }
+      // 좌측 진열대 (x < 3)
+      else if (x < 3) {
+        zoneIntensity = 0.5;
+      }
+      // 우측 진열대 (x > 6)
+      else if (x > 6) {
+        zoneIntensity = 0.45;
+      }
+      // 중앙 디스플레이 (중앙, y 4-6)
+      else if (x >= 4 && x <= 6 && y >= 4 && y <= 6) {
+        zoneIntensity = 0.7;
+      }
+      // 기타 통로
+      else {
+        zoneIntensity = 0.2;
+      }
+
+      const randomVariation = (Math.random() - 0.5) * 0.2;
       const intensity = Math.min(
         1,
-        (baseIntensity + entranceBoost + aisleBoost) * timeMultiplier
+        Math.max(0, (zoneIntensity + randomVariation + peakBonus) * timeMultiplier)
       );
 
       data.push({ x, y, intensity });
@@ -35,24 +73,49 @@ const generateHeatmapData = (timeOfDay: number): HeatmapCell[] => {
   return data;
 };
 
+const detectHotspots = (heatmapData: HeatmapCell[]): Hotspot[] => {
+  const hotspots: Hotspot[] = [];
+  const threshold = 0.65;
+  
+  const highIntensityCells = heatmapData.filter(cell => cell.intensity > threshold);
+  
+  // 그룹화된 핫스팟 찾기
+  const visited = new Set<string>();
+  
+  highIntensityCells.forEach(cell => {
+    const key = `${cell.x}-${cell.y}`;
+    if (visited.has(key)) return;
+    
+    visited.add(key);
+    
+    // 구역 이름 결정
+    let zone = "일반 통로";
+    if (cell.y > 7) zone = "입구 영역";
+    else if (cell.y < 2 && cell.x > 3 && cell.x < 7) zone = "계산대";
+    else if (cell.x < 3) zone = "좌측 진열대";
+    else if (cell.x > 6) zone = "우측 진열대";
+    else if (cell.x >= 4 && cell.x <= 6 && cell.y >= 4 && cell.y <= 6) zone = "중앙 디스플레이";
+    
+    hotspots.push({
+      x: cell.x,
+      y: cell.y,
+      intensity: cell.intensity,
+      zone
+    });
+  });
+  
+  // 상위 5개만 반환
+  return hotspots.sort((a, b) => b.intensity - a.intensity).slice(0, 5);
+};
+
 export const TrafficHeatmap3D = () => {
   const [timeOfDay, setTimeOfDay] = useState(14);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [heatmapData, setHeatmapData] = useState(() => generateHeatmapData(14));
-
-  const updateHeatmap = (newTime: number) => {
-    setTimeOfDay(newTime);
-    setHeatmapData(generateHeatmapData(newTime));
-  };
-
-  const handlePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleReset = () => {
-    setIsPlaying(false);
-    updateHeatmap(14);
-  };
+  const [showHotspots, setShowHotspots] = useState(true);
+  const [showRealtime, setShowRealtime] = useState(true);
+  
+  const heatmapData = useMemo(() => generateHeatmapData(timeOfDay), [timeOfDay]);
+  const hotspots = useMemo(() => detectHotspots(heatmapData), [heatmapData]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -60,17 +123,34 @@ export const TrafficHeatmap3D = () => {
     const interval = setInterval(() => {
       setTimeOfDay((prev) => {
         const next = prev >= 23 ? 9 : prev + 1;
-        setHeatmapData(generateHeatmapData(next));
         return next;
       });
-    }, 500);
+    }, 800);
 
     return () => clearInterval(interval);
   }, [isPlaying]);
 
+  const handleReset = () => {
+    setIsPlaying(false);
+    setTimeOfDay(14);
+  };
+
+  // 통계 계산
   const maxIntensity = Math.max(...heatmapData.map((d) => d.intensity));
   const avgIntensity = heatmapData.reduce((sum, d) => sum + d.intensity, 0) / heatmapData.length;
-  const hotspots = heatmapData.filter((d) => d.intensity > 0.7).length;
+  const hotspotCount = heatmapData.filter((d) => d.intensity > 0.65).length;
+  const totalTraffic = Math.floor(avgIntensity * 450);
+
+  // 시간대 분류
+  const getTimeCategory = (hour: number) => {
+    if (hour >= 9 && hour < 12) return { label: "오전", status: "보통" };
+    if (hour >= 12 && hour < 14) return { label: "점심", status: "피크" };
+    if (hour >= 14 && hour < 18) return { label: "오후", status: "보통" };
+    if (hour >= 18 && hour < 21) return { label: "저녁", status: "피크" };
+    return { label: "야간", status: "한산" };
+  };
+  
+  const timeCategory = getTimeCategory(timeOfDay);
 
   return (
     <div className="space-y-6">
@@ -79,82 +159,175 @@ export const TrafficHeatmap3D = () => {
         mode="heatmap"
         timeOfDay={timeOfDay}
         heatmapData={heatmapData}
+        hotspots={showHotspots ? hotspots : []}
       />
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* 시간 컨트롤 */}
-        <div className="md:col-span-2 space-y-4">
+        <Card className="glass p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold">시간대 컨트롤</h4>
+            <h4 className="font-semibold flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              시간대 분석
+            </h4>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {String(timeOfDay).padStart(2, "0")}:00
+              <Badge variant={timeCategory.status === "피크" ? "destructive" : "secondary"}>
+                {timeCategory.label} - {timeCategory.status}
               </Badge>
-              <Button size="sm" variant="outline" onClick={handleReset}>
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-              <Button size="sm" onClick={handlePlay}>
-                {isPlaying ? (
-                  <Pause className="w-4 h-4" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-              </Button>
             </div>
           </div>
-
-          <Card className="glass p-6">
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">현재 시간</span>
+              <span className="text-lg font-bold">{String(timeOfDay).padStart(2, "0")}:00</span>
+            </div>
             <Slider
               min={9}
               max={23}
               step={1}
               value={[timeOfDay]}
-              onValueChange={(value) => updateHeatmap(value[0])}
-              className="mb-4"
+              onValueChange={(value) => setTimeOfDay(value[0])}
             />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>09:00</span>
-              <span>오픈 시간</span>
-              <span>23:00</span>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>09:00 오픈</span>
+              <span>23:00 마감</span>
             </div>
-          </Card>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleReset} className="flex-1">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              초기화
+            </Button>
+            <Button size="sm" onClick={() => setIsPlaying(!isPlaying)} className="flex-1">
+              {isPlaying ? (
+                <>
+                  <Pause className="w-4 h-4 mr-2" />
+                  정지
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 mr-2" />
+                  시뮬레이션
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
 
+        {/* 옵션 & 범례 */}
+        <Card className="glass p-6 space-y-4">
+          <h4 className="font-semibold flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            표시 옵션
+          </h4>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-hotspots" className="flex items-center gap-2">
+                <Flame className="w-3 h-3 text-red-500" />
+                핫스팟 표시
+              </Label>
+              <Switch 
+                id="show-hotspots" 
+                checked={showHotspots} 
+                onCheckedChange={setShowHotspots} 
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-realtime" className="flex items-center gap-2">
+                <TrendingUp className="w-3 h-3 text-green-500" />
+                실시간 업데이트
+              </Label>
+              <Switch 
+                id="show-realtime" 
+                checked={showRealtime} 
+                onCheckedChange={setShowRealtime} 
+              />
+            </div>
+          </div>
+          
           {/* 히트맵 범례 */}
-          <Card className="glass p-4">
-            <div className="text-sm font-medium mb-3">트래픽 강도</div>
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <div className="text-sm font-medium">트래픽 강도</div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded bg-blue-500/20"></div>
-              <span className="text-xs">낮음</span>
-              <div className="flex-1 h-2 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 rounded-full"></div>
-              <span className="text-xs">높음</span>
-              <div className="w-8 h-8 rounded bg-red-500/90"></div>
+              <div className="w-6 h-6 rounded bg-blue-500/60" />
+              <span className="text-xs flex-1">낮음</span>
+              <div className="flex-[3] h-3 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 rounded-full" />
+              <span className="text-xs flex-1 text-right">높음</span>
+              <div className="w-6 h-6 rounded bg-red-500/80" />
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
-        {/* 통계 */}
-        <div className="space-y-4">
-          <h4 className="font-semibold">실시간 통계</h4>
-          <Card className="glass p-6 space-y-4">
+        {/* 실시간 통계 */}
+        <Card className="glass p-6 space-y-4">
+          <h4 className="font-semibold flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            실시간 통계
+          </h4>
+          
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-muted-foreground mb-1">최대 밀집도</div>
-              <div className="text-3xl font-bold gradient-text">
+              <div className="text-xs text-muted-foreground">최대 밀집도</div>
+              <div className="text-2xl font-bold gradient-text">
                 {(maxIntensity * 100).toFixed(0)}%
               </div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">평균 트래픽</div>
-              <div className="text-3xl font-bold gradient-text">
+              <div className="text-xs text-muted-foreground">평균 트래픽</div>
+              <div className="text-2xl font-bold gradient-text">
                 {(avgIntensity * 100).toFixed(0)}%
               </div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">핫스팟 구역</div>
-              <div className="text-3xl font-bold gradient-text">{hotspots}</div>
+              <div className="text-xs text-muted-foreground">핫스팟 구역</div>
+              <div className="text-2xl font-bold gradient-text">{hotspotCount}</div>
             </div>
-          </Card>
-        </div>
+            <div>
+              <div className="text-xs text-muted-foreground">예상 방문자</div>
+              <div className="text-2xl font-bold gradient-text">{totalTraffic}</div>
+            </div>
+          </div>
+        </Card>
       </div>
+
+      {/* 핫스팟 상세 */}
+      {showHotspots && hotspots.length > 0 && (
+        <Card className="glass p-6">
+          <h4 className="font-semibold flex items-center gap-2 mb-4">
+            <Flame className="w-4 h-4 text-red-500" />
+            감지된 핫스팟 ({hotspots.length}개)
+          </h4>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {hotspots.map((spot, idx) => (
+              <div 
+                key={idx} 
+                className="p-3 rounded-lg bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ 
+                      backgroundColor: `hsl(${(1 - spot.intensity) * 60}, 100%, 50%)` 
+                    }}
+                  />
+                  <span className="text-xs font-medium">{spot.zone}</span>
+                </div>
+                <div className="text-lg font-bold">
+                  {(spot.intensity * 100).toFixed(0)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  밀집도
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
