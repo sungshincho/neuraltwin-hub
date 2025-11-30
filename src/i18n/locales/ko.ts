@@ -23,7 +23,7 @@ export default {
     },
     headline1: "궁극의 AI 기반 리테일 운영 인텔리전스",
     headline2: "NEURALTWIN",
-    subheadline1: "가장 진보한 스마트 리테일의 미래",
+    subheadline1: "가장 진보한 스마트 리테일의 미래.",
     subheadline2: "1분 만에 시작하고 바로 상담을 받아보세요",
     cta1: "미팅 요청",
     cta2: "미니 피쳐 둘러보기",
