@@ -255,12 +255,12 @@ const Product = () => {
                   </div>
                 </div>
 
-                {/* 4. 시뮬레이션을 통한 사전검증 */}
+                {/* 4. 시뮬레이션을 통한 사전 검증 */}
                 <div className="grid lg:grid-cols-3 gap-8 items-center">
                   <div className="order-2 lg:order-1 lg:col-span-2 glass p-3 rounded-2xl">
                     <img 
                       src={store3DImage} 
-                      alt="시뮬레이션을 통한 사전검증"
+                      alt="시뮬레이션을 통한 사전 검증"
                       className="w-full rounded-lg"
                     />
                   </div>
@@ -269,7 +269,7 @@ const Product = () => {
                       <span className="text-primary font-bold text-base">04</span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold">
-                      시뮬레이션을 통한 사전검증
+                      시뮬레이션을 통한 사전 검증
                     </h3>
                     <p className="text-base text-muted-foreground leading-relaxed">
                       매장 레이아웃 변경이나 상품 배치 최적화를 사전에 시뮬레이션합니다. 실제 적용 전 효과를 미리 확인할 수 있습니다.
