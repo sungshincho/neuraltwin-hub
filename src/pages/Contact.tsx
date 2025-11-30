@@ -239,8 +239,8 @@ const Contact = () => {
                     </div>
                     <div>
                       <div className="font-semibold mb-1">{t("contact.info.email")}</div>
-                      <a href="mailto:contact@neuraltwin.ai" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                        contact@neuraltwin.ai
+                      <a href="mailto:neuraltwin.hq@neuraltwin.io" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                        neuraltwin.hq@neuraltwin.io
                       </a>
                     </div>
                   </div>
