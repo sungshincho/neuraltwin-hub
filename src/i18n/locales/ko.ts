@@ -323,16 +323,6 @@ export default {
           "모든 매장 데이터를 AI로 학습해 고객 행동, 수요 변화, 운영 효율성을 예측하고 자동으로 인사이트를 생성합니다.",
         
         features: {
-          b2b: {
-            title: "엔터프라이즈 시스템 연동",
-            description:
-              "ERP·CRM·POS 등 기존 시스템과 자동 연동해 모든 데이터를 하나의 흐름으로 통합합니다.",
-          },
-          external: {
-            title: "외부 컨텍스트 데이터 통합",
-            description:
-              "날씨, 공휴일, 프로모션, 온라인 로그 등 매출과 트래픽에 영향을 주는 외부 데이터를 함께 분석에 반영합니다.",
-          },
           demand: {
             title: "고정밀 수요 예측",
             description:
