@@ -21,7 +21,7 @@ export default {
       stores: "활성 매장",
       data: "데이터 포인트/일",
     },
-    headline1: "궁극의 AI 기반 리테일 운영 인텔리전스,
+    headline1: "궁극의 AI 기반 리테일 운영 인텔리전스",
     headline2: "NEURALTWIN",
     subheadline1: "가장 진보한 스마트 리테일의 미래",
     subheadline2: "1분 만에 시작하고 바로 상담을 받아보세요",
