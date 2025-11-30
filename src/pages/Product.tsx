@@ -64,9 +64,7 @@ const Product = () => {
               {/* Summary */}
               <Card className="glass p-8 max-w-4xl mx-auto">
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  <span className="text-foreground font-semibold">NEURALTWIN</span>{t("product.hero.subtitle")} 
-                  <span className="text-primary font-semibold"> {t("product.hero.subtitle2")}</span>{t("product.hero.subtitle3")} 
-                  <span className="text-primary font-semibold"> {t("product.hero.subtitle4")}</span>{t("product.hero.subtitle5")}
+                  <span className="text-foreground font-semibold">NEURALTWIN</span>{t("product.hero.subtitle")}
                   <br/><br/>
                   {t("product.hero.description")} 
                   <span className="gradient-text font-semibold"> {t("product.hero.description2")}</span>{t("product.hero.description3")}
