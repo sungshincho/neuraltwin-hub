@@ -219,14 +219,14 @@ const Product = () => {
                   </div>
                 </div>
 
-                {/* 3. 매장현황분석 */}
+                {/* 3. 매장 현황 분석 */}
                 <div className="grid lg:grid-cols-3 gap-8 items-center">
                   <div className="lg:col-span-1 space-y-4">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass">
                       <span className="text-primary font-bold text-base">03</span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bold">
-                      매장현황분석
+                      매장 현황 분석
                     </h3>
                     <p className="text-base text-muted-foreground leading-relaxed">
                       매장의 현재 상황을 정확하게 파악합니다. 일일 매출, 고객 행동, 재고 현황 등 매장 운영에 필요한 핵심 지표를 분석합니다.
@@ -249,7 +249,7 @@ const Product = () => {
                   <div className="lg:col-span-2 glass p-3 rounded-2xl">
                     <img 
                       src={storeAnalyticsImage} 
-                      alt="매장현황분석 대시보드"
+                      alt="매장 현황 분석 대시보드"
                       className="w-full rounded-lg"
                     />
                   </div>
