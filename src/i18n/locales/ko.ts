@@ -287,91 +287,93 @@ export default {
       subtitle: "데이터 수집부터 인사이트·시뮬레이션까지",
 
       neuralsense: {
-    title: "NEURALSENSE",
-    subtitle: "실시간 IoT 데이터 수집",
-    description:
-      "매장 내 다양한 IoT·센서 인프라로부터 고객 동선, 상품 접점, 환경 데이터를 실시간으로 수집해 운영 상태를 정밀하게 모니터링합니다.",
-    
-    features: {
-      iot: {
-        title: "IoT 인프라 통합",
+        title: "NEURALSENSE",
+        subtitle: "실시간 IoT 데이터 수집",
         description:
-          "카메라, WiFi, 비콘, 환경 센서 등 여러 장비의 데이터를 단일 파이프라인에서 일괄 수집하고 표준화합니다.",
+          "매장 내 다양한 IoT·센서 인프라로부터 고객 동선, 상품 접점, 환경 데이터를 실시간으로 수집해 운영 상태를 정밀하게 모니터링합니다.",
+        
+        features: {
+          iot: {
+            title: "IoT 인프라 통합",
+            description:
+              "카메라, WiFi, 비콘, 환경 센서 등 여러 장비의 데이터를 단일 파이프라인에서 일괄 수집하고 표준화합니다.",
+          },
+          realtime: {
+            title: "실시간 매장 상태 모니터링",
+            description:
+              "고객 흐름, 체류 변화, 이상 트래픽 등 실시간 지표를 감지해 즉각적인 대응을 가능하게 합니다.",
+          },
+        },
       },
-      realtime: {
-        title: "실시간 매장 상태 모니터링",
-        description:
-          "고객 흐름, 체류 변화, 이상 트래픽 등 실시간 지표를 감지해 즉각적인 대응을 가능하게 합니다.",
-      },
-    },
-  },
 
-  neuralmind: {
-    title: "NEURALMIND",
-    subtitle: "AI 기반 분석 엔진",
-    description:
-      "모든 매장 데이터를 AI로 학습해 고객 행동, 수요 변화, 운영 효율성을 예측하고 자동으로 인사이트를 생성합니다.",
-    
-    features: {
-      b2b: {
-        title: "엔터프라이즈 시스템 연동",
+      neuralmind: {
+        title: "NEURALMIND",
+        subtitle: "AI 기반 분석 엔진",
         description:
-          "ERP·CRM·POS 등 기존 시스템과 자동 연동해 모든 데이터를 하나의 흐름으로 통합합니다.",
+          "모든 매장 데이터를 AI로 학습해 고객 행동, 수요 변화, 운영 효율성을 예측하고 자동으로 인사이트를 생성합니다.",
+        
+        features: {
+          b2b: {
+            title: "엔터프라이즈 시스템 연동",
+            description:
+              "ERP·CRM·POS 등 기존 시스템과 자동 연동해 모든 데이터를 하나의 흐름으로 통합합니다.",
+          },
+          external: {
+            title: "외부 컨텍스트 데이터 통합",
+            description:
+              "날씨, 공휴일, 프로모션, 온라인 로그 등 매출과 트래픽에 영향을 주는 외부 데이터를 함께 분석에 반영합니다.",
+          },
+          demand: {
+            title: "고정밀 수요 예측",
+            description:
+              "날씨·요일·트렌드·프로모션 등 다양한 변수를 반영해 판매량·재고 수요를 정확히 예측합니다.",
+          },
+          behavior: {
+            title: "고객 행동 패턴 분석",
+            description:
+              "동선, 체류 시간, 상품 인터랙션 데이터를 기반으로 고객의 구매 여정과 행동 패턴을 정량적으로 분석합니다.",
+          },
+          optimization: {
+            title: "운영 최적화 인사이트",
+            description:
+              "AI가 재고·인력·MD·레이아웃 등 핵심 운영 요소에 대해 최적 전략을 자동으로 제안합니다.",
+          },
+          anomaly: {
+            title: "AI 이상 탐지",
+            description:
+              "매출 급변, 비정상 트래픽, 제품 성과 이상 등 운영 리스크를 자동 감지하고 즉시 알림합니다.",
+          },
+        },
       },
-      external: {
-        title: "외부 컨텍스트 데이터 통합",
-        description:
-          "날씨, 공휴일, 프로모션, 온라인 로그 등 매출과 트래픽에 영향을 주는 외부 데이터를 함께 분석에 반영합니다.",
-      },
-      demand: {
-        title: "고정밀 수요 예측",
-        description:
-          "날씨·요일·트렌드·프로모션 등 다양한 변수를 반영해 판매량·재고 수요를 정확히 예측합니다.",
-      },
-      behavior: {
-        title: "고객 행동 패턴 분석",
-        description:
-          "동선, 체류 시간, 상품 인터랙션 데이터를 기반으로 고객의 구매 여정과 행동 패턴을 정량적으로 분석합니다.",
-      },
-      optimization: {
-        title: "운영 최적화 인사이트",
-        description:
-          "AI가 재고·인력·MD·레이아웃 등 핵심 운영 요소에 대해 최적 전략을 자동으로 제안합니다.",
-      },
-      anomaly: {
-        title: "AI 이상 탐지",
-        description:
-          "매출 급변, 비정상 트래픽, 제품 성과 이상 등 운영 리스크를 자동 감지하고 즉시 알림합니다.",
-      },
-    },
-  },
 
-  neuraltwin: {
-    title: "NEURALTWIN",
-    subtitle: "3D 디지털 트윈 엔진",
-    description:
-      "매장을 3D로 고해상도 재현하여 모든 데이터를 시각화하고, 다양한 운영 전략을 사전에 검증할 수 있는 디지털 트윈 환경을 제공합니다.",
-    
-    features: {
-      scenario: {
-        title: "시나리오 플래닝",
+      neuraltwin: {
+        title: "NEURALTWIN",
+        subtitle: "3D 디지털 트윈 엔진",
         description:
-          "프로모션, 동선 변경, 신규 집기 배치 등 다양한 시나리오를 비교해 최적의 운영 전략을 도출합니다.",
-      },
-      simulation: {
-        title: "인터랙티브 3D 시뮬레이션",
-        description:
-          "3D 공간에서 고객 흐름, 매장 혼잡도, 제품 접근성을 시뮬레이션해 변화의 영향을 사전에 예측합니다.",
-      },
-      enterprise: {
-        title: "본사·체인 통합 운영",
-        description:
-          "멀티 스토어 데이터를 통합 관리하여 전사 단위 전략 수립과 매장별 성과 비교가 가능해집니다.",
-      },
-      report: {
-        title: "AI 인사이트 리포트",
-        description:
-          "시뮬레이션 결과, KPI 변화, 운영 영향도를 리포트 형태로 제공하여 의사결정을 명확하게 지원합니다.",
+          "매장을 3D로 고해상도 재현하여 모든 데이터를 시각화하고, 다양한 운영 전략을 사전에 검증할 수 있는 디지털 트윈 환경을 제공합니다.",
+        
+        features: {
+          scenario: {
+            title: "시나리오 플래닝",
+            description:
+              "프로모션, 동선 변경, 신규 집기 배치 등 다양한 시나리오를 비교해 최적의 운영 전략을 도출합니다.",
+          },
+          simulation: {
+            title: "인터랙티브 3D 시뮬레이션",
+            description:
+              "3D 공간에서 고객 흐름, 매장 혼잡도, 제품 접근성을 시뮬레이션해 변화의 영향을 사전에 예측합니다.",
+          },
+          enterprise: {
+            title: "본사·체인 통합 운영",
+            description:
+              "멀티 스토어 데이터를 통합 관리하여 전사 단위 전략 수립과 매장별 성과 비교가 가능해집니다.",
+          },
+          report: {
+            title: "AI 인사이트 리포트",
+            description:
+              "시뮬레이션 결과, KPI 변화, 운영 영향도를 리포트 형태로 제공하여 의사결정을 명확하게 지원합니다.",
+          },
+        },
       },
     },
   },
