@@ -26,7 +26,7 @@ export default {
     subheadline1: "매장 디지털 트윈으로 운영 효율 3배 향상",
     subheadline2: "1분만에 도입하고 미팅 요청하세요",
     cta1: "미팅 요청",
-    cta2: "미니 기능 둘러보기",
+    cta2: "미니 피쳐 둘러보기",
     tagline: "차세대 리테일 디지털 트윈",
   },
   benefits: {
@@ -46,21 +46,21 @@ export default {
     },
   },
   valueProps: {
-    title1: "실시간 데이터 분석",
-    desc1: "매장의 모든 데이터를 실시간으로 수집하고 분석합니다",
-    title2: "빠른 의사결정",
-    desc2: "AI 기반 인사이트로 즉각적인 비즈니스 결정을 내립니다",
-    title3: "고객 중심 운영",
-    desc3: "고객 행동 분석으로 최적의 고객 경험을 제공합니다",
-    title4: "지능형 최적화",
-    desc4: "머신러닝으로 매장 운영을 자동으로 최적화합니다",
+    title1: "실시간 데이터 수집",
+    desc1: "IoT 인프라를 통해 매장의 모든 비식별 데이터를 실시간으로 수집합니다",
+    title2: "강력한 데이터 통합 관리",
+    desc2: "POS, CRM, ERP 등 고객사의 모든 데이터를 한 곳에서 통합 관리합니다",
+    title3: "실시간 매장 현황 분석",
+    desc3: "매장의 핵심 데이터 지표들을 실시간으로 분석합니다",
+    title4: "지능형 시뮬레이션 최적화",
+    desc4: "AI/머신러닝을 기반으로 매장 운영을 자동으로 최적화합니다",
   },
   vision: {
     title: "우리의 비전",
     subtitle: "리테일의 미래를 만듭니다",
     description:
       "NEURALTWIN은 디지털 트윈 기술로 리테일 산업을 혁신합니다. 실시간 데이터와 AI 분석을 통해 매장 운영을 최적화하고, 고객 경험을 향상시키며, 비즈니스 성장을 가속화합니다.",
-    desc1: "NEURALTWIN은 매장의 디지털 트윈을 만들어 실시간으로 운영 상황을 모니터링하고 최적화합니다.",
+    desc1: "NEURALTWIN은 오프라인 매장의 디지털 트윈으로 구현하여 실시간으로 운영 상황을 모니터링하고 최적화합니다.",
     desc2: "AI 기반 분석으로 고객 동선, 상품 배치, 재고 관리를 자동으로 최적화하여 매출을 극대화합니다.",
     desc3: "수십 년간 축적된 리테일 운영 노하우와 최신 AI 기술을 결합하여",
     desc4: "가장 정확하고 실용적인 매장 운영 솔루션을 제공합니다.",
@@ -185,42 +185,38 @@ export default {
       privacy: "개인정보처리방침",
       terms: "이용약관",
     },
-    copyright: "© 2024 NEURALTWIN. All rights reserved.",
+    copyright: "© 2025 NEURALTWIN. All rights reserved.",
   },
   product: {
     hero: {
       badge: "제품 소개",
       title: "오프라인 매장의 완전한 디지털 전환",
-      subtitle: "은(는) AI와 IoT 센서로 오프라인 매장의 모든 데이터를 실시간으로 수집하고",
-      subtitle2: "3D 디지털 트윈",
-      subtitle3: "으로 시각화하여",
-      subtitle4: "AI 기반 인사이트",
-      subtitle5: "를 제공합니다.",
+      subtitle: "은 AI와 IoT 인프라를 기반으로 매장 운영의 모든 요소를 실시간으로 데이터화하고, 분석하며, 자동으로 최적화합니다.",
       description: "매장 운영의 모든 의사결정을 데이터 기반으로 전환하여",
-      description2: "매출 극대화와 비용 최적화",
-      description3: "를 동시에 달성하세요.",
+      description2: "매출 극대화하고 비용은 최소화하는 스마트 리테일 운영",
+      description3: "을 경험해보세요.",
       benefits: {
         sales: {
-          value: "+28%",
-          title: "매출 성장",
-          description: "데이터 기반 매장 최적화로 평균 28% 매출 증가",
+          value: "-70%",
+          title: "시간 단축",
+          description: "재고 관리·보고·MD 변경·매장 레이아웃 검증 등 수작업 기반 운영 시간 절감",
         },
         realtime: {
-          value: "실시간",
-          title: "즉시 분석",
-          description: "고객 행동과 매장 상황을 실시간으로 파악",
+          value: "+20%",
+          title: "매출 성장",
+          description: "데이터 기반 운영 + 고효율 동선·MD 구성 → 고객 체류·전환 향상",
         },
         visibility: {
-          value: "100%",
-          title: "완전한 가시성",
-          description: "매장 전체를 3D로 시각화하여 모든 데이터 확인",
+          value: "-30%",
+          title: "비용 감소",
+          description: "인력·재고·에너지·낭비 요소 제거를 통한 운영 비용 최적화",
         },
       },
     },
     pillars: {
-      analyze: "분석",
-      predict: "예측",
-      forecast: "예보",
+      analyze: "수집",
+      predict: "통합",
+      forecast: "분석",
       simulate: "시뮬레이션",
       optimize: "최적화",
     },
@@ -286,79 +282,100 @@ export default {
         },
       },
     },
-    technology: {
-      title: "3단계 기술 파이프라인",
-      subtitle: "데이터 수집부터 인사이트 도출까지",
-      neuralsense: {
-        title: "NEURALSENSE",
-        subtitle: "IoT 데이터 수집",
-        description: "매장 내 다양한 IoT 센서를 통해 고객 동선, 상품 인터랙션, 환경 데이터를 실시간으로 수집합니다.",
-        features: {
-          b2b: {
-            title: "B2B 시스템 연동",
-            description: "ERP, CRM, POS 등 기존 시스템과 연동해 데이터를 통합 관리합니다.",
-          },
-          iot: {
-            title: "IoT 인프라 통합",
-            description: "카메라, WiFi, 비콘, 환경 센서를 하나의 데이터 파이프라인으로 통합합니다.",
-          },
-          external: {
-            title: "외부 데이터 연동",
-            description: "날씨, 프로모션, 온라인 로그 등 외부 데이터를 함께 분석합니다.",
-          },
-          realtime: {
-            title: "실시간 모니터링",
-            description: "매장 상황을 실시간으로 모니터링하고 이상 패턴을 즉시 감지합니다.",
-          },
-        },
+technology: {
+  title: "3단계 기술 파이프라인",
+  subtitle: "데이터 수집부터 인사이트·시뮬레이션까지",
+
+  neuralsense: {
+    title: "NEURALSENSE",
+    subtitle: "실시간 IoT 데이터 수집",
+    description:
+      "매장 내 다양한 IoT·센서 인프라로부터 고객 동선, 상품 접점, 환경 데이터를 실시간으로 수집해 운영 상태를 정밀하게 모니터링합니다.",
+    
+    features: {
+      iot: {
+        title: "IoT 인프라 통합",
+        description:
+          "카메라, WiFi, 비콘, 환경 센서 등 여러 장비의 데이터를 단일 파이프라인에서 일괄 수집하고 표준화합니다.",
       },
-      neuralmind: {
-        title: "NEURALMIND",
-        subtitle: "AI 분석 엔진",
-        description: "수집된 데이터를 AI로 분석하여 고객 행동 패턴, 수요 예측, 재고 최적화 인사이트를 도출합니다.",
-        features: {
-          demand: {
-            title: "수요 예측",
-            description: "날씨, 요일, 프로모션 등 다양한 요인을 반영해 매출과 재고 수요를 예측합니다.",
-          },
-          behavior: {
-            title: "고객 행동 패턴 분석",
-            description: "고객 동선, 체류 시간, 상품 인터랙션 데이터를 기반으로 행동 패턴을 분석합니다.",
-          },
-          optimization: {
-            title: "운영 최적화 인사이트",
-            description: "재고, 인력, 레이아웃 등 핵심 운영 지표에 대해 AI 기반 최적화 전략을 제안합니다.",
-          },
-          anomaly: {
-            title: "이상 탐지",
-            description: "매출 급변, 비정상 트래픽 등 이상 패턴을 자동으로 감지해 알림을 제공합니다.",
-          },
-        },
-      },
-      neuraltwin: {
-        title: "NEURALTWIN",
-        subtitle: "3D 디지털 트윈",
-        description: "매장을 3D로 재현하여 모든 데이터를 시각화하고 시뮬레이션을 통해 의사결정을 지원합니다.",
-        features: {
-          scenario: {
-            title: "시나리오 플래닝",
-            description: "프로모션, 동선 변경, 신규 집기 배치 등 다양한 시나리오를 가정하고 결과를 비교합니다.",
-          },
-          simulation: {
-            title: "3D 시뮬레이션",
-            description: "3D 환경에서 고객 흐름과 매장 운영 변화를 시뮬레이션해 사전 검증합니다.",
-          },
-          enterprise: {
-            title: "체인/본사 통합 운영",
-            description: "본사와 다점포 데이터를 통합해 전사 관점에서 전략과 운영을 검증합니다.",
-          },
-          report: {
-            title: "인사이트 리포트",
-            description: "시뮬레이션 결과와 KPI 변화를 리포트 형태로 제공해 의사결정을 지원합니다.",
-          },
-        },
+      realtime: {
+        title: "실시간 매장 상태 모니터링",
+        description:
+          "고객 흐름, 체류 변화, 이상 트래픽 등 실시간 지표를 감지해 즉각적인 대응을 가능하게 합니다.",
       },
     },
+  },
+
+  neuralmind: {
+    title: "NEURALMIND",
+    subtitle: "AI 기반 분석 엔진",
+    description:
+      "모든 매장 데이터를 AI로 학습해 고객 행동, 수요 변화, 운영 효율성을 예측하고 자동으로 인사이트를 생성합니다.",
+    
+    features: {
+      b2b: {
+        title: "엔터프라이즈 시스템 연동",
+        description:
+          "ERP·CRM·POS 등 기존 시스템과 자동 연동해 모든 데이터를 하나의 흐름으로 통합합니다.",
+      },
+      external: {
+        title: "외부 컨텍스트 데이터 통합",
+        description:
+          "날씨, 공휴일, 프로모션, 온라인 로그 등 매출과 트래픽에 영향을 주는 외부 데이터를 함께 분석에 반영합니다.",
+      },
+      demand: {
+        title: "고정밀 수요 예측",
+        description:
+          "날씨·요일·트렌드·프로모션 등 다양한 변수를 반영해 판매량·재고 수요를 정확히 예측합니다.",
+      },
+      behavior: {
+        title: "고객 행동 패턴 분석",
+        description:
+          "동선, 체류 시간, 상품 인터랙션 데이터를 기반으로 고객의 구매 여정과 행동 패턴을 정량적으로 분석합니다.",
+      },
+      optimization: {
+        title: "운영 최적화 인사이트",
+        description:
+          "AI가 재고·인력·MD·레이아웃 등 핵심 운영 요소에 대해 최적 전략을 자동으로 제안합니다.",
+      },
+      anomaly: {
+        title: "AI 이상 탐지",
+        description:
+          "매출 급변, 비정상 트래픽, 제품 성과 이상 등 운영 리스크를 자동 감지하고 즉시 알림합니다.",
+      },
+    },
+  },
+
+  neuraltwin: {
+    title: "NEURALTWIN",
+    subtitle: "3D 디지털 트윈 엔진",
+    description:
+      "매장을 3D로 고해상도 재현하여 모든 데이터를 시각화하고, 다양한 운영 전략을 사전에 검증할 수 있는 디지털 트윈 환경을 제공합니다.",
+    
+    features: {
+      scenario: {
+        title: "시나리오 플래닝",
+        description:
+          "프로모션, 동선 변경, 신규 집기 배치 등 다양한 시나리오를 비교해 최적의 운영 전략을 도출합니다.",
+      },
+      simulation: {
+        title: "인터랙티브 3D 시뮬레이션",
+        description:
+          "3D 공간에서 고객 흐름, 매장 혼잡도, 제품 접근성을 시뮬레이션해 변화의 영향을 사전에 예측합니다.",
+      },
+      enterprise: {
+        title: "본사·체인 통합 운영",
+        description:
+          "멀티 스토어 데이터를 통합 관리하여 전사 단위 전략 수립과 매장별 성과 비교가 가능해집니다.",
+      },
+      report: {
+        title: "AI 인사이트 리포트",
+        description:
+          "시뮬레이션 결과, KPI 변화, 운영 영향도를 리포트 형태로 제공하여 의사결정을 명확하게 지원합니다.",
+      },
+    },
+  },
+}
     benefits: {
       timeReduction: "시간 단축",
       timeDesc: "데이터 수집부터 분석까지",
