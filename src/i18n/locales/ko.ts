@@ -193,7 +193,7 @@ export default {
       title: "오프라인 매장의 완전한 디지털 전환",
       subtitle: "은 AI와 IoT 인프라를 기반으로 매장 운영의 모든 요소를 실시간으로 데이터화하고, 분석하며, 자동으로 최적화합니다.",
       description: "매장 운영의 모든 의사결정을 데이터 기반으로 전환하여",
-      description2: "매출을 극대화하고, 비용은 최소화하는 스마트 리테일 운영",
+      description2: "매출을 극대화하고 비용은 최소화하는 스마트 리테일 운영",
       description3: "을 경험해보세요.",
       benefits: {
         sales: {
