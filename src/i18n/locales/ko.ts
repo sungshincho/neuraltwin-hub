@@ -282,11 +282,11 @@ export default {
         },
       },
     },
-technology: {
-  title: "3단계 기술 파이프라인",
-  subtitle: "데이터 수집부터 인사이트·시뮬레이션까지",
+    technology: {
+      title: "3단계 기술 파이프라인",
+      subtitle: "데이터 수집부터 인사이트·시뮬레이션까지",
 
-  neuralsense: {
+      neuralsense: {
     title: "NEURALSENSE",
     subtitle: "실시간 IoT 데이터 수집",
     description:
@@ -375,16 +375,7 @@ technology: {
       },
     },
   },
-}
-    benefits: {
-      timeReduction: "시간 단축",
-      timeDesc: "데이터 수집부터 분석까지",
-      revenueIncrease: "매출 향상",
-      revenueDesc: "최적화된 매장 운영으로",
-      costReduction: "비용 감소",
-      costDesc: "효율적인 재고 및 인력 관리",
-    },
-  },
+
   pricing: {
     title: "라이선스 기반 가격",
     subtitle: "필요한 만큼만 구매하세요",
