@@ -2,6 +2,12 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, Cylinder, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useMemo, useState } from "react";
 import * as THREE from "three";
+import { 
+  buildObstacles, 
+  generateRandomPath, 
+  generateBrowseOnlyPath,
+  type Obstacle
+} from "@/lib/pathfinding";
 
 interface CustomerPath {
   id: string;
@@ -374,6 +380,15 @@ const furnitureLayout = [
   // { file: 'Product_모자_0.2x0.2x0.3.glb', x: -7.1, y: 1.3, z: 1.7, rotationY: 90 },
 ];
 
+// Build obstacles for pathfinding (computed once)
+const storeObstacles: Obstacle[] = buildObstacles(furnitureLayout.map(item => ({
+  file: item.file,
+  x: item.x,
+  y: item.y,
+  z: item.z,
+  rotationY: item.rotationY
+})));
+
 // 개별 GLB 가구/제품 로더
 const FurnitureItem = ({ 
   file, 
@@ -439,83 +454,25 @@ const StoreModel = ({
   hotspots = []
 }: Store3DViewerProps) => {
   
-  // 기본 고객 동선 생성
+  // 기본 고객 동선 생성 (pathfinding 기반)
   const defaultPaths = useMemo(() => {
     const paths: CustomerPath[] = [];
     const pathCount = Math.floor((timeRange[1] - timeRange[0]) / 3);
     
     for (let i = 0; i < pathCount; i++) {
       const isReturning = Math.random() > 0.6;
-      const pathType = Math.floor(Math.random() * 4);
+      const isBrowseOnly = Math.random() > 0.7;
       
-      let points: [number, number, number][] = [];
-      
-      // 다양한 동선 패턴
-      switch (pathType) {
-        case 0: // 입구 → 좌측 진열대 → 계산대
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [6, 0.5, 1.6],
-            [2.7, 0.5, -3.5],
-          ];
-          break;
-        case 1: // 입구 → 우측 진열대 → 계산대
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [-5.6, 0.5, 2.5],
-            [-5, 0.5, -0.7],
-            [0.5, 0.5, -1],
-            [2.7, 0.5, -3.5],
-          ];
-          break;
-        case 2: // 전체 순회
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [-5.6, 0.5, 2.5],
-            [-5, 0.5, -0.7],
-            [-6, 0.5, -5.5],
-            [-2.7, 0.5, -7],
-            [5.6, 0.5, -6],
-            [6, 0.5, 1.6],
-            [2, 0.5, 3.6],
-            [1.8, 0.5, 5.6],
-          ];
-          break;
-        case 3: // 중앙 디스플레이 방문
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [0.3, 0.5, 2],
-            [0.5, 0.5, -1],
-            [2.7, 0.5, -3.5],
-          ];
-          break;
-        case 4: // 빠른 통과 (구매 안함)
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [-5.6, 0.5, 2.5],
-            [0.3, 0.5, 2],
-            [1.8, 0.5, 5.6],
-          ];
-          break;
-      }
-      
-      // 약간의 랜덤 변화 추가
-      points = points.map(([x, y, z]) => [
-        x + (Math.random() - 0.5) * 1.5,
-        y,
-        z + (Math.random() - 0.5) * 0.8
-      ] as [number, number, number]);
+      // 가구 회피 경로 생성
+      const points = isBrowseOnly 
+        ? generateBrowseOnlyPath(storeObstacles)
+        : generateRandomPath(storeObstacles);
       
       paths.push({
         id: `path-${i}`,
         points,
         isReturning,
-        dwellTime: pathType === 4 ? Math.random() * 2 + 0.5 : Math.random() * 12 + 3
+        dwellTime: isBrowseOnly ? Math.random() * 2 + 0.5 : Math.random() * 12 + 3
       });
     }
     
