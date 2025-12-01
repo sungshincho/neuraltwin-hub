@@ -33,13 +33,26 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Image */}
+        {/* Background Video */}
         <div className="absolute inset-0 z-0">
-          <img
-            src={heroMainBuilding}
-            alt="NeuralTwin Building - Digital Twin Technology"
-            className="w-full h-full object-cover"
-          />
+          <div style={{ padding: '56.25% 0 0 0', position: 'relative', height: '100%' }}>
+            <iframe
+              src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1"
+              frameBorder="0"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '100vw',
+                height: '100vh',
+                transform: 'translate(-50%, -50%)',
+                objectFit: 'cover'
+              }}
+              title="NeuralTwin"
+            />
+          </div>
           {/* Gradient overlay that appears on scroll */}
           <div 
             className={`absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-background/90 transition-opacity duration-500 ${
