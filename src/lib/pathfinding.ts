@@ -50,13 +50,15 @@ export function buildObstacles(furnitureLayout: FurnitureItem[]): Obstacle[] {
       const dims = parseDimensions(item.file);
       if (!dims) return null;
 
-      // Use circular approximation: radius = 60% of max(width, depth)
-      const radius = Math.max(dims.width, dims.depth) * 0.6;
+      // Use circular approximation: radius = 85% of max(width, depth) for better collision
+      // Add minimum radius to ensure small objects still block paths
+      const baseRadius = Math.max(dims.width, dims.depth) * 0.85;
+      const radius = Math.max(baseRadius, 0.6); // minimum 0.6m radius
 
       return {
         file: item.file,
-        x: item.x,           // floor X = x_csv
-        z: item.y,           // floor Z = y_csv (coordinate mapping)
+        x: item.x,           // floor X = x_csv (from CSV)
+        z: item.y,           // floor Z = y_csv (from CSV, note: y in data = Z on floor)
         radius,
       };
     })
@@ -90,7 +92,7 @@ export function isWalkablePoint(x: number, z: number, obstacles: Obstacle[]): bo
 // Sample a random walkable point
 export function sampleRandomWalkablePoint(
   obstacles: Obstacle[],
-  maxAttempts = 50
+  maxAttempts = 100  // increased from 50
 ): [number, number, number] | null {
   for (let i = 0; i < maxAttempts; i++) {
     const x = STORE_BOUNDS.xMin + Math.random() * (STORE_BOUNDS.xMax - STORE_BOUNDS.xMin);
@@ -102,6 +104,83 @@ export function sampleRandomWalkablePoint(
     }
   }
   return null;
+}
+
+// Check if a line segment between two points is walkable (collision-free)
+function isPathClear(
+  start: [number, number, number],
+  end: [number, number, number],
+  obstacles: Obstacle[],
+  steps = 10
+): boolean {
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = start[0] + (end[0] - start[0]) * t;
+    const z = start[2] + (end[2] - start[2]) * t;
+    
+    if (!isWalkablePoint(x, z, obstacles)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Find intermediate waypoint to avoid obstacle
+function findDetourPoint(
+  start: [number, number, number],
+  end: [number, number, number],
+  obstacles: Obstacle[],
+  maxAttempts = 30
+): [number, number, number] | null {
+  const midX = (start[0] + end[0]) / 2;
+  const midZ = (start[2] + end[2]) / 2;
+  
+  // Try points around the midpoint with increasing radius
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 1 + Math.random() * 3; // 1-4 meters offset
+    
+    const detourX = midX + Math.cos(angle) * radius;
+    const detourZ = midZ + Math.sin(angle) * radius;
+    
+    if (isWalkablePoint(detourX, detourZ, obstacles)) {
+      const detourPoint: [number, number, number] = [detourX, 0.5, detourZ];
+      
+      // Check if paths to and from detour are clearer
+      if (isPathClear(start, detourPoint, obstacles, 5) && 
+          isPathClear(detourPoint, end, obstacles, 5)) {
+        return detourPoint;
+      }
+    }
+  }
+  return null;
+}
+
+// Smooth path by adding detour points where needed
+function smoothPathAroundObstacles(
+  points: [number, number, number][],
+  obstacles: Obstacle[]
+): [number, number, number][] {
+  if (points.length < 2) return points;
+  
+  const smoothed: [number, number, number][] = [points[0]];
+  
+  for (let i = 0; i < points.length - 1; i++) {
+    const current = points[i];
+    const next = points[i + 1];
+    
+    if (!isPathClear(current, next, obstacles)) {
+      // Path blocked, try to find detour
+      const detour = findDetourPoint(current, next, obstacles);
+      if (detour) {
+        smoothed.push(detour);
+      }
+    }
+    
+    smoothed.push(next);
+  }
+  
+  return smoothed;
 }
 
 // Generate a random furniture-aware path
@@ -144,10 +223,11 @@ export function generateRandomPath(obstacles: Obstacle[]): [number, number, numb
 
   // Fallback: if something went wrong, use simple entry → checkout
   if (points.length < 2) {
-    return [ENTRY_POINT, CHECKOUT_POINT];
+    return smoothPathAroundObstacles([ENTRY_POINT, CHECKOUT_POINT], obstacles);
   }
 
-  return points;
+  // Smooth path to avoid obstacles between waypoints
+  return smoothPathAroundObstacles(points, obstacles);
 }
 
 // Generate path that exits without purchase (returns to entry)
@@ -177,5 +257,6 @@ export function generateBrowseOnlyPath(obstacles: Obstacle[]): [number, number, 
   ];
   points.push(exit);
 
-  return points;
+  // Smooth path to avoid obstacles between waypoints
+  return smoothPathAroundObstacles(points, obstacles);
 }
