@@ -8,10 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Users, Clock, TrendingUp, MapPin } from "lucide-react";
 import { Store3DViewer } from "./Store3DViewer";
 import { 
-  buildObstacles, 
+  FIXED_OBSTACLES, 
   generateRandomPath, 
   generateBrowseOnlyPath,
-  type FurnitureItem,
   type Obstacle
 } from "@/lib/pathfinding";
 
@@ -22,49 +21,8 @@ interface CustomerPath {
   dwellTime: number;
 }
 
-// Furniture layout data (same as Store3DViewer)
-const furnitureLayout: FurnitureItem[] = [
-  { file: 'Shelf_WallShelf1_1.7x2.5x0.5.glb', x: -7.1, y: 3.2, z: 0.0, rotationY: 90 },
-  { file: 'Shelf_WallShelf2_1.7x2.5x0.5.glb', x: -7.1, y: 1.3, z: 0.0, rotationY: 90 },
-  { file: 'Shelf_WallShelf3_1.7x2.5x0.5.glb', x: -7.1, y: -0.6, z: 0.0, rotationY: 90 },
-  { file: 'Shelf_WallShelf4_1.7x2.5x0.5.glb', x: -7.1, y: -3.5, z: 0.0, rotationY: 90 },
-  { file: 'Shelf_WallShelf5_1.7x2.5x0.5.glb', x: -7.1, y: -5.4, z: 0.0, rotationY: 90 },
-  { file: 'Shelf_WallShelf6_1.7x2.5x0.5.glb', x: -4.2, y: -7.7, z: 0.0, rotationY: 0 },
-  { file: 'Shelf_WallShelf7_1.7x2.5x0.5.glb', x: -2.5, y: -7.7, z: 0.0, rotationY: 0 },
-  { file: 'Shelf_WallShelf8_1.7x2.5x0.5.glb', x: -0.6, y: -7.7, z: 0.0, rotationY: 0 },
-  { file: 'Shelf_WallShelf9_1.7x2.5x0.5.glb', x: 7.4, y: -1.6, z: 0.0, rotationY: -90 },
-  { file: 'Shelf_WallShelf10_1.7x2.5x0.5.glb', x: 7.4, y: 0.8, z: 0.0, rotationY: -90 },
-  { file: 'Shelf_WallShelf11_1.7x2.5x0.5.glb', x: 7.4, y: 3.2, z: 0.0, rotationY: -90 },
-  { file: 'Shelf_WallShelf12_1.7x2.5x0.5.glb', x: 6.0, y: 5.0, z: 0.0, rotationY: -180 },
-  { file: 'Shelf_WallShelf13_1.7x2.5x0.5.glb', x: 4.0, y: 5.0, z: 0.0, rotationY: -180 },
-  { file: 'Shelf_SideShelf1_1.2x0.4x0.4.glb', x: -0.8, y: 1.2, z: 0.1, rotationY: 90 },
-  { file: 'Shelf_SideShelf2_1.9x0.4x0.4.glb', x: 3.6, y: -1.0, z: 0.1, rotationY: 0 },
-  { file: 'Mannequin_FullMannequin1_0.7x1.8x0.7.glb', x: -2.4, y: 5.0, z: 0.1, rotationY: 0 },
-  { file: 'Mannequin_FullMannequin2_0.6x1.8x0.6.glb', x: -1.2, y: 5.0, z: 0.1, rotationY: 0 },
-  { file: 'Mannequin_HalfMannequin_0.4x1.6x0.4.glb', x: -3.5, y: 5.0, z: 0.0, rotationY: 0 },
-  { file: 'DisplayTable_CenterTable_3.6x1.0x1.3.glb', x: -3.0, y: 1.2, z: 0.0, rotationY: 0 },
-  { file: 'DisplayTable_CircularTable_0.3x0.8x0.3.glb', x: -4.2, y: -4.5, z: 0.0, rotationY: 0 },
-  { file: 'CheckoutCounter_CheckoutCounter_2.9x1.2x0.7.glb', x: 2.8, y: -4.2, z: 0.0, rotationY: 0 },
-  { file: 'Rack_Hanger1_1.7x1.5x0.5.glb', x: -1.0, y: -2.9, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger2_1.7x1.5x0.5.glb', x: -1.0, y: -4.8, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger3_1.7x1.5x0.5.glb', x: -0.2, y: -2.9, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger4_1.7x1.5x0.5.glb', x: -0.2, y: -4.8, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger5_1.7x1.5x0.5.glb', x: 2.0, y: 1.9, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger6_1.7x1.5x0.5.glb', x: 2.0, y: 0.0, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger7_1.7x1.5x0.5.glb', x: 5.0, y: 1.9, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger8_1.7x1.5x0.5.glb', x: 5.0, y: 0.0, z: 0.0, rotationY: -90 },
-  { file: 'Product_TopA_0.4x0.1x0.4.glb', x: -3.5, y: 0.9, z: 0.9, rotationY: 180 },
-  { file: 'Product_BottomA_0.4x0.1x0.4.glb', x: -2.7, y: 1.5, z: 0.9, rotationY: 0 },
-  { file: 'Product_TopB_0.5x0.9x0.1.glb', x: -1.0, y: -2.5, z: 0.6, rotationY: 0 },
-  { file: 'Product_BottomB_0.4x1.1x0.1.glb', x: 2.0, y: 2.5, z: 0.4, rotationY: 0 },
-  { file: 'Product_OuterB_0.5x0.9x0.2.glb', x: 5.0, y: 0.0, z: 0.6, rotationY: 0 },
-  { file: 'Product_Shoes_0.3x0.1x0.3.glb', x: -4.0, y: 1.5, z: 0.9, rotationY: 0 },
-  { file: 'Product_Bag_0.8x0.5x0.5.glb', x: -7.0, y: 3.2, z: 1.6, rotationY: 90 },
-  { file: 'Product_Hat_0.2x0.2x0.3.glb', x: -7.1, y: 1.3, z: 1.7, rotationY: 90 },
-];
-
-// Build obstacles once
-const obstacles: Obstacle[] = buildObstacles(furnitureLayout);
+// Use fixed obstacles from pathfinding (Blender-based coordinates)
+const obstacles: Obstacle[] = FIXED_OBSTACLES;
 
 const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
   const pathCount = Math.max(1, Math.floor((timeRange[1] - timeRange[0]) / 2));
