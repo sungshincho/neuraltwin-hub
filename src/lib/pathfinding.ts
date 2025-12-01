@@ -45,7 +45,7 @@ export function parseDimensions(fileName: string): { width: number; height: numb
 
 // Build obstacles from furniture layout
 export function buildObstacles(furnitureLayout: FurnitureItem[]): Obstacle[] {
-  const obstacles = furnitureLayout
+  return furnitureLayout
     .map((item) => {
       const dims = parseDimensions(item.file);
       if (!dims) return null;
@@ -63,17 +63,6 @@ export function buildObstacles(furnitureLayout: FurnitureItem[]): Obstacle[] {
       };
     })
     .filter((o): o is Obstacle => o !== null);
-  
-  // Debug: Log obstacles info
-  console.log('[Pathfinding] Built obstacles:', obstacles.length);
-  console.log('[Pathfinding] Sample obstacles:', obstacles.slice(0, 3).map(o => ({
-    file: o.file.split('_')[1],
-    x: o.x.toFixed(1),
-    z: o.z.toFixed(1),
-    radius: o.radius.toFixed(2)
-  })));
-  
-  return obstacles;
 }
 
 // Check if point is inside store bounds
@@ -175,34 +164,21 @@ function smoothPathAroundObstacles(
   if (points.length < 2) return points;
   
   const smoothed: [number, number, number][] = [points[0]];
-  let detoursAdded = 0;
-  let blockedSegments = 0;
   
   for (let i = 0; i < points.length - 1; i++) {
     const current = points[i];
     const next = points[i + 1];
     
     if (!isPathClear(current, next, obstacles)) {
-      blockedSegments++;
       // Path blocked, try to find detour
       const detour = findDetourPoint(current, next, obstacles);
       if (detour) {
         smoothed.push(detour);
-        detoursAdded++;
-      } else {
-        // Could not find detour - path will go through obstacle!
-        console.warn('[Pathfinding] Could not find detour for blocked segment:', {
-          from: [current[0].toFixed(1), current[2].toFixed(1)],
-          to: [next[0].toFixed(1), next[2].toFixed(1)]
-        });
       }
+      // If no detour found, path will go through obstacle (simplified approach)
     }
     
     smoothed.push(next);
-  }
-  
-  if (blockedSegments > 0) {
-    console.log(`[Pathfinding] Path smoothing: ${blockedSegments} blocked segments, ${detoursAdded} detours added`);
   }
   
   return smoothed;
