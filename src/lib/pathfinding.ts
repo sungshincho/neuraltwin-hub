@@ -48,12 +48,14 @@ export function buildObstacles(furnitureLayout: FurnitureItem[]): Obstacle[] {
   return furnitureLayout
     .map((item) => {
       const dims = parseDimensions(item.file);
-      if (!dims) return null;
+      
+      // Default dimensions for files without size info
+      const effectiveDims = dims || { width: 1.0, height: 1.0, depth: 1.0 };
 
-      // Use circular approximation: radius = 85% of max(width, depth) for better collision
-      // Add minimum radius to ensure small objects still block paths
-      const baseRadius = Math.max(dims.width, dims.depth) * 0.85;
-      const radius = Math.max(baseRadius, 0.6); // minimum 0.6m radius
+      // Use circular approximation: radius = 110% of max(width, depth) for better collision avoidance
+      // Increased from 85% to ensure paths don't clip furniture
+      const baseRadius = Math.max(effectiveDims.width, effectiveDims.depth) * 1.1;
+      const radius = Math.max(baseRadius, 0.8); // minimum 0.8m radius (increased from 0.6)
 
       return {
         file: item.file,
@@ -79,10 +81,14 @@ export function isInsideStoreBounds(x: number, z: number): boolean {
 export function isWalkablePoint(x: number, z: number, obstacles: Obstacle[]): boolean {
   if (!isInsideStoreBounds(x, z)) return false;
 
+  // Add safety margin to obstacle collision check
+  const safetyMargin = 0.15; // Extra clearance from obstacles
+  
   for (const o of obstacles) {
     const dx = x - o.x;
     const dz = z - o.z;
-    if (dx * dx + dz * dz < o.radius * o.radius) {
+    const effectiveRadius = o.radius + safetyMargin;
+    if (dx * dx + dz * dz < effectiveRadius * effectiveRadius) {
       return false; // too close to furniture
     }
   }
@@ -111,7 +117,7 @@ function isPathClear(
   start: [number, number, number],
   end: [number, number, number],
   obstacles: Obstacle[],
-  steps = 20 // More steps for better collision detection
+  steps = 30 // Increased from 20 for better collision detection
 ): boolean {
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
@@ -166,8 +172,8 @@ function findDetourPoint(
   const perpX = -dz / len;
   const perpZ = dx / len;
   
-  // Try both sides of the obstacle with increasing distance
-  const detourDistance = blocker.radius + 0.8; // Go around with margin
+  // Try both sides of the obstacle with increasing distance (increased margin from 0.8 to 1.2)
+  const detourDistance = blocker.radius + 1.2; // Go around with larger margin
   const directions = [1, -1]; // Try both perpendicular directions
   
   for (const dir of directions) {
@@ -178,9 +184,9 @@ function findDetourPoint(
     if (isWalkablePoint(detourX, detourZ, obstacles)) {
       const detourPoint: [number, number, number] = [detourX, 0.5, detourZ];
       
-      // Check if both path segments are clear
-      if (isPathClear(start, detourPoint, obstacles, 15) && 
-          isPathClear(detourPoint, end, obstacles, 15)) {
+      // Check if both path segments are clear with more steps
+      if (isPathClear(start, detourPoint, obstacles, 25) && 
+          isPathClear(detourPoint, end, obstacles, 25)) {
         return detourPoint;
       }
     }
@@ -241,7 +247,7 @@ function smoothSegment(
     const angleToStart = Math.atan2(start[2] - blocker.z, start[0] - blocker.x);
     const angleToEnd = Math.atan2(end[2] - blocker.z, end[0] - blocker.x);
     
-    const clearance = blocker.radius + 0.8;
+    const clearance = blocker.radius + 1.2; // Increased from 0.8 to 1.2
     const wp1: [number, number, number] = [
       blocker.x + Math.cos(angleToStart) * clearance,
       0.5,
