@@ -6,8 +6,50 @@ import {
   FIXED_OBSTACLES,
   generateRandomPath, 
   generateBrowseOnlyPath,
+  STORE_BOUNDS,
+  BLOCKED_CELLS,
+  cellKey,
   type Obstacle
 } from "@/lib/pathfinding";
+
+// Walkable 셀 시각화 컴포넌트
+const WalkableCellGrid = () => {
+  const walkableCells = useMemo(() => {
+    const cells: { cx: number; cz: number }[] = [];
+    const xMin = Math.ceil(STORE_BOUNDS.xMin);
+    const xMax = Math.floor(STORE_BOUNDS.xMax);
+    const zMin = Math.ceil(STORE_BOUNDS.zMin);
+    const zMax = Math.floor(STORE_BOUNDS.zMax);
+
+    for (let cx = xMin; cx <= xMax; cx++) {
+      for (let cz = zMin; cz <= zMax; cz++) {
+        if (!BLOCKED_CELLS.has(cellKey(cx, cz))) {
+          cells.push({ cx, cz });
+        }
+      }
+    }
+    return cells;
+  }, []);
+
+  return (
+    <group>
+      {walkableCells.map((cell, idx) => (
+        <mesh
+          key={`walkable-${idx}`}
+          position={[cell.cx, 0.02, cell.cz]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[0.9, 0.9]} />
+          <meshBasicMaterial 
+            color="#22c55e"
+            transparent
+            opacity={0.3}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+};
 
 interface CustomerPath {
   id: string;
@@ -527,6 +569,9 @@ const StoreModel = ({
       
       {/* 가구/제품 레이아웃 */}
       <FurnitureLayout />
+
+      {/* Walkable 셀 시각화 (초록색 사각형) */}
+      <WalkableCellGrid />
 
       {/* Footfall 모드 - 고객 동선 시각화 */}
       {mode === "footfall" && (
