@@ -361,10 +361,11 @@ const furnitureLayout = [
   { file: 'Product_하의_0.4x0.1x0.4.glb', x: -2.7, y: 1.5, z: 0.9, rotationY: 0 },
   { file: 'Product_상의B_0.5x0.9x0.1.glb', x: -1.0, y: -2.5, z: 0.6, rotationY: 0 },
   { file: 'Product_하의B_0.4x1.1x0.1.glb', x: 2.0, y: 2.5, z: 0.4, rotationY: 0 },
-  { file: 'Product_아우터B_0.5x0.9x0.2.glb', x: 5.0, y: 0.0, z: 0.6, rotationY: 0 },
-  { file: 'Product_신발_0.3x0.1x0.3.glb', x: -4.0, y: 1.5, z: 0.9, rotationY: 0 },
-  { file: 'Product_가방_0.8x0.5x0.5.glb', x: -7.0, y: 3.2, z: 1.6, rotationY: 90 },
-  { file: 'Product_모자_0.2x0.2x0.3.glb', x: -7.1, y: 1.3, z: 1.7, rotationY: 90 },
+  // Missing GLB files - commented out to prevent 404 errors
+  // { file: 'Product_아우터B_0.5x0.9x0.2.glb', x: 5.0, y: 0.0, z: 0.6, rotationY: 0 },
+  // { file: 'Product_신발_0.3x0.1x0.3.glb', x: -4.0, y: 1.5, z: 0.9, rotationY: 0 },
+  // { file: 'Product_가방_0.8x0.5x0.5.glb', x: -7.0, y: 3.2, z: 1.6, rotationY: 90 },
+  // { file: 'Product_모자_0.2x0.2x0.3.glb', x: -7.1, y: 1.3, z: 1.7, rotationY: 90 },
 ];
 
 // 개별 GLB 가구/제품 로더
