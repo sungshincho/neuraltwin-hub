@@ -16,7 +16,7 @@ interface CustomerPath {
 }
 
 const generateDemoData = (timeRange: [number, number]) => {
-  const pathCount = Math.floor((timeRange[1] - timeRange[0]) / 2);
+  const pathCount = Math.max(1, Math.floor((timeRange[1] - timeRange[0]) / 2));
   const paths: CustomerPath[] = [];
   
   for (let i = 0; i < pathCount; i++) {
