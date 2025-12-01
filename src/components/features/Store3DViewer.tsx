@@ -95,6 +95,11 @@ const CustomerPathLine = ({
   points: [number, number, number][]; 
   isReturning: boolean;
 }) => {
+  // Safety check: Line requires at least 2 points
+  if (!points || points.length < 2) {
+    return null;
+  }
+  
   const color = isReturning ? "#8b5cf6" : "#3b82f6";
   
   return (
