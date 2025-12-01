@@ -1,10 +1,9 @@
-// Furniture-Aware Path Generation System
-// Based on furniture_product_layout data
+// Fixed-Coordinate Path Generation System
+// Based on Blender-exported coordinates (not GLB filenames)
 
 export interface Obstacle {
-  file: string;
-  x: number;      // floor X (x_csv)
-  z: number;      // floor Z (y_csv)
+  x: number;      // floor X (Blender X)
+  z: number;      // floor Z (Blender Y)
   radius: number; // collision radius
 }
 
@@ -28,14 +27,63 @@ export const STORE_BOUNDS = {
 export const ENTRY_POINT: [number, number, number] = [1.8, 0.5, 5.6];
 export const CHECKOUT_POINT: [number, number, number] = [2.7, 0.5, -3.5];
 
-// Parse dimensions from GLB filename (e.g., "Shelf_벽면진열대1_1.7x2.5x0.5.glb")
+// ============================================
+// FIXED OBSTACLES - Blender에서 추출한 고정 좌표들
+// 모든 장애물 반경: 0.5 (가이드 기준)
+// x = Blender X, z = Blender Y (바닥 평면)
+// ============================================
+export const FIXED_OBSTACLES: Obstacle[] = [
+  // Wall Shelves (벽면 진열대)
+  { x: -7.1, z: 3.2, radius: 0.5 },   // WallShelf1
+  { x: -7.1, z: 1.3, radius: 0.5 },   // WallShelf2
+  { x: -7.1, z: -0.6, radius: 0.5 },  // WallShelf3
+  { x: -7.1, z: -3.5, radius: 0.5 },  // WallShelf4
+  { x: -7.1, z: -5.4, radius: 0.5 },  // WallShelf5
+  { x: -4.2, z: -7.7, radius: 0.5 },  // WallShelf6
+  { x: -2.5, z: -7.7, radius: 0.5 },  // WallShelf7
+  { x: -0.6, z: -7.7, radius: 0.5 },  // WallShelf8
+  { x: 7.4, z: -1.6, radius: 0.5 },   // WallShelf9
+  { x: 7.4, z: 0.8, radius: 0.5 },    // WallShelf10
+  { x: 7.4, z: 3.2, radius: 0.5 },    // WallShelf11
+  { x: 6.0, z: 5.0, radius: 0.5 },    // WallShelf12
+  { x: 4.0, z: 5.0, radius: 0.5 },    // WallShelf13
+  // Side Shelves (사이드 진열대)
+  { x: -0.8, z: 1.2, radius: 0.5 },   // SideShelf1
+  { x: 3.6, z: -1.0, radius: 0.5 },   // SideShelf2
+  // Display Tables (디스플레이 테이블)
+  { x: -3.0, z: 1.2, radius: 0.8 },   // CenterTable (더 큰 반경)
+  { x: -4.2, z: -4.5, radius: 0.5 },  // CircularTable
+  // Checkout Counter (계산대)
+  { x: 2.8, z: -4.2, radius: 0.8 },   // CheckoutCounter (더 큰 반경)
+  // Mannequins (마네킹)
+  { x: -2.4, z: 5.0, radius: 0.5 },   // FullMannequin1
+  { x: -1.2, z: 5.0, radius: 0.5 },   // FullMannequin2
+  { x: -3.5, z: 5.0, radius: 0.5 },   // HalfMannequin
+  // Rack Hangers (행거)
+  { x: -1.0, z: -2.9, radius: 0.5 },  // Hanger1
+  { x: -1.0, z: -4.8, radius: 0.5 },  // Hanger2
+  { x: -0.2, z: -2.9, radius: 0.5 },  // Hanger3
+  { x: -0.2, z: -4.8, radius: 0.5 },  // Hanger4
+  { x: 2.0, z: 1.9, radius: 0.5 },    // Hanger5
+  { x: 2.0, z: -0.0, radius: 0.5 },   // Hanger6
+  { x: 5.0, z: 1.9, radius: 0.5 },    // Hanger7
+  { x: 5.0, z: -0.0, radius: 0.5 },   // Hanger8
+];
+
+// Helper function to get fixed obstacles
+export function getFixedObstacles(): Obstacle[] {
+  return FIXED_OBSTACLES;
+}
+
+// ============================================
+// DEPRECATED: GLB 파일명 기반 로직 (더 이상 사용 안 함)
+// ============================================
 const DIMENSION_REGEX = /_(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)\.glb$/;
 
+/** @deprecated Use FIXED_OBSTACLES instead */
 export function parseDimensions(fileName: string): { width: number; height: number; depth: number } | null {
   const match = fileName.match(DIMENSION_REGEX);
-  if (!match) {
-    return null;
-  }
+  if (!match) return null;
   return {
     width: parseFloat(match[1]),
     height: parseFloat(match[2]),
@@ -43,28 +91,10 @@ export function parseDimensions(fileName: string): { width: number; height: numb
   };
 }
 
-// Build obstacles from furniture layout
+/** @deprecated Use getFixedObstacles() instead */
 export function buildObstacles(furnitureLayout: FurnitureItem[]): Obstacle[] {
-  return furnitureLayout
-    .map((item) => {
-      const dims = parseDimensions(item.file);
-      
-      // Default dimensions for files without size info
-      const effectiveDims = dims || { width: 1.0, height: 1.0, depth: 1.0 };
-
-      // Use circular approximation: radius = 110% of max(width, depth) for better collision avoidance
-      // Increased from 85% to ensure paths don't clip furniture
-      const baseRadius = Math.max(effectiveDims.width, effectiveDims.depth) * 1.1;
-      const radius = Math.max(baseRadius, 0.8); // minimum 0.8m radius (increased from 0.6)
-
-      return {
-        file: item.file,
-        x: item.x,           // floor X = x_csv (from CSV)
-        z: item.y,           // floor Z = y_csv (from CSV, note: y in data = Z on floor)
-        radius,
-      };
-    })
-    .filter((o): o is Obstacle => o !== null);
+  // Return fixed obstacles instead of computing from furniture
+  return FIXED_OBSTACLES;
 }
 
 // Check if point is inside store bounds

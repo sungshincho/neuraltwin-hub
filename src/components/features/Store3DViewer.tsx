@@ -3,7 +3,7 @@ import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, Cylinder, u
 import { Suspense, useRef, useMemo, useState, Component, ReactNode } from "react";
 import * as THREE from "three";
 import { 
-  buildObstacles, 
+  FIXED_OBSTACLES,
   generateRandomPath, 
   generateBrowseOnlyPath,
   type Obstacle
@@ -380,14 +380,8 @@ const furnitureLayout = [
   { file: 'Product_Hat_0.2x0.2x0.3.glb', x: -7.1, y: 1.3, z: 1.7, rotationY: 90 },
 ];
 
-// Build obstacles for pathfinding (computed once)
-const storeObstacles: Obstacle[] = buildObstacles(furnitureLayout.map(item => ({
-  file: item.file,
-  x: item.x,
-  y: item.y,
-  z: item.z,
-  rotationY: item.rotationY
-})));
+// Use fixed obstacles for pathfinding (Blender-based coordinates)
+const storeObstacles: Obstacle[] = FIXED_OBSTACLES;
 
 // ErrorBoundary for individual furniture items
 class FurnitureErrorBoundary extends Component<
