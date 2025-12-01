@@ -346,7 +346,7 @@ const furnitureLayout = [
   { file: 'DisplayTable_중앙테이블_3.6x1.0x1.3.glb', x: -3.0, y: -1.2, z: 0.0, rotationY: 0 },
   { file: 'DisplayTable_원형테이블_0.3x0.8x0.3.glb', x: -4.2, y: 7.7, z: 0, rotationY: 0 },
   // CheckoutCounter
-  { file: 'CheckoutCounter_계산대_2.9x1.2x0.7.glb', x: 2.8, y: 4.2, z: 0, rotationY: 0 },
+  { file: 'CheckoutCounter_계산대_2.9x1.2x0.7.glb', x: 2.8, y: 0, z: -4.5, rotationY: 0 },
   // Rack_의류행거
   { file: 'Rack_의류행거1_1.7x1.5x0.5.glb', x: -1.0, y: 2.9, z: 0, rotationY: 0 },
   { file: 'Rack_의류행거2_1.7x1.5x0.5.glb', x: -1.0, y: 4.8, z: 0, rotationY: 0 },
