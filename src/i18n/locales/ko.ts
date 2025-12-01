@@ -21,7 +21,7 @@ export default {
       stores: "활성 매장",
       data: "데이터 포인트/일",
     },
-    headline1: "궁극의 AI 기반 리테일 운영 인텔리전스",
+    headline1: "궁극의 AI 리테일 인텔리전스",
     headline2: "NEURALTWIN",
     subheadline1: "가장 진보한 스마트 리테일의 미래.",
     subheadline2: "1분 만에 시작하고 바로 상담을 받아보세요",
@@ -191,7 +191,8 @@ export default {
     hero: {
       badge: "제품 소개",
       title: "오프라인 매장의 완전한 디지털 전환",
-      subtitle: "은 AI와 IoT 인프라를 기반으로 매장 운영의 모든 요소를 실시간으로 데이터화하고, 분석하며, 자동으로 최적화합니다.",
+      subtitle:
+        "은 AI와 IoT 인프라를 기반으로 매장 운영의 모든 요소를 실시간으로 데이터화하고, 분석하며, 자동으로 최적화합니다.",
       description: "매장 운영의 모든 의사결정을 데이터 기반으로 전환하여",
       description2: "매출을 극대화하고 비용은 최소화하는 스마트 리테일 운영",
       description3: "을 경험해보세요.",
@@ -291,12 +292,11 @@ export default {
         subtitle: "실시간 IoT 데이터 수집",
         description:
           "매장 내 다양한 IoT·센서 인프라로부터 고객 동선, 상품 접점, 환경 데이터를 실시간으로 수집해 운영 상태를 정밀하게 모니터링합니다.",
-        
+
         features: {
           b2b: {
             title: "엔터프라이즈 시스템 연동",
-            description:
-              "ERP·CRM·POS 등 기존 시스템과 자동 연동해 모든 데이터를 하나의 흐름으로 통합합니다.",
+            description: "ERP·CRM·POS 등 기존 시스템과 자동 연동해 모든 데이터를 하나의 흐름으로 통합합니다.",
           },
           external: {
             title: "외부 컨텍스트 데이터 통합",
@@ -310,8 +310,7 @@ export default {
           },
           realtime: {
             title: "실시간 매장 상태 모니터링",
-            description:
-              "고객 흐름, 체류 변화, 이상 트래픽 등 실시간 지표를 감지해 즉각적인 대응을 가능하게 합니다.",
+            description: "고객 흐름, 체류 변화, 이상 트래픽 등 실시간 지표를 감지해 즉각적인 대응을 가능하게 합니다.",
           },
         },
       },
@@ -321,12 +320,11 @@ export default {
         subtitle: "AI 기반 분석 엔진",
         description:
           "모든 매장 데이터를 AI로 학습해 고객 행동, 수요 변화, 운영 효율성을 예측하고 자동으로 인사이트를 생성합니다.",
-        
+
         features: {
           demand: {
             title: "고정밀 수요 예측",
-            description:
-              "날씨·요일·트렌드·프로모션 등 다양한 변수를 반영해 판매량·재고 수요를 정확히 예측합니다.",
+            description: "날씨·요일·트렌드·프로모션 등 다양한 변수를 반영해 판매량·재고 수요를 정확히 예측합니다.",
           },
           behavior: {
             title: "고객 행동 패턴 분석",
@@ -335,13 +333,11 @@ export default {
           },
           optimization: {
             title: "운영 최적화 인사이트",
-            description:
-              "AI가 재고·인력·MD·레이아웃 등 핵심 운영 요소에 대해 최적 전략을 자동으로 제안합니다.",
+            description: "AI가 재고·인력·MD·레이아웃 등 핵심 운영 요소에 대해 최적 전략을 자동으로 제안합니다.",
           },
           anomaly: {
             title: "AI 이상 탐지",
-            description:
-              "매출 급변, 비정상 트래픽, 제품 성과 이상 등 운영 리스크를 자동 감지하고 즉시 알림합니다.",
+            description: "매출 급변, 비정상 트래픽, 제품 성과 이상 등 운영 리스크를 자동 감지하고 즉시 알림합니다.",
           },
         },
       },
@@ -351,7 +347,7 @@ export default {
         subtitle: "3D 디지털 트윈 엔진",
         description:
           "매장을 3D로 고해상도 재현하여 모든 데이터를 시각화하고, 다양한 운영 전략을 사전에 검증할 수 있는 디지털 트윈 환경을 제공합니다.",
-        
+
         features: {
           scenario: {
             title: "시나리오 플래닝",
@@ -365,8 +361,7 @@ export default {
           },
           enterprise: {
             title: "본사·체인 통합 운영",
-            description:
-              "멀티 스토어 데이터를 통합 관리하여 전사 단위 전략 수립과 매장별 성과 비교가 가능해집니다.",
+            description: "멀티 스토어 데이터를 통합 관리하여 전사 단위 전략 수립과 매장별 성과 비교가 가능해집니다.",
           },
           report: {
             title: "AI 인사이트 리포트",
