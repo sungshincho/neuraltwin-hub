@@ -56,27 +56,37 @@ export const Header = () => {
   };
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    // 세션이 없거나 이미 로그아웃된 경우도 성공으로 처리
-    if (error && error.message !== "Auth session missing!") {
+    try {
+      // 로컬 세션을 완전히 제거
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // 로컬 상태 초기화
+      setUser(null);
+      setProfile(null);
+      
       toast({
-        title: "로그아웃 실패",
-        description: error.message,
-        variant: "destructive",
+        title: "로그아웃 완료",
+        description: "성공적으로 로그아웃되었습니다.",
       });
-      return;
+      
+      // 약간의 딜레이 후 네비게이션 (세션 정리 시간 확보)
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 100);
+    } catch (error: any) {
+      // 세션이 이미 없는 경우도 성공으로 처리
+      if (error?.message?.includes("session")) {
+        setUser(null);
+        setProfile(null);
+        navigate("/", { replace: true });
+      } else {
+        toast({
+          title: "로그아웃 실패",
+          description: error?.message || "알 수 없는 오류가 발생했습니다.",
+          variant: "destructive",
+        });
+      }
     }
-    
-    // 로컬 상태 초기화
-    setUser(null);
-    setProfile(null);
-    
-    toast({
-      title: "로그아웃 완료",
-      description: "성공적으로 로그아웃되었습니다.",
-    });
-    navigate("/");
   };
 
   const navigation = [
