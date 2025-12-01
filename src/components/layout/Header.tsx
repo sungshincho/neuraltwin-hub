@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 // import { LanguageToggle } from "@/components/LanguageToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,36 +17,20 @@ import {
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      fetchProfile(user.id);
+    } else {
+      setProfile(null);
+    }
+  }, [user]);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
@@ -56,37 +41,15 @@ export const Header = () => {
   };
 
   const handleSignOut = async () => {
-    try {
-      // 로컬 세션을 완전히 제거
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // 로컬 상태 초기화
-      setUser(null);
-      setProfile(null);
-      
-      toast({
-        title: "로그아웃 완료",
-        description: "성공적으로 로그아웃되었습니다.",
-      });
-      
-      // 약간의 딜레이 후 네비게이션 (세션 정리 시간 확보)
-      setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 100);
-    } catch (error: any) {
-      // 세션이 이미 없는 경우도 성공으로 처리
-      if (error?.message?.includes("session")) {
-        setUser(null);
-        setProfile(null);
-        navigate("/", { replace: true });
-      } else {
-        toast({
-          title: "로그아웃 실패",
-          description: error?.message || "알 수 없는 오류가 발생했습니다.",
-          variant: "destructive",
-        });
-      }
-    }
+    await signOut();
+    setProfile(null);
+
+    toast({
+      title: "로그아웃 완료",
+      description: "성공적으로 로그아웃되었습니다.",
+    });
+
+    navigate("/", { replace: true });
   };
 
   const navigation = [
