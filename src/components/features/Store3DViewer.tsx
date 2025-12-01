@@ -424,28 +424,6 @@ const GLBStoreModel = () => {
   return <primitive object={scene} scale={1} position={[0, 0, 0]} />;
 };
 
-// Debug: 장애물 영역 시각화 (바닥에 원형으로 표시)
-const ObstacleDebugView = ({ obstacles }: { obstacles: Obstacle[] }) => {
-  return (
-    <>
-      {obstacles.map((obs, idx) => (
-        <group key={idx} position={[obs.x, 0.02, obs.z]}>
-          {/* 장애물 반경을 나타내는 원형 */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[obs.radius - 0.05, obs.radius, 32]} />
-            <meshBasicMaterial color="#ff0000" transparent opacity={0.4} />
-          </mesh>
-          {/* 중심점 표시 */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[0.1, 16]} />
-            <meshBasicMaterial color="#ff0000" />
-          </mesh>
-        </group>
-      ))}
-    </>
-  );
-};
-
 // 전체 가구/제품 배치
 const FurnitureLayout = () => {
   return (
@@ -512,9 +490,6 @@ const StoreModel = ({
       
       {/* 가구/제품 레이아웃 */}
       <FurnitureLayout />
-      
-      {/* DEBUG: 장애물 영역 시각화 (빨간 원으로 표시) */}
-      <ObstacleDebugView obstacles={storeObstacles} />
 
       {/* Footfall 모드 - 고객 동선 시각화 */}
       {mode === "footfall" && (
