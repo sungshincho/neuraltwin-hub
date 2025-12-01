@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { 
   FIXED_OBSTACLES,
   generateRandomCustomerPath,
-  type Cell
+  pathReachesCheckout
 } from "@/lib/pathfinding";
 
 interface CustomerPath {
@@ -500,16 +500,13 @@ const StoreModel = ({
     const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
     
     for (let i = 0; i < pathCount; i++) {
-      // 새 pathfinding API 사용
       const points = generateRandomCustomerPath(timeRangeStr);
-      
-      // 계산대 방향(-z)으로 갔는지 확인하여 isReturning 결정
-      const wentToCheckout = points.some(p => p[2] < -3);
+      const wentToCheckout = pathReachesCheckout(points);
       
       paths.push({
         id: `path-${i}`,
         points,
-        isReturning: !wentToCheckout, // 계산대 안 갔으면 돌아나간 것
+        isReturning: !wentToCheckout,
         dwellTime: wentToCheckout ? Math.random() * 12 + 3 : Math.random() * 2 + 0.5
       });
     }
