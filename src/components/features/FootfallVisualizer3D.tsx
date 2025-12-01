@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Users, Clock, TrendingUp, MapPin } from "lucide-react";
 import { Store3DViewer } from "./Store3DViewer";
-import { generateRandomCustomerPath } from "@/lib/pathfinding";
+import { generateRandomCustomerPath, pathReachesCheckout } from "@/lib/pathfinding";
 
 interface CustomerPath {
   id: string;
@@ -20,24 +20,20 @@ const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
   const pathCount = Math.max(1, Math.floor((timeRange[1] - timeRange[0]) / 2));
   const paths: CustomerPath[] = [];
   
-  // timeRange를 문자열로 변환 (예: "09:00-21:00")
   const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
   
   for (let i = 0; i < pathCount; i++) {
-    // 새 pathfinding API 사용
     const points = generateRandomCustomerPath(timeRangeStr);
-    
-    // 계산대 방향(-z)으로 갔는지 확인하여 isReturning 결정
-    const wentToCheckout = points.some(p => p[2] < -3);
+    const wentToCheckout = pathReachesCheckout(points);
     
     const dwellTime = wentToCheckout 
-      ? Math.random() * 12 + 3  // Normal visit: 3-15 min
-      : Math.random() * 2 + 0.5;  // Quick visit: 0.5-2.5 min
+      ? Math.random() * 12 + 3
+      : Math.random() * 2 + 0.5;
     
     paths.push({
       id: `customer-${i}`,
       points,
-      isReturning: !wentToCheckout, // 계산대 안 갔으면 돌아나간 것
+      isReturning: !wentToCheckout,
       dwellTime,
     });
   }
