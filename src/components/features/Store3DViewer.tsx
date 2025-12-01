@@ -344,14 +344,14 @@ const furnitureLayout = [
   { file: 'Mannequin_상반신마네킹_0.4x1.6x0.4.glb', x: -3.5, y: 5.0, z: 0.0, rotationY: 0 },
   // DisplayTable
   { file: 'DisplayTable_중앙테이블_3.6x1.0x1.3.glb', x: -3.0, y: 1.2, z: 0.0, rotationY: 0 },
-  { file: 'DisplayTable_원형테이블_0.3x0.8x0.3.glb', x: -4.2, y: -7.7, z: 0.0, rotationY: 0 },
+  { file: 'DisplayTable_원형테이블_0.3x0.8x0.3.glb', x: -4.2, y: -4.5, z: 0.0, rotationY: 0 },
   // CheckoutCounter
   { file: 'CheckoutCounter_계산대_2.9x1.2x0.7.glb', x: 2.8, y: -4.2, z: 0.0, rotationY: 0 },
   // Rack_의류행거
-  { file: 'Rack_의류행거1_1.7x1.5x0.5.glb', x: -1.0, y: -2.9, z: 0.0, rotationY: 0 },
-  { file: 'Rack_의류행거2_1.7x1.5x0.5.glb', x: -1.0, y: -4.8, z: 0.0, rotationY: 0 },
-  { file: 'Rack_의류행거3_1.7x1.5x0.5.glb', x: -0.2, y: -2.9, z: 0.0, rotationY: 0 },
-  { file: 'Rack_의류행거4_1.7x1.5x0.5.glb', x: -0.2, y: -4.8, z: 0.0, rotationY: 0 },
+  { file: 'Rack_의류행거1_1.7x1.5x0.5.glb', x: -1.0, y: -2.9, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거2_1.7x1.5x0.5.glb', x: -1.0, y: -4.8, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거3_1.7x1.5x0.5.glb', x: -0.2, y: -2.9, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거4_1.7x1.5x0.5.glb', x: -0.2, y: -4.8, z: 0.0, rotationY: -90 },
   { file: 'Rack_의류행거5_1.7x1.5x0.5.glb', x: 2.0, y: 1.9, z: 0.0, rotationY: -90 },
   { file: 'Rack_의류행거6_1.7x1.5x0.5.glb', x: 2.0, y: 0.0, z: 0.0, rotationY: -90 },
   { file: 'Rack_의류행거7_1.7x1.5x0.5.glb', x: 5.0, y: 1.9, z: 0.0, rotationY: -90 },
@@ -359,7 +359,6 @@ const furnitureLayout = [
   // Products
   { file: 'Product_상의A_0.4x0.1x0.4.glb', x: -3.5, y: 0.9, z: 0.9, rotationY: 180 },
   { file: 'Product_하의_0.4x0.1x0.4.glb', x: -2.7, y: 1.5, z: 0.9, rotationY: 0 },
-  { file: 'Product_아우터_0.4x0.1x0.4.glb', x: -3.6, y: -3.8, z: 0.8, rotationY: 90 },
   { file: 'Product_상의B_0.5x0.9x0.1.glb', x: -1.0, y: -2.5, z: 0.6, rotationY: 0 },
   { file: 'Product_하의B_0.4x1.1x0.1.glb', x: 2.0, y: 2.5, z: 0.4, rotationY: 0 },
   { file: 'Product_아우터B_0.5x0.9x0.2.glb', x: 5.0, y: 0.0, z: 0.6, rotationY: 0 },
