@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, Cylinder, useGLTF } from "@react-three/drei";
-import { Suspense, useRef, useMemo, useState } from "react";
+import { Suspense, useRef, useMemo, useState, Component, ReactNode } from "react";
 import * as THREE from "three";
 import { 
   buildObstacles, 
@@ -389,8 +389,34 @@ const storeObstacles: Obstacle[] = buildObstacles(furnitureLayout.map(item => ({
   rotationY: item.rotationY
 })));
 
+// ErrorBoundary for individual furniture items
+class FurnitureErrorBoundary extends Component<
+  { children: ReactNode; fallback?: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.warn('Failed to load furniture model:', error.message);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
+
 // 개별 GLB 가구/제품 로더
-const FurnitureItem = ({ 
+const FurnitureItemInner = ({ 
   file, 
   x, 
   y, 
@@ -415,6 +441,19 @@ const FurnitureItem = ({
     />
   );
 };
+
+// Wrapped FurnitureItem with error boundary
+const FurnitureItem = (props: { 
+  file: string; 
+  x: number; 
+  y: number; 
+  z: number; 
+  rotationY?: number;
+}) => (
+  <FurnitureErrorBoundary>
+    <FurnitureItemInner {...props} />
+  </FurnitureErrorBoundary>
+);
 
 // GLB 매장 모델 로더
 const GLBStoreModel = () => {
