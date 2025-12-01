@@ -500,7 +500,7 @@ const StoreModel = ({
     return paths;
   }, [timeRange]);
 
-  const activePaths = customerPaths.length > 0 ? customerPaths : defaultPaths;
+  const activePaths = customerPaths;
 
   return (
     <>
