@@ -43,8 +43,6 @@ const Index = () => {
             className="absolute top-0 left-0 w-full h-full object-cover"
             title="NeuralTwin"
           />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-background" />
         </div>
 
         {/* Content Below Video */}
