@@ -249,6 +249,11 @@ export function generatePathWithBacktracking(
     cellToWorld(cell, startWorld[1] ?? 0.5)
   );
 
+  // Safety: 최소 2개 점 보장
+  if (result.length < 2) {
+    return [startWorld, targetWorld];
+  }
+
   return result;
 }
 
