@@ -105,9 +105,16 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setAuthContext(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // 에러가 발생해도 로컬 상태는 초기화
+      console.error('Sign out error:', error);
+    } finally {
+      // 항상 로컬 상태 초기화
+      setUser(null);
+      setAuthContext(null);
+    }
   };
 
   const hasRole = (role: AppRole): boolean => {

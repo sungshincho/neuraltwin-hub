@@ -57,19 +57,26 @@ export const Header = () => {
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
+    
+    // 세션이 없거나 이미 로그아웃된 경우도 성공으로 처리
+    if (error && error.message !== "Auth session missing!") {
       toast({
         title: "로그아웃 실패",
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "로그아웃 완료",
-        description: "성공적으로 로그아웃되었습니다.",
-      });
-      navigate("/");
+      return;
     }
+    
+    // 로컬 상태 초기화
+    setUser(null);
+    setProfile(null);
+    
+    toast({
+      title: "로그아웃 완료",
+      description: "성공적으로 로그아웃되었습니다.",
+    });
+    navigate("/");
   };
 
   const navigation = [
