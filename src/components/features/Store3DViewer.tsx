@@ -4,12 +4,12 @@ import { Suspense, useRef, useMemo, useState, Component, ReactNode } from "react
 import * as THREE from "three";
 import { 
   FIXED_OBSTACLES,
-  generateRandomPath, 
-  generateBrowseOnlyPath,
+  generateRandomCustomerPath,
   STORE_BOUNDS,
   BLOCKED_CELLS,
   cellKey,
-  type Obstacle
+  isNearFixture,
+  type Cell
 } from "@/lib/pathfinding";
 
 // Walkable 셀 시각화 컴포넌트
@@ -428,7 +428,7 @@ const furnitureLayout = [
 ];
 
 // Use fixed obstacles for pathfinding (Blender-based coordinates)
-const storeObstacles: Obstacle[] = FIXED_OBSTACLES;
+const storeObstacles = FIXED_OBSTACLES;
 
 // ErrorBoundary for individual furniture items
 class FurnitureErrorBoundary extends Component<
@@ -539,20 +539,21 @@ const StoreModel = ({
     const paths: CustomerPath[] = [];
     const pathCount = Math.floor((timeRange[1] - timeRange[0]) / 3);
     
+    // timeRange를 문자열로 변환 (예: "09:00-12:00")
+    const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
+    
     for (let i = 0; i < pathCount; i++) {
-      const isReturning = Math.random() > 0.6;
-      const isBrowseOnly = Math.random() > 0.7;
+      // 새 pathfinding API 사용
+      const points = generateRandomCustomerPath(timeRangeStr);
       
-      // 가구 회피 경로 생성
-      const points = isBrowseOnly 
-        ? generateBrowseOnlyPath(storeObstacles)
-        : generateRandomPath(storeObstacles);
+      // 계산대 방향(-z)으로 갔는지 확인하여 isReturning 결정
+      const wentToCheckout = points.some(p => p[2] < -3);
       
       paths.push({
         id: `path-${i}`,
         points,
-        isReturning,
-        dwellTime: isBrowseOnly ? Math.random() * 2 + 0.5 : Math.random() * 12 + 3
+        isReturning: !wentToCheckout, // 계산대 안 갔으면 돌아나간 것
+        dwellTime: wentToCheckout ? Math.random() * 12 + 3 : Math.random() * 2 + 0.5
       });
     }
     

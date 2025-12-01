@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Users, Clock, TrendingUp, MapPin } from "lucide-react";
 import { Store3DViewer } from "./Store3DViewer";
-import { 
-  FIXED_OBSTACLES, 
-  generateRandomPath, 
-  generateBrowseOnlyPath,
-  type Obstacle
-} from "@/lib/pathfinding";
+import { generateRandomCustomerPath } from "@/lib/pathfinding";
 
 interface CustomerPath {
   id: string;
@@ -21,30 +16,28 @@ interface CustomerPath {
   dwellTime: number;
 }
 
-// Use fixed obstacles from pathfinding (Blender-based coordinates)
-const obstacles: Obstacle[] = FIXED_OBSTACLES;
-
 const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
   const pathCount = Math.max(1, Math.floor((timeRange[1] - timeRange[0]) / 2));
   const paths: CustomerPath[] = [];
   
+  // timeRange를 문자열로 변환 (예: "09:00-21:00")
+  const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
+  
   for (let i = 0; i < pathCount; i++) {
-    const isReturning = Math.random() > 0.6;
-    const isBrowseOnly = Math.random() > 0.7; // 30% just browse and leave
+    // 새 pathfinding API 사용
+    const points = generateRandomCustomerPath(timeRangeStr);
     
-    // Generate furniture-aware path
-    const points = isBrowseOnly 
-      ? generateBrowseOnlyPath(obstacles)
-      : generateRandomPath(obstacles);
+    // 계산대 방향(-z)으로 갔는지 확인하여 isReturning 결정
+    const wentToCheckout = points.some(p => p[2] < -3);
     
-    const dwellTime = isBrowseOnly 
-      ? Math.random() * 2 + 0.5  // Quick visit: 0.5-2.5 min
-      : Math.random() * 12 + 3;  // Normal visit: 3-15 min
+    const dwellTime = wentToCheckout 
+      ? Math.random() * 12 + 3  // Normal visit: 3-15 min
+      : Math.random() * 2 + 0.5;  // Quick visit: 0.5-2.5 min
     
     paths.push({
       id: `customer-${i}`,
       points,
-      isReturning,
+      isReturning: !wentToCheckout, // 계산대 안 갔으면 돌아나간 것
       dwellTime,
     });
   }
