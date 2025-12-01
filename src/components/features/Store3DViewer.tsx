@@ -36,7 +36,7 @@ const WalkableCellGrid = () => {
       {walkableCells.map((cell, idx) => (
         <mesh
           key={`walkable-${idx}`}
-          position={[cell.cx, 0.02, cell.cz]}
+          position={[cell.cx, 0.5, cell.cz]}
           rotation={[-Math.PI / 2, 0, 0]}
         >
           <planeGeometry args={[0.9, 0.9]} />
