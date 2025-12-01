@@ -106,7 +106,8 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // 로컬 세션을 완전히 제거
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (error) {
       // 에러가 발생해도 로컬 상태는 초기화
       console.error('Sign out error:', error);
