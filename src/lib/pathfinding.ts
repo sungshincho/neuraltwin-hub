@@ -111,7 +111,7 @@ function isPathClear(
   start: [number, number, number],
   end: [number, number, number],
   obstacles: Obstacle[],
-  steps = 10
+  steps = 20 // More steps for better collision detection
 ): boolean {
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
@@ -125,20 +125,74 @@ function isPathClear(
   return true;
 }
 
-// Find intermediate waypoint to avoid obstacle
+// Find the blocking obstacle between two points
+function findBlockingObstacle(
+  start: [number, number, number],
+  end: [number, number, number],
+  obstacles: Obstacle[]
+): Obstacle | null {
+  for (let i = 0; i <= 20; i++) {
+    const t = i / 20;
+    const x = start[0] + (end[0] - start[0]) * t;
+    const z = start[2] + (end[2] - start[2]) * t;
+    
+    for (const o of obstacles) {
+      const dx = x - o.x;
+      const dz = z - o.z;
+      if (dx * dx + dz * dz < o.radius * o.radius) {
+        return o;
+      }
+    }
+  }
+  return null;
+}
+
+// Find detour point by going around the blocking obstacle
 function findDetourPoint(
   start: [number, number, number],
   end: [number, number, number],
-  obstacles: Obstacle[],
-  maxAttempts = 30
+  obstacles: Obstacle[]
 ): [number, number, number] | null {
+  const blocker = findBlockingObstacle(start, end, obstacles);
+  if (!blocker) return null;
+  
+  // Calculate perpendicular direction to path
+  const dx = end[0] - start[0];
+  const dz = end[2] - start[2];
+  const len = Math.sqrt(dx * dx + dz * dz);
+  if (len < 0.01) return null;
+  
+  // Perpendicular unit vector
+  const perpX = -dz / len;
+  const perpZ = dx / len;
+  
+  // Try both sides of the obstacle with increasing distance
+  const detourDistance = blocker.radius + 0.8; // Go around with margin
+  const directions = [1, -1]; // Try both perpendicular directions
+  
+  for (const dir of directions) {
+    // Create detour point perpendicular to the line, at obstacle position
+    const detourX = blocker.x + perpX * detourDistance * dir;
+    const detourZ = blocker.z + perpZ * detourDistance * dir;
+    
+    if (isWalkablePoint(detourX, detourZ, obstacles)) {
+      const detourPoint: [number, number, number] = [detourX, 0.5, detourZ];
+      
+      // Check if both path segments are clear
+      if (isPathClear(start, detourPoint, obstacles, 15) && 
+          isPathClear(detourPoint, end, obstacles, 15)) {
+        return detourPoint;
+      }
+    }
+  }
+  
+  // Fallback: try random points around the midpoint
   const midX = (start[0] + end[0]) / 2;
   const midZ = (start[2] + end[2]) / 2;
   
-  // Try points around the midpoint with increasing radius
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+  for (let attempt = 0; attempt < 20; attempt++) {
     const angle = Math.random() * Math.PI * 2;
-    const radius = 1 + Math.random() * 3; // 1-4 meters offset
+    const radius = 1.5 + Math.random() * 2;
     
     const detourX = midX + Math.cos(angle) * radius;
     const detourZ = midZ + Math.sin(angle) * radius;
@@ -146,14 +200,67 @@ function findDetourPoint(
     if (isWalkablePoint(detourX, detourZ, obstacles)) {
       const detourPoint: [number, number, number] = [detourX, 0.5, detourZ];
       
-      // Check if paths to and from detour are clearer
-      if (isPathClear(start, detourPoint, obstacles, 5) && 
-          isPathClear(detourPoint, end, obstacles, 5)) {
+      if (isPathClear(start, detourPoint, obstacles, 10) && 
+          isPathClear(detourPoint, end, obstacles, 10)) {
         return detourPoint;
       }
     }
   }
+  
   return null;
+}
+
+// Recursively smooth path segments that are blocked
+function smoothSegment(
+  start: [number, number, number],
+  end: [number, number, number],
+  obstacles: Obstacle[],
+  depth = 0
+): [number, number, number][] {
+  // Limit recursion depth
+  if (depth > 3) return [end];
+  
+  // If path is clear, just return the endpoint
+  if (isPathClear(start, end, obstacles)) {
+    return [end];
+  }
+  
+  // Path is blocked, find a detour
+  const detour = findDetourPoint(start, end, obstacles);
+  if (detour) {
+    // Recursively smooth both segments
+    const firstHalf = smoothSegment(start, detour, obstacles, depth + 1);
+    const secondHalf = smoothSegment(detour, end, obstacles, depth + 1);
+    return [...firstHalf, ...secondHalf];
+  }
+  
+  // No detour found - try to step around obstacle manually
+  const blocker = findBlockingObstacle(start, end, obstacles);
+  if (blocker) {
+    // Create waypoints that go around the obstacle
+    const angleToStart = Math.atan2(start[2] - blocker.z, start[0] - blocker.x);
+    const angleToEnd = Math.atan2(end[2] - blocker.z, end[0] - blocker.x);
+    
+    const clearance = blocker.radius + 0.8;
+    const wp1: [number, number, number] = [
+      blocker.x + Math.cos(angleToStart) * clearance,
+      0.5,
+      blocker.z + Math.sin(angleToStart) * clearance
+    ];
+    const wp2: [number, number, number] = [
+      blocker.x + Math.cos(angleToEnd) * clearance,
+      0.5,
+      blocker.z + Math.sin(angleToEnd) * clearance
+    ];
+    
+    if (isWalkablePoint(wp1[0], wp1[2], obstacles) && 
+        isWalkablePoint(wp2[0], wp2[2], obstacles)) {
+      return [wp1, wp2, end];
+    }
+  }
+  
+  // Last resort: just return the endpoint (will pass through obstacle)
+  return [end];
 }
 
 // Smooth path by adding detour points where needed
@@ -169,16 +276,8 @@ function smoothPathAroundObstacles(
     const current = points[i];
     const next = points[i + 1];
     
-    if (!isPathClear(current, next, obstacles)) {
-      // Path blocked, try to find detour
-      const detour = findDetourPoint(current, next, obstacles);
-      if (detour) {
-        smoothed.push(detour);
-      }
-      // If no detour found, path will go through obstacle (simplified approach)
-    }
-    
-    smoothed.push(next);
+    const segment = smoothSegment(current, next, obstacles);
+    smoothed.push(...segment);
   }
   
   return smoothed;
