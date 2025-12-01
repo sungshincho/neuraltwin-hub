@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, Text, Cylinder } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, Cylinder, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useMemo, useState } from "react";
 import * as THREE from "three";
 
@@ -158,36 +158,31 @@ const HeatmapCell = ({
   );
 };
 
-// 매장 벽 컴포넌트
+// ============================================================
+// threejs기존백업 - 기존 procedural 매장 컴포넌트들
+// 필요시 주석 해제하여 사용 가능
+// ============================================================
+
+/*
+// [threejs기존백업] 매장 벽 컴포넌트
 const StoreWalls = () => {
   return (
     <>
-      {/* 뒷벽 */}
       <Box args={[20.4, 4, 0.2]} position={[0, 2, -7.6]}>
         <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
       </Box>
-      
-      {/* 왼쪽 벽 */}
       <Box args={[0.2, 4, 15.2]} position={[-10.1, 2, 0]}>
         <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
       </Box>
-      
-      {/* 오른쪽 벽 */}
       <Box args={[0.2, 4, 15.2]} position={[10.1, 2, 0]}>
         <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
       </Box>
-      
-      {/* 앞벽 왼쪽 */}
       <Box args={[7, 4, 0.2]} position={[-6.5, 2, 7.6]}>
         <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
       </Box>
-      
-      {/* 앞벽 오른쪽 */}
       <Box args={[7, 4, 0.2]} position={[6.5, 2, 7.6]}>
         <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
       </Box>
-      
-      {/* 입구 상단 */}
       <Box args={[6, 1, 0.2]} position={[0, 3.5, 7.6]}>
         <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
       </Box>
@@ -195,11 +190,10 @@ const StoreWalls = () => {
   );
 };
 
-// 입구 컴포넌트
+// [threejs기존백업] 입구 컴포넌트
 const Entrance = () => {
   return (
     <group position={[0, 0, 7.5]}>
-      {/* 입구 프레임 */}
       <Box args={[0.15, 3, 0.3]} position={[-3, 1.5, 0]}>
         <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
       </Box>
@@ -209,29 +203,21 @@ const Entrance = () => {
       <Box args={[6.3, 0.2, 0.3]} position={[0, 3.1, 0]}>
         <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
       </Box>
-      
-      {/* 자동문 유리 */}
       <Box args={[2.8, 2.8, 0.05]} position={[-1.5, 1.4, 0]}>
         <meshStandardMaterial color="#87ceeb" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
       </Box>
       <Box args={[2.8, 2.8, 0.05]} position={[1.5, 1.4, 0]}>
         <meshStandardMaterial color="#87ceeb" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
       </Box>
-      
-      {/* 입구 바닥 매트 */}
       <Box args={[5, 0.05, 1.5]} position={[0, 0.025, 0.5]}>
         <meshStandardMaterial color="#4a4a4a" roughness={0.9} />
       </Box>
-      
-      {/* 입구 센서 */}
       <Box args={[0.3, 0.1, 0.1]} position={[-2.5, 2.8, 0]}>
         <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
       </Box>
       <Box args={[0.3, 0.1, 0.1]} position={[2.5, 2.8, 0]}>
         <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
       </Box>
-      
-      {/* "ENTRANCE" 표시 */}
       <Box args={[4, 0.3, 0.05]} position={[0, 3.4, 0.2]}>
         <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
       </Box>
@@ -239,55 +225,40 @@ const Entrance = () => {
   );
 };
 
-// 계산대 컴포넌트
+// [threejs기존백업] 계산대 컴포넌트
 const CheckoutCounter = () => {
   return (
     <group position={[0, 0, -6]}>
-      {/* 카운터 베이스 */}
       <Box args={[4, 1.1, 1.5]} position={[0, 0.55, 0]}>
         <meshStandardMaterial color="#2c3e50" metalness={0.4} roughness={0.5} />
       </Box>
-      
-      {/* 카운터 상판 */}
       <Box args={[4.2, 0.08, 1.7]} position={[0, 1.14, 0]}>
         <meshStandardMaterial color="#1a252f" metalness={0.6} roughness={0.3} />
       </Box>
-      
-      {/* POS 시스템 모니터 */}
       <Box args={[0.6, 0.5, 0.08]} position={[-1.2, 1.55, 0.3]}>
         <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.1} />
       </Box>
       <Box args={[0.55, 0.45, 0.02]} position={[-1.2, 1.55, 0.35]}>
         <meshStandardMaterial color="#0066cc" emissive="#0066cc" emissiveIntensity={0.3} />
       </Box>
-      
-      {/* POS 스탠드 */}
       <Box args={[0.15, 0.3, 0.15]} position={[-1.2, 1.25, 0.3]}>
         <meshStandardMaterial color="#333333" metalness={0.7} />
       </Box>
-      
-      {/* 바코드 스캐너 */}
       <Box args={[0.15, 0.12, 0.25]} position={[-0.3, 1.2, 0.4]}>
         <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
       </Box>
       <Box args={[0.12, 0.08, 0.03]} position={[-0.3, 1.22, 0.55]}>
         <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.6} />
       </Box>
-      
-      {/* 카드 결제 단말기 */}
       <Box args={[0.2, 0.15, 0.3]} position={[0.5, 1.22, 0.4]}>
         <meshStandardMaterial color="#333333" metalness={0.7} roughness={0.3} />
       </Box>
       <Box args={[0.15, 0.1, 0.02]} position={[0.5, 1.27, 0.56]}>
         <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.4} />
       </Box>
-      
-      {/* 영수증 프린터 */}
       <Box args={[0.25, 0.2, 0.25]} position={[1.3, 1.2, 0.3]}>
         <meshStandardMaterial color="#f5f5f5" roughness={0.8} />
       </Box>
-      
-      {/* "CHECKOUT" 표시판 */}
       <group position={[0, 2.5, 0]}>
         <Box args={[2, 0.4, 0.1]}>
           <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.4} />
@@ -299,8 +270,6 @@ const CheckoutCounter = () => {
           <meshStandardMaterial color="#666666" metalness={0.6} />
         </Box>
       </group>
-      
-      {/* 직원 영역 */}
       <Box args={[0.6, 0.6, 0.6]} position={[0, 0.3, -1]}>
         <meshStandardMaterial color="#6b7280" roughness={0.7} />
       </Box>
@@ -308,32 +277,25 @@ const CheckoutCounter = () => {
   );
 };
 
-// 진열대 컴포넌트
+// [threejs기존백업] 진열대 컴포넌트
 const ShelfUnit = ({ position, products }: { position: [number, number, number]; products?: string[] }) => {
   const defaultColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
   
   return (
     <group position={position}>
-      {/* 기둥 */}
       {[[-1.4, -0.4], [1.4, -0.4], [-1.4, 0.4], [1.4, 0.4]].map(([x, z], i) => (
         <Box key={i} args={[0.08, 2, 0.08]} position={[x, 1, z]}>
           <meshStandardMaterial color="#5d4037" metalness={0.3} roughness={0.7} />
         </Box>
       ))}
-      
-      {/* 선반들 */}
       {[0.4, 0.9, 1.4, 1.9].map((y, i) => (
         <Box key={i} args={[3, 0.04, 1]} position={[0, y, 0]}>
           <meshStandardMaterial color="#8d6e63" roughness={0.6} />
         </Box>
       ))}
-      
-      {/* 백판 */}
       <Box args={[3, 2, 0.04]} position={[0, 1, -0.52]}>
         <meshStandardMaterial color="#d7ccc8" />
       </Box>
-      
-      {/* 상품들 */}
       {Array.from({ length: 9 }).map((_, i) => (
         <Box 
           key={i} 
@@ -349,6 +311,16 @@ const ShelfUnit = ({ position, products }: { position: [number, number, number];
       ))}
     </group>
   );
+};
+*/
+// ============================================================
+// threejs기존백업 끝
+// ============================================================
+
+// GLB 매장 모델 로더
+const GLBStoreModel = () => {
+  const { scene } = useGLTF('/models/store-kolon.glb');
+  return <primitive object={scene} scale={1} position={[0, 0, 0]} />;
 };
 
 // 3D 매장 모델
@@ -446,85 +418,8 @@ const StoreModel = ({
 
   return (
     <>
-      {/* 바닥 */}
-      <Plane 
-        args={[20, 15]} 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[0, 0, 0]}
-      >
-        <meshStandardMaterial 
-          color="#f0f0f0" 
-          roughness={0.7}
-          metalness={0.05}
-        />
-      </Plane>
-      
-      {/* 바닥 타일 패턴 */}
-      {Array.from({ length: 10 }).map((_, i) => (
-        <Box key={`tile-x-${i}`} args={[0.03, 0.005, 15]} position={[-9 + i * 2, 0.003, 0]}>
-          <meshStandardMaterial color="#d0d0d0" />
-        </Box>
-      ))}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Box key={`tile-z-${i}`} args={[20, 0.005, 0.03]} position={[0, 0.003, -6.5 + i * 2]}>
-          <meshStandardMaterial color="#d0d0d0" />
-        </Box>
-      ))}
-
-      {/* 벽 */}
-      <StoreWalls />
-
-      {/* 천장 조명 */}
-      {[[-6, -4], [-6, 0], [-6, 4], [0, -4], [0, 0], [0, 4], [6, -4], [6, 0], [6, 4]].map(([x, z], i) => (
-        <group key={i} position={[x, 3.95, z]}>
-          <Box args={[1.2, 0.08, 1.2]}>
-            <meshStandardMaterial color="#ffffff" emissive="#fffacd" emissiveIntensity={0.6} />
-          </Box>
-        </group>
-      ))}
-
-      {/* 입구 */}
-      <Entrance />
-
-      {/* 계산대 */}
-      <CheckoutCounter />
-
-      {/* 진열대 */}
-      <ShelfUnit position={[-6, 0, -3]} />
-      <ShelfUnit position={[-6, 0, 1]} />
-      <ShelfUnit position={[-6, 0, 5]} />
-      <ShelfUnit position={[6, 0, -3]} />
-      <ShelfUnit position={[6, 0, 1]} />
-      <ShelfUnit position={[6, 0, 5]} />
-
-      {/* 중앙 디스플레이 테이블 */}
-      <group position={[0, 0, 1]}>
-        <Box args={[3, 0.8, 2]} position={[0, 0.4, 0]}>
-          <meshStandardMaterial color="#4a4a4a" metalness={0.3} roughness={0.6} />
-        </Box>
-        <Box args={[3.2, 0.06, 2.2]} position={[0, 0.83, 0]}>
-          <meshStandardMaterial color="#2c2c2c" metalness={0.5} roughness={0.4} />
-        </Box>
-        {/* 프로모션 상품 */}
-        {[[-0.8, 0], [0, 0], [0.8, 0]].map(([x, z], i) => (
-          <Box key={i} args={[0.5, 0.6, 0.5]} position={[x, 1.2, z]}>
-            <meshStandardMaterial 
-              color={['#f59e0b', '#ef4444', '#8b5cf6'][i]} 
-              emissive={['#f59e0b', '#ef4444', '#8b5cf6'][i]}
-              emissiveIntensity={0.2}
-            />
-          </Box>
-        ))}
-      </group>
-
-      {/* 쇼핑 카트 영역 */}
-      <group position={[8, 0, 6.5]}>
-        {[0, 0.45, 0.9].map((x, i) => (
-          <Box key={i} args={[0.4, 0.7, 0.5]} position={[x, 0.35, 0]}>
-            <meshStandardMaterial color="#c0392b" metalness={0.5} roughness={0.5} />
-          </Box>
-        ))}
-      </group>
+      {/* GLB 매장 모델 */}
+      <GLBStoreModel />
 
       {/* Footfall 모드 - 고객 동선 시각화 */}
       {mode === "footfall" && (
@@ -706,6 +601,9 @@ const StoreModel = ({
     </>
   );
 };
+
+// GLB 파일 프리로드
+useGLTF.preload('/models/store-kolon.glb');
 
 export const Store3DViewer = (props: Store3DViewerProps) => {
   return (
