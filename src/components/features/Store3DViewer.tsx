@@ -518,7 +518,8 @@ const StoreModel = ({
     return paths;
   }, [timeRange]);
 
-  const activePaths = customerPaths;
+  // Use customerPaths if provided and not empty, otherwise use defaultPaths
+  const activePaths = customerPaths && customerPaths.length > 0 ? customerPaths : defaultPaths;
 
   return (
     <>
