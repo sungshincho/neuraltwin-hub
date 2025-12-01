@@ -32,74 +32,65 @@ const Index = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section className="relative">
         {/* Background Video */}
-        <div className="absolute inset-0 z-0">
+        <div className="relative w-full h-screen overflow-hidden">
           <iframe
             src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1"
             frameBorder="0"
             allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
+            className="absolute top-0 left-0 w-full h-full object-cover"
             title="NeuralTwin"
           />
-          {/* Gradient overlay that appears on scroll */}
-          <div 
-            className={`absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-background/90 transition-opacity duration-500 ${
-              scrolled ? 'opacity-100' : 'opacity-0'
-            }`} 
-          />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-background" />
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-32">
-          <div className="max-w-3xl mx-auto text-center space-y-4 animate-fade-in-up">
-            {/* Headline */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white drop-shadow-lg">
-              {t("hero.headline1")}
-              <br />
-              <span className="text-white">{t("hero.headline2")}</span>
-            </h1>
+        {/* Content Below Video */}
+        <div className="bg-background py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fade-in-up">
+              {/* Headline */}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
+                {t("hero.headline1")}
+                <br />
+                <span className="text-primary">{t("hero.headline2")}</span>
+              </h1>
 
-            {/* Subheadline */}
-            <p className="text-sm md:text-base text-white drop-shadow-md max-w-2xl mx-auto">
-              {t("hero.subheadline1")}
-              <br />
-              {t("hero.subheadline2")}
-            </p>
+              {/* Subheadline */}
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+                {t("hero.subheadline1")}
+                <br />
+                {t("hero.subheadline2")}
+              </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
-              <Button 
-                asChild 
-                size="default" 
-                className="text-sm px-5 py-4 bg-white text-black hover:bg-white/90"
-                onClick={() => trackCTAClick('meeting_request_hero', '/contact', 1)}
-              >
-                <Link to="/contact">
-                  {t("hero.cta1")}
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
-              <Button 
-                asChild 
-                variant="outline" 
-                size="default" 
-                className="text-sm px-5 py-4 border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
-                onClick={() => {
-                  trackCTAClick('mini_features_hero', '/product#mini', 2);
-                  trackFunnelStep(2, 'click_mini_features');
-                }}
-              >
-                <Link to="/product#mini">{t("hero.cta2")}</Link>
-              </Button>
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
+                <Button 
+                  asChild 
+                  size="default" 
+                  className="text-sm px-5 py-4"
+                  onClick={() => trackCTAClick('meeting_request_hero', '/contact', 1)}
+                >
+                  <Link to="/contact">
+                    {t("hero.cta1")}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="default" 
+                  className="text-sm px-5 py-4"
+                  onClick={() => {
+                    trackCTAClick('mini_features_hero', '/product#mini', 2);
+                    trackFunnelStep(2, 'click_mini_features');
+                  }}
+                >
+                  <Link to="/product#mini">{t("hero.cta2")}</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
