@@ -238,6 +238,8 @@ const Auth = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // 로그인 성공 시 수동 로그아웃 플래그 제거
+        localStorage.removeItem('neuraltwin_manual_logout');
         await ensureOrganizationAndNavigateWrapper(session);
       }
     };
@@ -246,6 +248,8 @@ const Auth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        // 로그인 성공 시 수동 로그아웃 플래그 제거
+        localStorage.removeItem('neuraltwin_manual_logout');
         ensureOrganizationAndNavigateWrapper(session);
       }
     });

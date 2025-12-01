@@ -8,11 +8,28 @@ export const useAuth = () => {
   const [authContext, setAuthContext] = useState<UserAuthContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const LOGOUT_FLAG_KEY = 'neuraltwin_manual_logout';
 
   useEffect(() => {
+    const logoutFlag = localStorage.getItem(LOGOUT_FLAG_KEY);
+
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // 로그인 성공 시 수동 로그아웃 플래그 제거
+        if (event === 'SIGNED_IN' && session?.user) {
+          localStorage.removeItem(LOGOUT_FLAG_KEY);
+        }
+
+        // 수동 로그아웃 상태면 어떤 세션 이벤트도 무시하고 비로그인 유지
+        if (localStorage.getItem(LOGOUT_FLAG_KEY)) {
+          setUser(null);
+          setAuthContext(null);
+          setLoading(false);
+          setInitialized(true);
+          return;
+        }
+
         setUser(session?.user ?? null);
         
         if (session?.user) {
@@ -23,21 +40,30 @@ export const useAuth = () => {
         } else {
           setAuthContext(null);
           setLoading(false);
+          setInitialized(true);
         }
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserContext(session.user.id);
-      } else {
-        setLoading(false);
-        setInitialized(true);
-      }
-    });
+    // Then check for existing session (단, 수동 로그아웃 상태가 아니라면)
+    if (!logoutFlag) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          fetchUserContext(session.user.id);
+        } else {
+          setLoading(false);
+          setInitialized(true);
+        }
+      });
+    } else {
+      // 수동 로그아웃 상태에서는 즉시 비로그인으로 처리
+      setUser(null);
+      setAuthContext(null);
+      setLoading(false);
+      setInitialized(true);
+    }
 
     return () => subscription.unsubscribe();
   }, []);
@@ -106,6 +132,9 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      // 수동 로그아웃 플래그 설정 (새로 마운트되어도 비로그인 유지)
+      localStorage.setItem(LOGOUT_FLAG_KEY, '1');
+      
       // Supabase 전역 세션 로그아웃
       await supabase.auth.signOut();
     } catch (error) {
@@ -115,6 +144,8 @@ export const useAuth = () => {
       // 항상 로컬 상태 초기화
       setUser(null);
       setAuthContext(null);
+      setLoading(false);
+      setInitialized(true);
     }
   };
 
