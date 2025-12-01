@@ -51,7 +51,7 @@ const furnitureLayout: FurnitureItem[] = [
   { file: 'Rack_의류행거4_1.7x1.5x0.5.glb', x: -0.2, y: -4.8, z: 0.0, rotationY: -90 },
   { file: 'Rack_의류행거5_1.7x1.5x0.5.glb', x: 2.0, y: 1.9, z: 0.0, rotationY: -90 },
   { file: 'Rack_의류행거6_1.7x1.5x0.5.glb', x: 2.0, y: 0.0, z: 0.0, rotationY: -90 },
-  { file: 'Rack_의류행거7_1.7x1.5x0.5.glb', x: 5.0, y: 1.9, z: 0.0, rotationY: -90 },
+  // { file: 'Rack_의류행거7_1.7x1.5x0.5.glb', x: 5.0, y: 1.9, z: 0.0, rotationY: -90 }, // 404 error
 ];
 
 // Build obstacles once
