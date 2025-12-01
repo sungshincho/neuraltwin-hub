@@ -28,46 +28,72 @@ export const ENTRY_POINT: [number, number, number] = [1.8, 0.5, 5.6];
 export const CHECKOUT_POINT: [number, number, number] = [2.7, 0.5, -3.5];
 
 // ============================================
-// FIXED OBSTACLES - Blender에서 추출한 고정 좌표들
+// FIXED OBSTACLES - 가이드 문서의 고정 좌표들
 // 모든 장애물 반경: 0.5 (가이드 기준)
 // x = Blender X, z = Blender Y (바닥 평면)
 // ============================================
 export const FIXED_OBSTACLES: Obstacle[] = [
-  // Wall Shelves (벽면 진열대)
-  { x: -7.1, z: 3.2, radius: 0.5 },   // WallShelf1
-  { x: -7.1, z: 1.3, radius: 0.5 },   // WallShelf2
-  { x: -7.1, z: -0.6, radius: 0.5 },  // WallShelf3
-  { x: -7.1, z: -3.5, radius: 0.5 },  // WallShelf4
-  { x: -7.1, z: -5.4, radius: 0.5 },  // WallShelf5
-  { x: -4.2, z: -7.7, radius: 0.5 },  // WallShelf6
-  { x: -2.5, z: -7.7, radius: 0.5 },  // WallShelf7
-  { x: -0.6, z: -7.7, radius: 0.5 },  // WallShelf8
-  { x: 7.4, z: -1.6, radius: 0.5 },   // WallShelf9
-  { x: 7.4, z: 0.8, radius: 0.5 },    // WallShelf10
-  { x: 7.4, z: 3.2, radius: 0.5 },    // WallShelf11
-  { x: 6.0, z: 5.0, radius: 0.5 },    // WallShelf12
-  { x: 4.0, z: 5.0, radius: 0.5 },    // WallShelf13
-  // Side Shelves (사이드 진열대)
-  { x: -0.8, z: 1.2, radius: 0.5 },   // SideShelf1
-  { x: 3.6, z: -1.0, radius: 0.5 },   // SideShelf2
-  // Display Tables (디스플레이 테이블)
-  { x: -3.0, z: 1.2, radius: 0.8 },   // CenterTable (더 큰 반경)
-  { x: -4.2, z: -4.5, radius: 0.5 },  // CircularTable
-  // Checkout Counter (계산대)
-  { x: 2.8, z: -4.2, radius: 0.8 },   // CheckoutCounter (더 큰 반경)
-  // Mannequins (마네킹)
-  { x: -2.4, z: 5.0, radius: 0.5 },   // FullMannequin1
-  { x: -1.2, z: 5.0, radius: 0.5 },   // FullMannequin2
-  { x: -3.5, z: 5.0, radius: 0.5 },   // HalfMannequin
-  // Rack Hangers (행거)
-  { x: -1.0, z: -2.9, radius: 0.5 },  // Hanger1
-  { x: -1.0, z: -4.8, radius: 0.5 },  // Hanger2
-  { x: -0.2, z: -2.9, radius: 0.5 },  // Hanger3
-  { x: -0.2, z: -4.8, radius: 0.5 },  // Hanger4
-  { x: 2.0, z: 1.9, radius: 0.5 },    // Hanger5
-  { x: 2.0, z: -0.0, radius: 0.5 },   // Hanger6
-  { x: 5.0, z: 1.9, radius: 0.5 },    // Hanger7
-  { x: 5.0, z: -0.0, radius: 0.5 },   // Hanger8
+  { x: -6, z: 5, radius: 0.5 },
+  { x: -5, z: -1, radius: 0.5 },
+  { x: -5, z: 0, radius: 0.5 },
+  { x: -5, z: 1, radius: 0.5 },
+  { x: -5, z: 2, radius: 0.5 },
+  { x: -5, z: 3, radius: 0.5 },
+  { x: -5, z: 5, radius: 0.5 },
+  { x: -4, z: -5, radius: 0.5 },
+  { x: -4, z: -4, radius: 0.5 },
+  { x: -4, z: -1, radius: 0.5 },
+  { x: -4, z: 5, radius: 0.5 },
+  { x: -3, z: -5, radius: 0.5 },
+  { x: -3, z: -4, radius: 0.5 },
+  { x: -3, z: -1, radius: 0.5 },
+  { x: -3, z: 5, radius: 0.5 },
+  { x: -2, z: -5, radius: 0.5 },
+  { x: -2, z: -4, radius: 0.5 },
+  { x: -2, z: -1, radius: 0.5 },
+  { x: -2, z: 0, radius: 0.5 },
+  { x: -2, z: 1, radius: 0.5 },
+  { x: -2, z: 2, radius: 0.5 },
+  { x: -2, z: 3, radius: 0.5 },
+  { x: -1, z: -5, radius: 0.5 },
+  { x: -1, z: -4, radius: 0.5 },
+  { x: -1, z: 5, radius: 0.5 },
+  { x: 0, z: -6, radius: 0.5 },
+  { x: 0, z: -5, radius: 0.5 },
+  { x: 0, z: -4, radius: 0.5 },
+  { x: 0, z: -3, radius: 0.5 },
+  { x: 0, z: -2, radius: 0.5 },
+  { x: 0, z: 5, radius: 0.5 },
+  { x: 1, z: -5, radius: 0.5 },
+  { x: 1, z: -4, radius: 0.5 },
+  { x: 1, z: -3, radius: 0.5 },
+  { x: 1, z: -2, radius: 0.5 },
+  { x: 1, z: 1, radius: 0.5 },
+  { x: 1, z: 2, radius: 0.5 },
+  { x: 1, z: 5, radius: 0.5 },
+  { x: 2, z: -5, radius: 0.5 },
+  { x: 2, z: -4, radius: 0.5 },
+  { x: 2, z: 1, radius: 0.5 },
+  { x: 2, z: 2, radius: 0.5 },
+  { x: 2, z: 5, radius: 0.5 },
+  { x: 3, z: -6, radius: 0.5 },
+  { x: 3, z: -5, radius: 0.5 },
+  { x: 3, z: -4, radius: 0.5 },
+  { x: 3, z: -3, radius: 0.5 },
+  { x: 3, z: 1, radius: 0.5 },
+  { x: 3, z: 2, radius: 0.5 },
+  { x: 3, z: 5, radius: 0.5 },
+  { x: 4, z: -6, radius: 0.5 },
+  { x: 4, z: -5, radius: 0.5 },
+  { x: 4, z: -4, radius: 0.5 },
+  { x: 4, z: -3, radius: 0.5 },
+  { x: 4, z: 1, radius: 0.5 },
+  { x: 4, z: 2, radius: 0.5 },
+  { x: 4, z: 5, radius: 0.5 },
+  { x: 5, z: -5, radius: 0.5 },
+  { x: 5, z: -4, radius: 0.5 },
+  { x: 5, z: 1, radius: 0.5 },
+  { x: 5, z: 2, radius: 0.5 },
 ];
 
 // Helper function to get fixed obstacles
