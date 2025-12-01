@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Users, Clock, TrendingUp, MapPin } from "lucide-react";
 import { Store3DViewer } from "./Store3DViewer";
+import { 
+  buildObstacles, 
+  generateRandomPath, 
+  generateBrowseOnlyPath,
+  type FurnitureItem,
+  type Obstacle
+} from "@/lib/pathfinding";
 
 interface CustomerPath {
   id: string;
@@ -15,81 +22,63 @@ interface CustomerPath {
   dwellTime: number;
 }
 
-const generateDemoData = (timeRange: [number, number]) => {
+// Furniture layout data (same as Store3DViewer)
+const furnitureLayout: FurnitureItem[] = [
+  { file: 'Shelf_벽면진열대1_1.7x2.5x0.5.glb', x: -7.1, y: 3.2, z: 0.0, rotationY: 90 },
+  { file: 'Shelf_벽면진열대2_1.7x2.5x0.5.glb', x: -7.1, y: 1.3, z: 0.0, rotationY: 90 },
+  { file: 'Shelf_벽면진열대3_1.7x2.5x0.5.glb', x: -7.1, y: -0.6, z: 0.0, rotationY: 90 },
+  { file: 'Shelf_벽면진열대4_1.7x2.5x0.5.glb', x: -7.1, y: -3.5, z: 0.0, rotationY: 90 },
+  { file: 'Shelf_벽면진열대5_1.7x2.5x0.5.glb', x: -7.1, y: -5.4, z: 0.0, rotationY: 90 },
+  { file: 'Shelf_벽면진열대6_1.7x2.5x0.5.glb', x: -4.2, y: -7.7, z: 0.0, rotationY: 0 },
+  { file: 'Shelf_벽면진열대7_1.7x2.5x0.5.glb', x: -2.5, y: -7.7, z: 0.0, rotationY: 0 },
+  { file: 'Shelf_벽면진열대8_1.7x2.5x0.5.glb', x: -0.6, y: -7.7, z: 0.0, rotationY: 0 },
+  { file: 'Shelf_벽면진열대9_1.7x2.5x0.5.glb', x: 7.4, y: -1.6, z: 0.0, rotationY: -90 },
+  { file: 'Shelf_벽면진열대10_1.7x2.5x0.5.glb', x: 7.4, y: 0.8, z: 0.0, rotationY: -90 },
+  { file: 'Shelf_벽면진열대11_1.7x2.5x0.5.glb', x: 7.4, y: 3.2, z: 0.0, rotationY: -90 },
+  { file: 'Shelf_벽면진열대12_1.7x2.5x0.5.glb', x: 6.0, y: 5.0, z: 0.0, rotationY: -180 },
+  { file: 'Shelf_벽면진열대13_1.7x2.5x0.5.glb', x: 4.0, y: 5.0, z: 0.0, rotationY: -180 },
+  { file: 'Shelf_측면진열대1_1.2x0.4x0.4.glb', x: -0.8, y: 1.2, z: 0.1, rotationY: 90 },
+  { file: 'Shelf_측면진열대2_1.9x0.4x0.4.glb', x: 3.6, y: -1.0, z: 0.1, rotationY: 0 },
+  { file: 'Mannequin_전신마네킹1_0.7x1.8x0.7.glb', x: -2.4, y: 5.0, z: 0.1, rotationY: 0 },
+  { file: 'Mannequin_전신마네킹2_0.6x1.8x0.6.glb', x: -1.2, y: 5.0, z: 0.1, rotationY: 0 },
+  { file: 'Mannequin_상반신마네킹_0.4x1.6x0.4.glb', x: -3.5, y: 5.0, z: 0.0, rotationY: 0 },
+  { file: 'DisplayTable_중앙테이블_3.6x1.0x1.3.glb', x: -3.0, y: 1.2, z: 0.0, rotationY: 0 },
+  { file: 'DisplayTable_원형테이블_0.3x0.8x0.3.glb', x: -4.2, y: -4.5, z: 0.0, rotationY: 0 },
+  { file: 'CheckoutCounter_계산대_2.9x1.2x0.7.glb', x: 2.8, y: -4.2, z: 0.0, rotationY: 0 },
+  { file: 'Rack_의류행거1_1.7x1.5x0.5.glb', x: -1.0, y: -2.9, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거2_1.7x1.5x0.5.glb', x: -1.0, y: -4.8, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거3_1.7x1.5x0.5.glb', x: -0.2, y: -2.9, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거4_1.7x1.5x0.5.glb', x: -0.2, y: -4.8, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거5_1.7x1.5x0.5.glb', x: 2.0, y: 1.9, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거6_1.7x1.5x0.5.glb', x: 2.0, y: 0.0, z: 0.0, rotationY: -90 },
+  { file: 'Rack_의류행거7_1.7x1.5x0.5.glb', x: 5.0, y: 1.9, z: 0.0, rotationY: -90 },
+];
+
+// Build obstacles once
+const obstacles: Obstacle[] = buildObstacles(furnitureLayout);
+
+const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
   const pathCount = Math.max(1, Math.floor((timeRange[1] - timeRange[0]) / 2));
   const paths: CustomerPath[] = [];
   
   for (let i = 0; i < pathCount; i++) {
     const isReturning = Math.random() > 0.6;
-    const pathType = Math.floor(Math.random() * 5);
+    const isBrowseOnly = Math.random() > 0.7; // 30% just browse and leave
     
-    let points: [number, number, number][] = [];
+    // Generate furniture-aware path
+    const points = isBrowseOnly 
+      ? generateBrowseOnlyPath(obstacles)
+      : generateRandomPath(obstacles);
     
-      switch (pathType) {
-        case 0: // 입구 → 좌측 진열대 → 계산대
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [6, 0.5, 1.6],
-            [2.7, 0.5, -3.5],
-          ];
-          break;
-        case 1: // 입구 → 우측 진열대 → 계산대
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [-5.6, 0.5, 2.5],
-            [-5, 0.5, -0.7],
-            [0.5, 0.5, -1],
-            [2.7, 0.5, -3.5],
-          ];
-          break;
-        case 2: // 전체 순회
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [-5.6, 0.5, 2.5],
-            [-5, 0.5, -0.7],
-            [-6, 0.5, -5.5],
-            [-2.7, 0.5, -7],
-            [5.6, 0.5, -6],
-            [6, 0.5, 1.6],
-            [2, 0.5, 3.6],
-            [1.8, 0.5, 5.6],
-          ];
-          break;
-        case 3: // 중앙 디스플레이 방문
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [0.3, 0.5, 2],
-            [0.5, 0.5, -1],
-            [2.7, 0.5, -3.5],
-          ];
-          break;
-        case 4: // 빠른 통과 (구매 안함)
-          points = [
-            [1.8, 0.5, 5.6],
-            [2, 0.5, 3.6],
-            [-5.6, 0.5, 2.5],
-            [0.3, 0.5, 2],
-            [1.8, 0.5, 5.6],
-          ];
-          break;
-      }
-    
-    // 약간의 랜덤 변화
-    points = points.map(([x, y, z]) => [
-      x + (Math.random() - 0.5) * 1.5,
-      y,
-      z + (Math.random() - 0.5) * 0.8
-    ] as [number, number, number]);
+    const dwellTime = isBrowseOnly 
+      ? Math.random() * 2 + 0.5  // Quick visit: 0.5-2.5 min
+      : Math.random() * 12 + 3;  // Normal visit: 3-15 min
     
     paths.push({
       id: `customer-${i}`,
       points,
       isReturning,
-      dwellTime: pathType === 4 ? Math.random() * 2 + 0.5 : Math.random() * 12 + 3
+      dwellTime,
     });
   }
   

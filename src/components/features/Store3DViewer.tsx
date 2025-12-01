@@ -39,30 +39,37 @@ const AnimatedCustomer = ({
   const meshRef = useRef<THREE.Mesh>(null);
   const [progress, setProgress] = useState(0);
   
+  // Safety check: path must have at least 2 points
+  const safePath = path.length >= 2 ? path : [[0, 0.5, 0], [0, 0.5, 0]] as [number, number, number][];
+  
   useFrame((_, delta) => {
     setProgress((prev) => {
       const next = prev + delta * speed;
-      return next > path.length - 1 ? 0 : next;
+      return next > safePath.length - 1 ? 0 : next;
     });
     
-    if (meshRef.current && path.length > 1) {
+    if (meshRef.current && safePath.length > 1) {
       const index = Math.floor(progress);
-      const nextIndex = Math.min(index + 1, path.length - 1);
-      const t = progress - index;
+      const safeIndex = Math.min(index, safePath.length - 1);
+      const nextIndex = Math.min(safeIndex + 1, safePath.length - 1);
+      const t = progress - safeIndex;
       
-      const current = path[index];
-      const next = path[nextIndex];
+      const current = safePath[safeIndex];
+      const next = safePath[nextIndex];
       
-      meshRef.current.position.x = current[0] + (next[0] - current[0]) * t;
-      meshRef.current.position.y = current[1] + (next[1] - current[1]) * t;
-      meshRef.current.position.z = current[2] + (next[2] - current[2]) * t;
+      if (current && next) {
+        meshRef.current.position.x = current[0] + (next[0] - current[0]) * t;
+        meshRef.current.position.y = current[1] + (next[1] - current[1]) * t;
+        meshRef.current.position.z = current[2] + (next[2] - current[2]) * t;
+      }
     }
   });
 
   const color = isReturning ? "#8b5cf6" : "#3b82f6";
+  const initialPosition = safePath[0] || [0, 0.5, 0];
 
   return (
-    <Sphere ref={meshRef} args={[0.25]} position={path[0]}>
+    <Sphere ref={meshRef} args={[0.25]} position={initialPosition}>
       <meshStandardMaterial 
         color={color} 
         emissive={color} 
