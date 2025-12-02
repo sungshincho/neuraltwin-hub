@@ -157,7 +157,7 @@ const HeatmapCell = ({
   
   useFrame((state) => {
     if (meshRef.current && isHotspot) {
-      meshRef.current.position.y = 0.03 + Math.sin(state.clock.elapsedTime * 2) * 0.5;
+      meshRef.current.position.y = 0.5 + Math.sin(state.clock.elapsedTime * 2) * 0.02;
     }
   });
 
