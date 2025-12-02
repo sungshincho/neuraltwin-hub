@@ -41,26 +41,48 @@ const AnimatedCustomer = ({
   speed?: number;
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+
+  // path가 2개 미만이면 안전용 더미
+  const safePath = path.length >= 2 
+    ? path 
+    : [[0, 0.5, 0], [0, 0.5, 0]] as [number, number, number][];
+
+  // 각 손님마다 랜덤 시작 지연 (0.5초 ~ 4초)
+  const spawnDelayRef = useRef(0.5 + Math.random() * 3.5);
+  const elapsedRef = useRef(0);
+  const [started, setStarted] = useState(false);
+
+  // 진행도는 인덱스 기반
   const [progress, setProgress] = useState(0);
-  
-  // Safety check: path must have at least 2 points
-  const safePath = path.length >= 2 ? path : [[0, 0.5, 0], [0, 0.5, 0]] as [number, number, number][];
-  
+
   useFrame((_, delta) => {
+    // 손님별 로컬 경과 시간
+    elapsedRef.current += delta;
+
+    // 아직 입장 전이면 아예 숨김
+    if (!started && elapsedRef.current < spawnDelayRef.current) {
+      return;
+    }
+
+    if (!started) {
+      setStarted(true);
+    }
+
+    // 여기부터 기존 로직
     setProgress((prev) => {
       const next = prev + delta * speed;
       return next > safePath.length - 1 ? 0 : next;
     });
-    
+
     if (meshRef.current && safePath.length > 1) {
       const index = Math.floor(progress);
       const safeIndex = Math.min(index, safePath.length - 1);
       const nextIndex = Math.min(safeIndex + 1, safePath.length - 1);
       const t = progress - safeIndex;
-      
+
       const current = safePath[safeIndex];
       const next = safePath[nextIndex];
-      
+
       if (current && next) {
         meshRef.current.position.x = current[0] + (next[0] - current[0]) * t;
         meshRef.current.position.y = current[1] + (next[1] - current[1]) * t;
@@ -73,7 +95,13 @@ const AnimatedCustomer = ({
   const initialPosition = safePath[0] || [0, 0.5, 0];
 
   return (
-    <Sphere ref={meshRef} args={[0.25]} position={initialPosition}>
+    <Sphere 
+      ref={meshRef} 
+      args={[0.25]} 
+      position={initialPosition}
+      // spawnDelay 지나기 전까지는 안 보이게
+      visible={started}
+    >
       <meshStandardMaterial 
         color={color} 
         emissive={color} 
