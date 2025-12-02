@@ -157,8 +157,11 @@ const HeatmapCell = ({
   
   useFrame((state) => {
     if (meshRef.current && isHotspot) {
-      // 바닥보다 살짝 위에서 부드럽게 떠 있도록 높이를 올림
-      meshRef.current.position.y = 0.3 + Math.sin(state.clock.elapsedTime * 2) * 0.05;
+      // 핫스팟인 경우 깜빡이는 효과 (깜빡이는 속도: * 2 부분을 조절)
+      const blinkIntensity = Math.sin(state.clock.elapsedTime * 2) * 0.5 + 0.5;
+      const material = meshRef.current.material as THREE.MeshStandardMaterial;
+      material.opacity = intensity * 0.6 + blinkIntensity * 0.4;
+      material.emissiveIntensity = intensity * 0.4 + blinkIntensity * 0.5;
     }
   });
 
@@ -173,33 +176,20 @@ const HeatmapCell = ({
   const color = getColor(intensity);
 
   return (
-    <group>
-      <Plane 
-        ref={meshRef}
-        args={[1, 1]} 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[x, 0.3, z]}
-      >
-        <meshStandardMaterial 
-          color={color} 
-          transparent 
-          opacity={intensity * 0.6 + 0.1}
-          emissive={color}
-          emissiveIntensity={intensity * 0.4}
-        />
-      </Plane>
-      {isHotspot && (
-        <Cylinder args={[0.3, 0.3, intensity * 2, 16]} position={[x, intensity, z]}>
-          <meshStandardMaterial 
-            color="#ef4444" 
-            transparent 
-            opacity={0.6}
-            emissive="#ef4444"
-            emissiveIntensity={0.5}
-          />
-        </Cylinder>
-      )}
-    </group>
+    <Plane 
+      ref={meshRef}
+      args={[1, 1]} 
+      rotation={[-Math.PI / 2, 0, 0]} 
+      position={[x, 0.3, z]}
+    >
+      <meshStandardMaterial 
+        color={color} 
+        transparent 
+        opacity={intensity * 0.6 + 0.1}
+        emissive={color}
+        emissiveIntensity={intensity * 0.4}
+      />
+    </Plane>
   );
 };
 
@@ -682,7 +672,9 @@ const StoreModel = ({
             // 3D 공간 좌표로 직접 사용 (이미 generateHeatmapData에서 필터링됨)
             const x3d = cell.x;
             const z3d = cell.y;
-            const isHotspot = cell.intensity > 0.75;
+            
+            // hotspots 배열에서 현재 셀이 핫스팟인지 확인
+            const isHotspot = hotspots.some(spot => spot.x === x3d && spot.y === z3d);
             
             return (
               <HeatmapCell 
@@ -692,27 +684,6 @@ const StoreModel = ({
                 intensity={cell.intensity}
                 isHotspot={isHotspot}
               />
-            );
-          })}
-
-          {/* 핫스팟 마커 */}
-          {hotspots.map((spot, idx) => {
-            // 3D 공간 좌표로 변환 (변환 없이 직접 사용)
-            const x3d = spot.x;
-            const z3d = spot.y;
-            
-            return (
-              <group key={`hotspot-${idx}`} position={[x3d, 0, z3d]}>
-                <Cylinder args={[0.4, 0.4, spot.intensity * 3, 16]} position={[0, spot.intensity * 1.5, 0]}>
-                  <meshStandardMaterial 
-                    color="#ef4444" 
-                    transparent 
-                    opacity={0.7}
-                    emissive="#ef4444"
-                    emissiveIntensity={0.6}
-                  />
-                </Cylinder>
-              </group>
             );
           })}
 

@@ -467,7 +467,7 @@ export const TrafficHeatmap3D = () => {
             <div className="flex items-center justify-between">
               <Label htmlFor="show-hotspots" className="flex items-center gap-2">
                 <Flame className="w-3 h-3 text-red-500" />
-                핫스팟 표시
+                상위 핫스팟 표시
               </Label>
               <Switch
                 id="show-hotspots"
