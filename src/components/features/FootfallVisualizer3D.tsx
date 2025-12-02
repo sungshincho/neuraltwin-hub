@@ -18,7 +18,7 @@ interface CustomerPath {
 
 const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
   // 10 ~ 20 사이 랜덤 정수
-  const pathCount = Math.floor(Math.random() * 11) + 10;
+  const pathCount = Math.floor(Math.random() * 11) + 5;
   const paths: CustomerPath[] = [];
   
   const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
