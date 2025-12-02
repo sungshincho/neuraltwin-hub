@@ -26,9 +26,7 @@ interface Store3DViewerProps {
   layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string }>;
   // Heatmap props
   timeOfDay?: number;
-  heatmapData?: Array<{ x: number; y: number; intensity: number }>;
-  hotspots?: Array<{ x: number; y: number; intensity: number }>;
-  allowedHeatmapPositions?: Array<[number, number]>;
+  manualHeatmapPositions?: Array<[number, number]>;
 }
 
 // 애니메이션되는 고객 구체
@@ -141,64 +139,20 @@ const CustomerPathLine = ({
   );
 };
 
-// 히트맵 셀 애니메이션
-const HeatmapCell = ({ 
-  x, 
-  z, 
-  intensity, 
-  isHotspot = false 
-}: { 
-  x: number; 
-  z: number; 
-  intensity: number; 
-  isHotspot?: boolean;
-}) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  useFrame((state) => {
-    if (meshRef.current && isHotspot) {
-      meshRef.current.position.y = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.02;
-    }
-  });
-
-  const getColor = (intensity: number) => {
-    if (intensity < 0.2) return '#3b82f6';
-    if (intensity < 0.4) return '#06b6d4';
-    if (intensity < 0.6) return '#eab308';
-    if (intensity < 0.8) return '#f97316';
-    return '#ef4444';
-  };
-
-  const color = getColor(intensity);
-
+// 히트맵 셀 (단순화 버전)
+const HeatmapCell = ({ x, z }: { x: number; z: number }) => {
   return (
-    <group>
-      <Plane 
-        ref={meshRef}
-        args={[1, 1]} 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[x, 0.1, z]}
-      >
-        <meshStandardMaterial 
-          color={color} 
-          transparent 
-          opacity={intensity * 0.6 + 0.1}
-          emissive={color}
-          emissiveIntensity={intensity * 0.4}
-        />
-      </Plane>
-      {isHotspot && (
-        <Cylinder args={[0.3, 0.3, intensity * 2, 16]} position={[x, intensity, z]}>
-          <meshStandardMaterial 
-            color="#ef4444" 
-            transparent 
-            opacity={0.6}
-            emissive="#ef4444"
-            emissiveIntensity={0.5}
-          />
-        </Cylinder>
-      )}
-    </group>
+    <Plane 
+      args={[0.5, 0.5]} 
+      rotation={[-Math.PI / 2, 0, 0]} 
+      position={[x, 0.5, z]}
+    >
+      <meshStandardMaterial 
+        color="#3b82f6" 
+        transparent 
+        opacity={0.5}
+      />
+    </Plane>
   );
 };
 
@@ -512,9 +466,7 @@ const StoreModel = ({
   customerPaths = [],
   layoutProducts = [],
   timeOfDay = 14,
-  heatmapData = [],
-  hotspots = [],
-  allowedHeatmapPositions, 
+  manualHeatmapPositions = [],
 }: Store3DViewerProps) => {
   
   // 기본 고객 동선 생성 (pathfinding 기반)
@@ -676,44 +628,14 @@ const StoreModel = ({
       {/* Heatmap 모드 - 트래픽 히트맵 */}
       {mode === "heatmap" && (
         <>
-          {/* 히트맵 데이터 시각화 - allowedHeatmapPositions에 정의된 좌표만 표시 */}
-          {heatmapData.map((cell, idx) => {
-            // 3D 공간 좌표로 직접 사용 (이미 generateHeatmapData에서 필터링됨)
-            const x3d = cell.x;
-            const z3d = cell.y;
-            const isHotspot = cell.intensity > 0.75;
-            
-            return (
-              <HeatmapCell 
-                key={idx}
-                x={x3d}
-                z={z3d}
-                intensity={cell.intensity}
-                isHotspot={isHotspot}
-              />
-            );
-          })}
-
-          {/* 핫스팟 마커 */}
-          {hotspots.map((spot, idx) => {
-            // 3D 공간 좌표로 변환 (변환 없이 직접 사용)
-            const x3d = spot.x;
-            const z3d = spot.y;
-            
-            return (
-              <group key={`hotspot-${idx}`} position={[x3d, 0, z3d]}>
-                <Cylinder args={[0.4, 0.4, spot.intensity * 3, 16]} position={[0, spot.intensity * 1.5, 0]}>
-                  <meshStandardMaterial 
-                    color="#ef4444" 
-                    transparent 
-                    opacity={0.7}
-                    emissive="#ef4444"
-                    emissiveIntensity={0.6}
-                  />
-                </Cylinder>
-              </group>
-            );
-          })}
+          {/* 수동 입력된 좌표에 히트맵 셀 생성 */}
+          {manualHeatmapPositions.map(([x, z], idx) => (
+            <HeatmapCell 
+              key={idx}
+              x={x}
+              z={z}
+            />
+          ))}
 
           {/* 시간대 인디케이터 */}
           <group position={[-9, 3, -7]}>
@@ -721,7 +643,7 @@ const StoreModel = ({
               <meshStandardMaterial 
                 color="#f59e0b" 
                 emissive="#f59e0b" 
-                emissiveIntensity={(timeOfDay / 24) * 0.8 + 0.2}
+                emissiveIntensity={(timeOfDay || 14) / 24 * 0.8 + 0.2}
               />
             </Sphere>
             <Box args={[0.8, 0.2, 0.05]} position={[0, -0.6, 0]}>
