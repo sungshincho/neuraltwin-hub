@@ -77,52 +77,50 @@ const allowedHeatmapPositions: [number, number][] = [
 
 const generateHeatmapData = (timeOfDay: number): HeatmapCell[] => {
   const data: HeatmapCell[] = [];
-  const gridSize = 10;
 
   // 시간대별 패턴
   const timeMultiplier = Math.sin((timeOfDay / 24) * Math.PI) * 0.5 + 0.5;
   const isPeakHour = (timeOfDay >= 12 && timeOfDay <= 14) || (timeOfDay >= 18 && timeOfDay <= 20);
   const peakBonus = isPeakHour ? 0.25 : 0;
 
-  for (let x = 0; x < gridSize; x++) {
-    for (let y = 0; y < gridSize; y++) {
-      // 구역별 기본 강도
-      let zoneIntensity = 0;
-      
-      // 입구 영역 (y > 7)
-      if (y > 7) {
-        zoneIntensity = 0.6;
-      }
-      // 계산대 영역 (y < 2, x 중앙)
-      else if (y < 2 && x > 3 && x < 7) {
-        zoneIntensity = 0.8;
-      }
-      // 좌측 진열대 (x < 3)
-      else if (x < 3) {
-        zoneIntensity = 0.5;
-      }
-      // 우측 진열대 (x > 6)
-      else if (x > 6) {
-        zoneIntensity = 0.45;
-      }
-      // 중앙 디스플레이 (중앙, y 4-6)
-      else if (x >= 4 && x <= 6 && y >= 4 && y <= 6) {
-        zoneIntensity = 0.7;
-      }
-      // 기타 통로
-      else {
-        zoneIntensity = 0.2;
-      }
-
-      const randomVariation = (Math.random() - 0.5) * 0.2;
-      const intensity = Math.min(
-        1,
-        Math.max(0, (zoneIntensity + randomVariation + peakBonus) * timeMultiplier)
-      );
-
-      data.push({ x, y, intensity });
+  // allowedHeatmapPositions에 정의된 좌표에만 히트맵 생성
+  allowedHeatmapPositions.forEach(([x, z]) => {
+    // 구역별 기본 강도
+    let zoneIntensity = 0;
+    
+    // 입구 영역 (z = 5)
+    if (z === 5) {
+      zoneIntensity = 0.6;
     }
-  }
+    // 계산대 영역 (z < -6, x 중앙)
+    else if (z < -6 && x >= -2 && x <= 2) {
+      zoneIntensity = 0.8;
+    }
+    // 좌측 진열대 (x < -4)
+    else if (x < -4) {
+      zoneIntensity = 0.5;
+    }
+    // 우측 진열대 (x > 4)
+    else if (x > 4) {
+      zoneIntensity = 0.45;
+    }
+    // 중앙 디스플레이 (중앙, z 1-4)
+    else if (x >= -2 && x <= 2 && z >= 1 && z <= 4) {
+      zoneIntensity = 0.7;
+    }
+    // 기타 통로
+    else {
+      zoneIntensity = 0.3;
+    }
+
+    const randomVariation = (Math.random() - 0.5) * 0.2;
+    const intensity = Math.min(
+      1,
+      Math.max(0, (zoneIntensity + randomVariation + peakBonus) * timeMultiplier)
+    );
+
+    data.push({ x, y: z, intensity });
+  });
 
   return data;
 };

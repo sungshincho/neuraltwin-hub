@@ -11,28 +11,85 @@ interface HeatmapCell {
   intensity: number;
 }
 
+// 2D 그리드용 허용된 히트맵 위치
+const allowedHeatmapPositions: [number, number][] = [
+  // 입구 영역 (상단)
+  [3, 0], [4, 0], [5, 0], [6, 0],
+  
+  // 메인 통로 (세로)
+  [3, 1], [4, 1], [5, 1], [6, 1],
+  [3, 2], [4, 2], [5, 2], [6, 2],
+  [3, 3], [4, 3], [5, 3], [6, 3],
+  [3, 4], [4, 4], [5, 4], [6, 4],
+  [3, 5], [4, 5], [5, 5], [6, 5],
+  [3, 6], [4, 6], [5, 6], [6, 6],
+  [3, 7], [4, 7], [5, 7], [6, 7],
+  
+  // 좌측 진열대 영역
+  [0, 2], [1, 2], [2, 2],
+  [0, 3], [1, 3], [2, 3],
+  [0, 4], [1, 4], [2, 4],
+  [0, 5], [1, 5], [2, 5],
+  [0, 6], [1, 6], [2, 6],
+  
+  // 우측 진열대 영역
+  [7, 2], [8, 2], [9, 2],
+  [7, 3], [8, 3], [9, 3],
+  [7, 4], [8, 4], [9, 4],
+  [7, 5], [8, 5], [9, 5],
+  [7, 6], [8, 6], [9, 6],
+  
+  // 계산대 영역 (하단)
+  [3, 8], [4, 8], [5, 8], [6, 8],
+  [3, 9], [4, 9], [5, 9], [6, 9],
+];
+
 const generateHeatmapData = (timeOfDay: number): HeatmapCell[] => {
   const data: HeatmapCell[] = [];
-  const gridSize = 10;
 
-  for (let x = 0; x < gridSize; x++) {
-    for (let y = 0; y < gridSize; y++) {
-      // Entrance area (top) has higher traffic
-      const entranceBoost = y < 2 ? 0.5 : 0;
-      // Center aisle has higher traffic
-      const aisleBoost = x > 3 && x < 6 ? 0.3 : 0;
-      // Time-based variation
-      const timeMultiplier = Math.sin((timeOfDay / 24) * Math.PI) * 0.5 + 0.5;
-      
-      const baseIntensity = Math.random() * 0.3;
-      const intensity = Math.min(
-        1,
-        (baseIntensity + entranceBoost + aisleBoost) * timeMultiplier
-      );
+  // 시간대별 패턴
+  const timeMultiplier = Math.sin((timeOfDay / 24) * Math.PI) * 0.5 + 0.5;
+  const isPeakHour = (timeOfDay >= 12 && timeOfDay <= 14) || (timeOfDay >= 18 && timeOfDay <= 20);
+  const peakBonus = isPeakHour ? 0.25 : 0;
 
-      data.push({ x, y, intensity });
+  // allowedHeatmapPositions에 정의된 좌표에만 히트맵 생성
+  allowedHeatmapPositions.forEach(([x, y]) => {
+    // 구역별 기본 강도
+    let zoneIntensity = 0;
+    
+    // 입구 영역 (y = 0)
+    if (y === 0) {
+      zoneIntensity = 0.6;
     }
-  }
+    // 계산대 영역 (y >= 8)
+    else if (y >= 8 && x >= 3 && x <= 6) {
+      zoneIntensity = 0.8;
+    }
+    // 좌측 진열대 (x < 3)
+    else if (x < 3) {
+      zoneIntensity = 0.5;
+    }
+    // 우측 진열대 (x > 6)
+    else if (x > 6) {
+      zoneIntensity = 0.45;
+    }
+    // 중앙 통로 (x 3-6, y 1-7)
+    else if (x >= 3 && x <= 6 && y >= 1 && y <= 7) {
+      zoneIntensity = 0.4;
+    }
+    // 기타
+    else {
+      zoneIntensity = 0.2;
+    }
+
+    const randomVariation = (Math.random() - 0.5) * 0.2;
+    const intensity = Math.min(
+      1,
+      Math.max(0, (zoneIntensity + randomVariation + peakBonus) * timeMultiplier)
+    );
+
+    data.push({ x, y, intensity });
+  });
 
   return data;
 };
@@ -82,6 +139,14 @@ export const TrafficHeatmap = () => {
   const avgIntensity = heatmapData.reduce((sum, d) => sum + d.intensity, 0) / heatmapData.length;
   const hotspots = heatmapData.filter((d) => d.intensity > 0.7).length;
 
+  // 10x10 그리드에서 허용된 위치만 표시
+  const gridCells = Array.from({ length: 100 }, (_, idx) => {
+    const x = idx % 10;
+    const y = Math.floor(idx / 10);
+    const cellData = heatmapData.find(cell => cell.x === x && cell.y === y);
+    return { x, y, intensity: cellData?.intensity || 0, isAllowed: !!cellData };
+  });
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-3 gap-6">
@@ -109,12 +174,14 @@ export const TrafficHeatmap = () => {
           <Card className="glass p-6">
             <div className="relative aspect-square max-w-md mx-auto">
               <div className="absolute inset-0 grid grid-cols-10 gap-1">
-                {heatmapData.map((cell, idx) => (
+                {gridCells.map((cell, idx) => (
                   <div
                     key={idx}
-                    className={`rounded-sm transition-all duration-300 ${getHeatColor(
-                      cell.intensity
-                    )}`}
+                    className={`rounded-sm transition-all duration-300 ${
+                      cell.isAllowed 
+                        ? getHeatColor(cell.intensity)
+                        : 'bg-muted/10'
+                    }`}
                   />
                 ))}
               </div>

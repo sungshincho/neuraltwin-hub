@@ -676,25 +676,12 @@ const StoreModel = ({
       {/* Heatmap 모드 - 트래픽 히트맵 */}
       {mode === "heatmap" && (
         <>
-          {/* 히트맵 데이터 시각화 */}
+          {/* 히트맵 데이터 시각화 - allowedHeatmapPositions에 정의된 좌표만 표시 */}
           {heatmapData.map((cell, idx) => {
-            const x3d = (cell.x - 4.5) * 2;
-            const z3d = (cell.y - 4.5) * 1.4;
+            // 3D 공간 좌표로 직접 사용 (이미 generateHeatmapData에서 필터링됨)
+            const x3d = cell.x;
+            const z3d = cell.y;
             const isHotspot = cell.intensity > 0.75;
-            const isAllowed =
-        !allowedHeatmapPositions || 
-        allowedHeatmapPositions.length === 0 ||
-        allowedHeatmapPositions.some(([ax, az]) => {
-          const dx = ax - x3d;
-          const dz = az - z3d;
-          // 거리 기반 허용 (0.1 이하 정도)
-          return dx * dx + dz * dz < 0.1 * 0.1;
-        });
-
-      if (!isAllowed) {
-        return null; // 이 셀은 컴포넌트 자체를 생성하지 않음
-      }
-
             
             return (
               <HeatmapCell 
@@ -709,8 +696,9 @@ const StoreModel = ({
 
           {/* 핫스팟 마커 */}
           {hotspots.map((spot, idx) => {
-            const x3d = (spot.x - 4.5) * 2;
-            const z3d = (spot.y - 4.5) * 1.4;
+            // 3D 공간 좌표로 변환 (변환 없이 직접 사용)
+            const x3d = spot.x;
+            const z3d = spot.y;
             
             return (
               <group key={`hotspot-${idx}`} position={[x3d, 0, z3d]}>
