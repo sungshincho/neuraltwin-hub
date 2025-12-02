@@ -346,6 +346,34 @@ function weightedRandomSelect(weights: number[]): number {
 }
 
 /**
+ * 대각선 이동을 수평/수직 이동으로 변환
+ */
+function convertToOrthogonalPath(path: [number, number, number][]): [number, number, number][] {
+  if (path.length < 2) return path;
+  
+  const orthogonalPath: [number, number, number][] = [path[0]];
+  
+  for (let i = 1; i < path.length; i++) {
+    const prev = path[i - 1];
+    const curr = path[i];
+    
+    const dx = Math.abs(curr[0] - prev[0]);
+    const dz = Math.abs(curr[2] - prev[2]);
+    
+    // x와 z가 모두 변하면 (대각선 이동) 중간 웨이포인트 삽입
+    if (dx > 0.01 && dz > 0.01) {
+      // 수평 이동 먼저 (x축), 그 다음 수직 이동 (z축)
+      const waypoint: [number, number, number] = [curr[0], prev[1], prev[2]];
+      orthogonalPath.push(waypoint);
+    }
+    
+    orthogonalPath.push(curr);
+  }
+  
+  return orthogonalPath;
+}
+
+/**
  * 시간대 기반 랜덤 고객 경로 생성
  */
 export function generateRandomCustomerPath(timeRange: string): [number, number, number][] {
@@ -353,8 +381,8 @@ export function generateRandomCustomerPath(timeRange: string): [number, number, 
   const weights = TIME_SLOT_WEIGHTS[timeSlot];
   const caseIndex = weightedRandomSelect(weights);
   
-  // 선택된 케이스의 경로 복사본 반환
-  return [...PATH_CASES[caseIndex]];
+  // 대각선 이동을 수평/수직으로 변환하여 반환
+  return convertToOrthogonalPath([...PATH_CASES[caseIndex]]);
 }
 
 /**
