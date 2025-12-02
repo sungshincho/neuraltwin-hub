@@ -389,7 +389,7 @@ const furnitureLayout = [
   { file: 'Mannequin_HalfMannequin_0.4x1.6x0.4.glb', x: -3.5, y: 5.0, z: 0.0, rotationY: 0 },
   // DisplayTable
   { file: 'DisplayTable_CenterTable_3.6x1.0x1.3.glb', x: -3.0, y: 1.2, z: 0.0, rotationY: 0 },
-  { file: 'DisplayTable_CircularTable_0.3x0.8x0.3.glb', x: -4.2, y: -4.5, z: 0.0, rotationY: 0 },
+  { file: 'DisplayTable_CircularTable_0.3x0.8x0.3.glb', x: -3.5, y: -4.5, z: 0.0, rotationY: 0 },
   // CheckoutCounter
   { file: 'CheckoutCounter_CheckoutCounter_2.9x1.2x0.7.glb', x: 2.8, y: -4.2, z: 0.0, rotationY: 0 },
   // Rack_Hanger
