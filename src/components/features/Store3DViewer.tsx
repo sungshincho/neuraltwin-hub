@@ -132,9 +132,9 @@ const CustomerPathLine = ({
     <Line
       points={points}
       color={color}
-      lineWidth={2}
-      transparent
-      opacity={0.4}
+      lineWidth={3}
+      transparent={false}  
+      opacity={1}
       dashed={false}  
     />
   );
