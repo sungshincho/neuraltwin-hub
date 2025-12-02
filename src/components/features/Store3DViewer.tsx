@@ -29,7 +29,6 @@ interface Store3DViewerProps {
   heatmapData?: Array<{ x: number; y: number; intensity: number }>;
   hotspots?: Array<{ x: number; y: number; intensity: number }>;
   allowedHeatmapPositions?: Array<[number, number]>;
-  showHotspots?: boolean;
 }
 
 // 애니메이션되는 고객 구체
@@ -147,43 +146,19 @@ const HeatmapCell = ({
   x, 
   z, 
   intensity, 
-  isHotspot = false,
-  showHotspots = true
+  isHotspot = false 
 }: { 
   x: number; 
   z: number; 
   intensity: number; 
   isHotspot?: boolean;
-  showHotspots?: boolean;
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
-    if (meshRef.current) {
-      // 기본 위치 유지
-      meshRef.current.position.y = 0.3;
-      
-      // 핫스팟이고 표시가 켜져 있을 때만 색상 깜빡임
-      if (isHotspot && showHotspots && meshRef.current.material) {
-        const material = meshRef.current.material as THREE.MeshStandardMaterial;
-        const blinkSpeed = 2;
-        const t = (Math.sin(state.clock.elapsedTime * blinkSpeed) + 1) / 2;
-        
-        const baseColor = getColor(intensity);
-        const whiteColor = '#ffffff';
-        
-        // intensity 색상과 하얀색 사이 보간
-        const r1 = parseInt(baseColor.slice(1, 3), 16) / 255;
-        const g1 = parseInt(baseColor.slice(3, 5), 16) / 255;
-        const b1 = parseInt(baseColor.slice(5, 7), 16) / 255;
-        
-        const r = r1 + (1 - r1) * t;
-        const g = g1 + (1 - g1) * t;
-        const b = b1 + (1 - b1) * t;
-        
-        material.color.setRGB(r, g, b);
-        material.emissive.setRGB(r * 0.4, g * 0.4, b * 0.4);
-      }
+    if (meshRef.current && isHotspot) {
+      // 바닥보다 살짝 위에서 부드럽게 떠 있도록 높이를 올림
+      meshRef.current.position.y = 0.3 + Math.sin(state.clock.elapsedTime * 2) * 0.05;
     }
   });
 
@@ -198,20 +173,33 @@ const HeatmapCell = ({
   const color = getColor(intensity);
 
   return (
-    <Plane 
-      ref={meshRef}
-      args={[1, 1]} 
-      rotation={[-Math.PI / 2, 0, 0]} 
-      position={[x, 0.3, z]}
-    >
-      <meshStandardMaterial 
-        color={color} 
-        transparent 
-        opacity={intensity * 0.6 + 0.1}
-        emissive={color}
-        emissiveIntensity={intensity * 0.4}
-      />
-    </Plane>
+    <group>
+      <Plane 
+        ref={meshRef}
+        args={[1, 1]} 
+        rotation={[-Math.PI / 2, 0, 0]} 
+        position={[x, 0.3, z]}
+      >
+        <meshStandardMaterial 
+          color={color} 
+          transparent 
+          opacity={intensity * 0.6 + 0.1}
+          emissive={color}
+          emissiveIntensity={intensity * 0.4}
+        />
+      </Plane>
+      {isHotspot && (
+        <Cylinder args={[0.3, 0.3, intensity * 2, 16]} position={[x, intensity, z]}>
+          <meshStandardMaterial 
+            color="#ef4444" 
+            transparent 
+            opacity={0.6}
+            emissive="#ef4444"
+            emissiveIntensity={0.5}
+          />
+        </Cylinder>
+      )}
+    </group>
   );
 };
 
@@ -527,8 +515,7 @@ const StoreModel = ({
   timeOfDay = 14,
   heatmapData = [],
   hotspots = [],
-  allowedHeatmapPositions,
-  showHotspots = true,
+  allowedHeatmapPositions, 
 }: Store3DViewerProps) => {
   
   // 기본 고객 동선 생성 (pathfinding 기반)
@@ -695,11 +682,7 @@ const StoreModel = ({
             // 3D 공간 좌표로 직접 사용 (이미 generateHeatmapData에서 필터링됨)
             const x3d = cell.x;
             const z3d = cell.y;
-            
-            // hotspots 배열에 있는지 확인하여 isHotspot 결정
-            const isHotspot = hotspots.some(
-              spot => spot.x === cell.x && spot.y === cell.y
-            );
+            const isHotspot = cell.intensity > 0.75;
             
             return (
               <HeatmapCell 
@@ -708,8 +691,28 @@ const StoreModel = ({
                 z={z3d}
                 intensity={cell.intensity}
                 isHotspot={isHotspot}
-                showHotspots={showHotspots}
               />
+            );
+          })}
+
+          {/* 핫스팟 마커 */}
+          {hotspots.map((spot, idx) => {
+            // 3D 공간 좌표로 변환 (변환 없이 직접 사용)
+            const x3d = spot.x;
+            const z3d = spot.y;
+            
+            return (
+              <group key={`hotspot-${idx}`} position={[x3d, 0, z3d]}>
+                <Cylinder args={[0.4, 0.4, spot.intensity * 3, 16]} position={[0, spot.intensity * 1.5, 0]}>
+                  <meshStandardMaterial 
+                    color="#ef4444" 
+                    transparent 
+                    opacity={0.7}
+                    emissive="#ef4444"
+                    emissiveIntensity={0.6}
+                  />
+                </Cylinder>
+              </group>
             );
           })}
 
