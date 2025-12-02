@@ -94,7 +94,10 @@ const Auth = () => {
 
         if (memberError) {
           console.error("Error creating organization member:", memberError);
-          throw memberError;
+          // 특정 권한 오류(예: permission denied for table users)는 치명적 오류로 보지 않고 계속 진행
+          if (memberError.code !== '42501') {
+            throw memberError;
+          }
         }
       }
 
@@ -189,18 +192,21 @@ const Auth = () => {
           const userRole = userRoleType === 'HQ' ? 'ORG_HQ' : 'ORG_STORE';
 
           // Add user to organization with selected role
-          const { error: memberError } = await supabase
-            .from('organization_members')
-            .insert({
-              user_id: session.user.id,
-              org_id: orgId,
-              role: userRole,
-            });
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({
+            user_id: session.user.id,
+            org_id: orgId,
+            role: userRole,
+          });
 
-          if (memberError) {
-            console.error("Error creating organization member:", memberError);
+        if (memberError) {
+          console.error("Error creating organization member:", memberError);
+          // 특정 권한 오류(예: permission denied for table users)는 치명적 오류로 보지 않고 계속 진행
+          if (memberError.code !== '42501') {
             throw memberError;
           }
+        }
         }
 
         // Check if user has an active subscription
