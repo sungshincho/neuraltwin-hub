@@ -4398,7 +4398,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_user_orgs: {
+        Row: {
+          org_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          org_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          org_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_access_membership: {

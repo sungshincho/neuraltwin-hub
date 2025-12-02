@@ -569,7 +569,7 @@ const StoreModel = ({
                 <AnimatedCustomer 
                   path={path.points} 
                   isReturning={path.isReturning}
-                  speed={0.3 + Math.random() * 0.4}
+                  speed={1.5 + Math.random() * 1.0}
                 />
               </group>
             );
