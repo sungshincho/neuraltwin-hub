@@ -157,7 +157,8 @@ const HeatmapCell = ({
   
   useFrame((state) => {
     if (meshRef.current && isHotspot) {
-      meshRef.current.position.y = 0.1 + Math.sin(state.clock.elapsedTime * 2) * 0.02;
+      // 바닥보다 살짝 위에서 부드럽게 떠 있도록 높이를 올림
+      meshRef.current.position.y = 0.3 + Math.sin(state.clock.elapsedTime * 2) * 0.05;
     }
   });
 
@@ -177,7 +178,7 @@ const HeatmapCell = ({
         ref={meshRef}
         args={[1, 1]} 
         rotation={[-Math.PI / 2, 0, 0]} 
-        position={[x, 0.02, z]}
+        position={[x, 0.3, z]}
       >
         <meshStandardMaterial 
           color={color} 
