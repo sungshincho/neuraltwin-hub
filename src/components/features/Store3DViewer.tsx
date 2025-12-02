@@ -22,6 +22,7 @@ interface Store3DViewerProps {
   showNew?: boolean;
   showHeatmap?: boolean;
   customerPaths?: CustomerPath[];
+  isPlaying?: boolean;
   // Layout props
   layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string }>;
   // Heatmap props
@@ -35,11 +36,13 @@ interface Store3DViewerProps {
 const AnimatedCustomer = ({ 
   path, 
   isReturning, 
-  speed = 8 
+  speed = 8,
+  isPlaying = true
 }: { 
   path: [number, number, number][]; 
   isReturning: boolean; 
   speed?: number;
+  isPlaying?: boolean;
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -67,6 +70,11 @@ const AnimatedCustomer = ({
 
     if (!started) {
       setStarted(true);
+    }
+
+    // isPlaying이 false면 애니메이션 멈춤
+    if (!isPlaying) {
+      return;
     }
 
     // 여기부터 기존 로직
@@ -508,6 +516,7 @@ const StoreModel = ({
   showNew = true,
   showHeatmap = false,
   customerPaths = [],
+  isPlaying = true,
   layoutProducts = [],
   timeOfDay = 14,
   heatmapData = [],
@@ -564,10 +573,11 @@ const StoreModel = ({
                   isReturning={path.isReturning} 
                 />
                 <AnimatedCustomer 
-                  path={path.points} 
-                  isReturning={path.isReturning}
-                  speed={1.5 + Math.random() * 1.0}
-                />
+              path={path.points} 
+              isReturning={path.isReturning}
+              speed={1.5 + Math.random() * 1.0}
+              isPlaying={isPlaying}
+            />
               </group>
             );
           })}

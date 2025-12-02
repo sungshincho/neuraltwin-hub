@@ -46,8 +46,7 @@ export const FootfallVisualizer3D = () => {
   const [timeRange, setTimeRange] = useState<[number, number]>([9, 21]);
   const [showReturning, setShowReturning] = useState(true);
   const [showNew, setShowNew] = useState(true);
-  const [showHeatmap, setShowHeatmap] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [currentHour, setCurrentHour] = useState(9);
   
   const customerPaths = useMemo(() => generateDemoData(timeRange), [timeRange]);
@@ -96,8 +95,8 @@ export const FootfallVisualizer3D = () => {
         timeRange={[timeRange[0], currentHour]}
         showReturning={showReturning}
         showNew={showNew}
-        showHeatmap={showHeatmap}
         customerPaths={filteredPaths}
+        isPlaying={isPlaying}
       />
 
       {/* 컨트롤 패널 */}
@@ -189,18 +188,6 @@ export const FootfallVisualizer3D = () => {
                 id="returning-visitors" 
                 checked={showReturning} 
                 onCheckedChange={setShowReturning} 
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3 h-3 text-red-500" />
-                <Label htmlFor="heatmap-overlay">히트맵 오버레이</Label>
-              </div>
-              <Switch 
-                id="heatmap-overlay" 
-                checked={showHeatmap} 
-                onCheckedChange={setShowHeatmap} 
               />
             </div>
           </div>
