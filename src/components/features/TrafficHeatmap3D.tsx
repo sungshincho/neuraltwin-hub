@@ -116,7 +116,7 @@ const generateHeatmapData = (timeOfDay: number): HeatmapCell[] => {
     const randomVariation = (Math.random() - 0.5) * 0.2;
     const intensity = Math.min(
       1,
-      Math.max(0.15, (zoneIntensity + randomVariation + peakBonus) * timeMultiplier)
+      Math.max(0.5, (zoneIntensity + randomVariation + peakBonus) * timeMultiplier)
     );
 
     data.push({ x, y: z, intensity });
