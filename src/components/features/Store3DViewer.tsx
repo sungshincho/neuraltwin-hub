@@ -28,6 +28,7 @@ interface Store3DViewerProps {
   timeOfDay?: number;
   heatmapData?: Array<{ x: number; y: number; intensity: number }>;
   hotspots?: Array<{ x: number; y: number; intensity: number }>;
+  allowedHeatmapPositions?: Array<[number, number]>;
 }
 
 // 애니메이션되는 고객 구체
@@ -512,7 +513,8 @@ const StoreModel = ({
   layoutProducts = [],
   timeOfDay = 14,
   heatmapData = [],
-  hotspots = []
+  hotspots = [],
+  allowedHeatmapPositions, 
 }: Store3DViewerProps) => {
   
   // 기본 고객 동선 생성 (pathfinding 기반)
@@ -679,6 +681,20 @@ const StoreModel = ({
             const x3d = (cell.x - 4.5) * 2;
             const z3d = (cell.y - 4.5) * 1.4;
             const isHotspot = cell.intensity > 0.75;
+            const isAllowed =
+        !allowedHeatmapPositions || 
+        allowedHeatmapPositions.length === 0 ||
+        allowedHeatmapPositions.some(([ax, az]) => {
+          const dx = ax - x3d;
+          const dz = az - z3d;
+          // 거리 기반 허용 (0.1 이하 정도)
+          return dx * dx + dz * dz < 0.1 * 0.1;
+        });
+
+      if (!isAllowed) {
+        return null; // 이 셀은 컴포넌트 자체를 생성하지 않음
+      }
+
             
             return (
               <HeatmapCell 
