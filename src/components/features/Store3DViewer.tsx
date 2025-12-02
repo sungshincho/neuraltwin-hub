@@ -177,7 +177,7 @@ const HeatmapCell = ({
         ref={meshRef}
         args={[1, 1]} 
         rotation={[-Math.PI / 2, 0, 0]} 
-        position={[x, 1, z]}
+        position={[x, 0.02, z]}
       >
         <meshStandardMaterial 
           color={color} 
