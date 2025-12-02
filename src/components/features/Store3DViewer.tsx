@@ -156,12 +156,19 @@ const HeatmapCell = ({
   const meshRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
-    if (meshRef.current && isHotspot) {
-      // 핫스팟인 경우 깜빡이는 효과 (깜빡이는 속도: * 2 부분을 조절)
-      const blinkIntensity = Math.sin(state.clock.elapsedTime * 6) * 0.5 + 0.5;
+    if (meshRef.current) {
       const material = meshRef.current.material as THREE.MeshStandardMaterial;
-      material.opacity = intensity * 0.6 + blinkIntensity * 0.4;
-      material.emissiveIntensity = intensity * 0.4 + blinkIntensity * 0.5;
+      
+      if (isHotspot) {
+        // 핫스팟인 경우 깜빡이는 효과 (깜빡이는 속도: * 6 부분을 조절)
+        const blinkIntensity = Math.sin(state.clock.elapsedTime * 6) * 0.5 + 0.5;
+        material.opacity = intensity * 0.6 + blinkIntensity * 0.4;
+        material.emissiveIntensity = intensity * 0.4 + blinkIntensity * 0.5;
+      } else {
+        // 핫스팟이 아닌 경우 원래 intensity에 맞는 값으로 복구
+        material.opacity = intensity * 0.6 + 0.1;
+        material.emissiveIntensity = intensity * 0.4;
+      }
     }
   });
 
@@ -687,19 +694,6 @@ const StoreModel = ({
             );
           })}
 
-          {/* 시간대 인디케이터 */}
-          <group position={[-9, 3, -7]}>
-            <Sphere args={[0.4]}>
-              <meshStandardMaterial 
-                color="#f59e0b" 
-                emissive="#f59e0b" 
-                emissiveIntensity={(timeOfDay / 24) * 0.8 + 0.2}
-              />
-            </Sphere>
-            <Box args={[0.8, 0.2, 0.05]} position={[0, -0.6, 0]}>
-              <meshStandardMaterial color="#333" />
-            </Box>
-          </group>
         </>
       )}
     </>
