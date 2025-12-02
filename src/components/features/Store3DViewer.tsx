@@ -34,7 +34,7 @@ interface Store3DViewerProps {
 const AnimatedCustomer = ({ 
   path, 
   isReturning, 
-  speed = 4 
+  speed = 8 
 }: { 
   path: [number, number, number][]; 
   isReturning: boolean; 
