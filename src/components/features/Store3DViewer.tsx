@@ -31,7 +31,7 @@ interface Store3DViewerProps {
   allowedHeatmapPositions?: Array<[number, number]>;
 }
 
-// 애니메이션되는 고객 구체 (trail 경로선 포함)
+// 애니메이션되는 고객 구체
 const AnimatedCustomer = ({ 
   path, 
   isReturning, 
@@ -95,44 +95,22 @@ const AnimatedCustomer = ({
   const color = isReturning ? "#8b5cf6" : "#3b82f6";
   const initialPosition = safePath[0] || [0, 0.5, 0];
 
-  // 지나간 경로만 추출 (trail effect)
-  const trailPoints = useMemo(() => {
-    if (!started) return [];
-    const currentIndex = Math.floor(progress);
-    const slicedPath = safePath.slice(0, Math.min(currentIndex + 2, safePath.length));
-    return slicedPath.length >= 2 ? slicedPath : [];
-  }, [progress, started, safePath]);
-
   return (
-    <group>
-      {/* Trail 경로선 - 지나간 부분만 표시 */}
-      {trailPoints.length >= 2 && (
-        <Line
-          points={trailPoints}
-          color={color}
-          lineWidth={3}
-          transparent={false}
-          opacity={1}
-          dashed={false}
-        />
-      )}
-      
-      {/* 고객 구체 */}
-      <Sphere 
-        ref={meshRef} 
-        args={[0.25]} 
-        position={initialPosition}
-        visible={started}
-      >
-        <meshStandardMaterial 
-          color={color} 
-          emissive={color} 
-          emissiveIntensity={0.6}
-          transparent
-          opacity={0.9}
-        />
-      </Sphere>
-    </group>
+    <Sphere 
+      ref={meshRef} 
+      args={[0.25]} 
+      position={initialPosition}
+      // spawnDelay 지나기 전까지는 안 보이게
+      visible={started}
+    >
+      <meshStandardMaterial 
+        color={color} 
+        emissive={color} 
+        emissiveIntensity={0.6}
+        transparent
+        opacity={0.9}
+      />
+    </Sphere>
   );
 };
 
@@ -213,7 +191,7 @@ const HeatmapCell = ({
       {isHotspot && (
         <Cylinder args={[0.3, 0.3, intensity * 2, 16]} position={[x, intensity, z]}>
           <meshStandardMaterial 
-            color={color}  
+            color="#ef4444" 
             transparent 
             opacity={0.6}
             emissive="#ef4444"
@@ -577,18 +555,23 @@ const StoreModel = ({
       {/* Footfall 모드 - 고객 동선 시각화 */}
       {mode === "footfall" && (
         <>
-          {/* 고객 구체 + Trail 경로선 */}
+          {/* 고객 동선 라인 */}
           {activePaths.map((path, i) => {
             if ((path.isReturning && !showReturning) || (!path.isReturning && !showNew)) {
               return null;
             }
             return (
-              <AnimatedCustomer 
-                key={path.id}
-                path={path.points} 
-                isReturning={path.isReturning}
-                speed={0.3 + Math.random() * 0.4}
-              />
+              <group key={path.id}>
+                <CustomerPathLine 
+                  points={path.points} 
+                  isReturning={path.isReturning} 
+                />
+                <AnimatedCustomer 
+                  path={path.points} 
+                  isReturning={path.isReturning}
+                  speed={0.3 + Math.random() * 0.4}
+                />
+              </group>
             );
           })}
 
