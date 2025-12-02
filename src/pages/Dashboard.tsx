@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [organization, setOrganization] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -38,6 +39,17 @@ const Dashboard = () => {
           ...orgMember.organizations,
           role: orgMember.role
         });
+
+        // Load subscription info
+        const { data: subData } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('org_id', orgMember.org_id)
+          .single();
+
+        if (subData) {
+          setSubscription(subData);
+        }
       }
 
       setLoading(false);
@@ -57,17 +69,25 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Mock project data - 실제 프로젝트에서는 데이터베이스에서 가져옴
-  const projects = [
-    {
-      id: 1,
-      name: "Dashboard_1",
-      description: "실시간 매장 분석 및 고객 동선 추적",
-      url: "https://neuraltwintest.app/",
-      icon: BarChart3,
-      status: "active"
+  const handleOpenDashboard = async () => {
+    try {
+      // Get current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.error('No active session');
+        return;
+      }
+
+      // Open dashboard with token
+      const dashboardUrl = `https://neuraltwintest.app?token=${session.access_token}`;
+      window.open(dashboardUrl, '_blank');
+    } catch (error) {
+      console.error('Error opening dashboard:', error);
     }
-  ];
+  };
+
+  const isSubscriptionActive = subscription?.status === 'active';
 
   if (loading) {
     return (
@@ -91,50 +111,75 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => {
-              const Icon = project.icon;
-              return (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                        {project.status === "active" ? "활성" : "비활성"}
-                      </span>
-                    </div>
-                    <CardTitle className="mt-4">{project.name}</CardTitle>
-                    <CardDescription>{project.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => window.open(project.url, '_blank')}
-                    >
-                      대시보드 열기
-                      <ExternalLink className="ml-2 w-4 h-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <BarChart3 className="w-6 h-6 text-primary" />
+                </div>
+                {isSubscriptionActive && (
+                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                    활성
+                  </span>
+                )}
+              </div>
+              <CardTitle className="mt-4">고객 대시보드</CardTitle>
+              <CardDescription>실시간 매장 분석 및 고객 동선 추적</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                className="w-full" 
+                onClick={handleOpenDashboard}
+                disabled={!isSubscriptionActive}
+              >
+                대시보드 열기
+                <ExternalLink className="ml-2 w-4 h-4" />
+              </Button>
+              {!isSubscriptionActive && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  구독이 필요합니다
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>구독 정보</CardTitle>
-              <CardDescription>현재 Pro 플랜을 사용 중입니다</CardDescription>
+              <CardDescription>
+                {subscription ? (
+                  subscription.status === 'active' ? '활성 구독을 사용 중입니다' : '구독이 활성화되지 않았습니다'
+                ) : (
+                  '구독 정보를 불러오는 중...'
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">다음 결제일</p>
-                  <p className="font-medium">2025년 12월 17일</p>
+              {subscription && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">구독 상태</p>
+                      <p className="font-medium capitalize">{subscription.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">월 비용</p>
+                      <p className="font-medium">${subscription.monthly_cost?.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">다음 결제일</p>
+                      <p className="font-medium">
+                        {new Date(subscription.current_period_end).toLocaleDateString('ko-KR')}
+                      </p>
+                    </div>
+                    <Button variant="outline" onClick={() => navigate('/subscribe')}>
+                      구독 관리
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="outline">구독 관리</Button>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
