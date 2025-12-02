@@ -1,6 +1,6 @@
 /**
  * Customer Pathfinding System
- * 15개의 사전 정의된 고객 동선 케이스를 사용합니다.
+ * 20개의 사전 정의된 고객 동선 케이스를 사용합니다.
  * 시간대에 따라 가중치를 적용하여 랜덤하게 케이스가 선택됩니다.
  * 
  * 변환 규칙: Blender (x, y) → Viewer [x, 0.5, z] where z = -y
@@ -9,7 +9,7 @@
 // 시간대 타입
 export type TimeSlot = 'morning' | 'afternoon' | 'evening';
 
-// 15개의 3D 경로 케이스 (이미 [x, 0.5, z] 형식)
+// 20개의 3D 경로 케이스 (이미 [x, 0.5, z] 형식)
 const PATH_CASES: [number, number, number][][] = [
 // Case 1 (34 포인트)
   [
