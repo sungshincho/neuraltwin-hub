@@ -158,7 +158,7 @@ const HeatmapCell = ({
   useFrame((state) => {
     if (meshRef.current && isHotspot) {
       // 핫스팟인 경우 깜빡이는 효과 (깜빡이는 속도: * 2 부분을 조절)
-      const blinkIntensity = Math.sin(state.clock.elapsedTime * 2) * 0.5 + 0.5;
+      const blinkIntensity = Math.sin(state.clock.elapsedTime * 6) * 0.5 + 0.5;
       const material = meshRef.current.material as THREE.MeshStandardMaterial;
       material.opacity = intensity * 0.6 + blinkIntensity * 0.4;
       material.emissiveIntensity = intensity * 0.4 + blinkIntensity * 0.5;
