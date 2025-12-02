@@ -135,8 +135,7 @@ const CustomerPathLine = ({
       lineWidth={2}
       transparent
       opacity={0.4}
-      dashed
-      dashScale={0.5}
+      dashed={false}  
     />
   );
 };
