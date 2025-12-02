@@ -191,7 +191,7 @@ const HeatmapCell = ({
       {isHotspot && (
         <Cylinder args={[0.3, 0.3, intensity * 2, 16]} position={[x, intensity, z]}>
           <meshStandardMaterial 
-            color="#ef4444" 
+            color={color}  
             transparent 
             opacity={0.6}
             emissive="#ef4444"
