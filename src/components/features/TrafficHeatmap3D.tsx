@@ -192,10 +192,9 @@ const mannequinPositions = mapBlenderGroup([
   [-4, -5],
 ]);
 
-// 전부 합쳐서 "막힌 구역"으로 관리
+// 전부 합쳐서 "막힌 구역"으로 관리 (입구는 제외 - 통로이므로)
 const blockedPositionsSet: Set<string> = new Set(
   [
-    ...entrancePositions,
     ...checkoutPositions,
     ...wallShelfPositions,
     ...hangerPositions,
@@ -269,13 +268,17 @@ const generateHeatmapData = (timeOfDay: number): HeatmapCell[] => {
 
     let zoneIntensity = 0.3; // 기본 통로
 
-    // 행거/벽면 선반 근처: 최우선 (거리 1~2칸까지 강하게)
-    if (dHanger <= 2 || dWall <= 2) {
+    // 입구: 최우선 (모든 시간대에 높은 강도 유지, 거리 0~2칸)
+    if (dEntrance <= 2) {
+      zoneIntensity = dEntrance === 0 ? 0.95 : dEntrance === 1 ? 0.85 : 0.75;
+    }
+    // 행거/벽면 선반 근처
+    else if (dHanger <= 2 || dWall <= 2) {
       zoneIntensity = dHanger <= 1 || dWall <= 1 ? 0.9 : 0.8;
     }
-    // 입구 & 계산대 근처
-    else if (dEntrance <= 2 || dCheckout <= 2) {
-      zoneIntensity = dEntrance <= 1 || dCheckout <= 1 ? 0.75 : 0.65;
+    // 계산대 근처
+    else if (dCheckout <= 2) {
+      zoneIntensity = dCheckout <= 1 ? 0.75 : 0.65;
     }
     // 중앙 테이블 & 원형 테이블 근처
     else if (dCenter <= 2 || dRound <= 2) {
