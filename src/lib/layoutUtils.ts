@@ -9,21 +9,21 @@ const WORLD_BOUNDS = {
   maxY: 6,
 };
 
-// 2D 캔버스 % → 3D 월드 좌표 변환 (X축 반전 적용)
+// 2D 캔버스 % → 3D 월드 좌표 변환 (Y축 반전 적용)
 export const percentToWorld = (percentX: number, percentY: number): { x: number; y: number } => {
   // 2D: x% (0=left, 100=right), y% (0=top=계산대, 100=bottom=입구)
   // 3D: x (-7.5 to 7.5), y (-8=계산대방향 to 6=입구방향)
-  // X축 반전: 2D 왼쪽 → 3D 오른쪽 (+x)
-  const x = WORLD_BOUNDS.maxX - (percentX / 100) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
-  const y = WORLD_BOUNDS.maxY - (percentY / 100) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
+  const x = WORLD_BOUNDS.minX + (percentX / 100) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
+  // Y축 반전: 3D 탑뷰 카메라 시점과 일치
+  const y = WORLD_BOUNDS.minY + (percentY / 100) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
   return { x, y };
 };
 
-// 3D 월드 좌표 → 2D 캔버스 % 변환 (3D 탑뷰 카메라 시점과 일치하도록 X축 반전)
+// 3D 월드 좌표 → 2D 캔버스 % 변환 (Y축 반전 적용)
 export const worldToPercent = (worldX: number, worldY: number): { x: number; y: number } => {
-  // X축 반전: 3D에서 -x가 왼쪽이지만, 탑뷰 카메라가 반대쪽에서 보므로 반전 필요
-  const percentX = ((WORLD_BOUNDS.maxX - worldX) / (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)) * 100;
-  const percentY = ((WORLD_BOUNDS.maxY - worldY) / (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)) * 100;
+  const percentX = ((worldX - WORLD_BOUNDS.minX) / (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)) * 100;
+  // Y축 반전: 3D에서 +y가 입구방향이지만, 탑뷰 카메라에서 반전되어 보임
+  const percentY = ((worldY - WORLD_BOUNDS.minY) / (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)) * 100;
   return { x: percentX, y: percentY };
 };
 
