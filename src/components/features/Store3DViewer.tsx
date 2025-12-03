@@ -24,7 +24,7 @@ interface Store3DViewerProps {
   customerPaths?: CustomerPath[];
   isPlaying?: boolean;
   // Layout props
-  layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string; worldX?: number; worldY?: number; rotationY?: number }>;
+  layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string; worldX?: number; worldY?: number; rotationY?: number; snappedTo?: string }>;
   // Heatmap props
   timeOfDay?: number;
   heatmapData?: Array<{ x: number; y: number; intensity: number }>;
@@ -614,19 +614,35 @@ const StoreModel = ({
             // 스냅된 가구의 회전값 적용 (degree → radian)
             const rotationY = product.rotationY !== undefined ? (product.rotationY * Math.PI) / 180 : 0;
             
+            // 스냅된 가구의 GLB 파일명에서 크기 파싱
+            let boxWidth = 1.0;
+            let boxHeight = 0.8;
+            let boxDepth = 0.6;
+            
+            if (product.snappedTo) {
+              // 파일명 형식: CategoryType_ItemName_WxHxD.glb
+              const match = product.snappedTo.match(/(\d+\.?\d*)x(\d+\.?\d*)x(\d+\.?\d*)\.glb$/);
+              if (match) {
+                boxWidth = parseFloat(match[1]);
+                boxHeight = parseFloat(match[2]);
+                boxDepth = parseFloat(match[3]);
+              }
+            }
+            
             const colorMap: { [key: string]: string } = {
               'bg-primary': '#0EA5E9',
               'bg-blue-500': '#3b82f6',
               'bg-purple-500': '#a855f7',
               'bg-amber-500': '#f59e0b',
-              'bg-yellow-500': '#eab308'
+              'bg-yellow-500': '#eab308',
+              'bg-pink-500': '#ec4899'
             };
             const color = colorMap[product.color] || '#0EA5E9';
 
             return (
               <group key={product.id} position={[x3d, 0, z3d]} rotation={[0, rotationY, 0]}>
-                {/* 제품 진열대 */}
-                <Box args={[1.8, 1.5, 1.2]} position={[0, 0.75, 0]}>
+                {/* 제품 진열대 - 스냅된 가구 크기에 맞춤 */}
+                <Box args={[boxWidth, boxHeight, boxDepth]} position={[0, boxHeight / 2, 0]}>
                   <meshStandardMaterial 
                     color={color} 
                     emissive={color}
@@ -636,7 +652,7 @@ const StoreModel = ({
                   />
                 </Box>
                 {/* 바닥 강조 */}
-                <Plane args={[2.2, 1.6]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+                <Plane args={[boxWidth + 0.4, boxDepth + 0.4]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
                   <meshStandardMaterial 
                     color={color} 
                     transparent 
@@ -648,26 +664,6 @@ const StoreModel = ({
               </group>
             );
           })}
-
-          {/* 추천 동선 표시 */}
-          <Line
-            points={[
-              [0, 0.1, 7],
-              [0, 0.1, 4],
-              [-4, 0.1, 2],
-              [-4, 0.1, -2],
-              [0, 0.1, -4],
-              [4, 0.1, -2],
-              [4, 0.1, 2],
-              [0, 0.1, -6]
-            ]}
-            color="#10b981"
-            lineWidth={3}
-            transparent
-            opacity={0.5}
-            dashed
-            dashScale={1}
-          />
         </>
       )}
 
