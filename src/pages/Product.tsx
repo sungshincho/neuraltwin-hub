@@ -478,14 +478,14 @@ const Product = () => {
 
             <div className="glass p-8 rounded-3xl">
               <Tabs defaultValue="footfall" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8">
-                  <TabsTrigger value="footfall" onClick={() => handleFeatureInteraction('footfall-visualizer')}>
+                <TabsList className="grid w-full grid-cols-3 mb-8 items-center">
+                  <TabsTrigger value="footfall" className="self-center" onClick={() => handleFeatureInteraction('footfall-visualizer')}>
                     {t("product.miniFeatures.tabs.footfall.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="layout" onClick={() => handleFeatureInteraction('layout-simulator')}>
+                  <TabsTrigger value="layout" className="self-center" onClick={() => handleFeatureInteraction('layout-simulator')}>
                     {t("product.miniFeatures.tabs.layout.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="heatmap" onClick={() => handleFeatureInteraction('traffic-heatmap')}>
+                  <TabsTrigger value="heatmap" className="self-center" onClick={() => handleFeatureInteraction('traffic-heatmap')}>
                     {t("product.miniFeatures.tabs.heatmap.title")}
                   </TabsTrigger>
                 </TabsList>
@@ -545,23 +545,23 @@ const Product = () => {
 
             <div className="glass p-8 rounded-3xl">
               <Tabs defaultValue="demand" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
-                  <TabsTrigger value="demand" onClick={() => handleFeatureInteraction('demand-forecast')}>
+                <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8 items-center">
+                  <TabsTrigger value="demand" className="self-center" onClick={() => handleFeatureInteraction('demand-forecast')}>
                     {t("product.miniFeatures.tabs.demand.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="funnel" onClick={() => handleFeatureInteraction('conversion-funnel')}>
+                  <TabsTrigger value="funnel" className="self-center" onClick={() => handleFeatureInteraction('conversion-funnel')}>
                     {t("product.miniFeatures.tabs.funnel.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="product" onClick={() => handleFeatureInteraction('product-performance')}>
+                  <TabsTrigger value="product" className="self-center" onClick={() => handleFeatureInteraction('product-performance')}>
                     {t("product.miniFeatures.tabs.product.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="inventory" onClick={() => handleFeatureInteraction('inventory-optimizer')}>
+                  <TabsTrigger value="inventory" className="self-center" onClick={() => handleFeatureInteraction('inventory-optimizer')}>
                     {t("product.miniFeatures.tabs.inventory.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="staff" onClick={() => handleFeatureInteraction('staff-efficiency')}>
+                  <TabsTrigger value="staff" className="self-center" onClick={() => handleFeatureInteraction('staff-efficiency')}>
                     {t("product.miniFeatures.tabs.staff.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="hq" onClick={() => handleFeatureInteraction('hq-store-sync')}>
+                  <TabsTrigger value="hq" className="self-center" onClick={() => handleFeatureInteraction('hq-store-sync')}>
                     {t("product.miniFeatures.tabs.hq.title")}
                   </TabsTrigger>
                 </TabsList>
