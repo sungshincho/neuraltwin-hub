@@ -1,12 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
 import { Sparkles, RotateCcw, TrendingUp, BarChart3, Users, DollarSign, Target, Zap } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from "recharts";
-import { Store3DViewer } from "./Store3DViewer";
+import { Store3DViewer, furnitureLayout } from "./Store3DViewer";
+import { 
+  convertFurnitureFor2D, 
+  findNearestFurniture, 
+  calculateProductSize,
+  FURNITURE_COLORS,
+  FurnitureItem,
+  worldToPercent
+} from "@/lib/layoutUtils";
 
 interface Product {
   id: string;
@@ -14,6 +21,9 @@ interface Product {
   x: number;
   y: number;
   color: string;
+  width?: number;
+  height?: number;
+  snappedTo?: string; // 스냅된 가구 파일명
 }
 
 interface KPIPreset {
@@ -108,6 +118,15 @@ export const LayoutSimulator3D = () => {
   const [draggedProduct, setDraggedProduct] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [activeKPI, setActiveKPI] = useState("conversion");
+  const [hoveredFurniture, setHoveredFurniture] = useState<string | null>(null);
+
+  // 가구 데이터를 2D용으로 변환 (Product 제외)
+  const furniture2D = useMemo(() => {
+    const nonProductFurniture = furnitureLayout.filter(
+      item => !item.file.startsWith('Product_')
+    );
+    return convertFurnitureFor2D(nonProductFurniture);
+  }, []);
 
   const metrics = useMemo(() => generateMetrics(products), [products]);
   const currentPreset = kpiPresets.find(p => p.id === selectedPreset);
@@ -145,15 +164,54 @@ export const LayoutSimulator3D = () => {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
+    // 가장 가까운 가구 찾기 (스냅)
+    const nearestFurniture = findNearestFurniture(x, y, furniture2D, 12);
+    
+    // 스냅된 가구가 있으면 해당 위치와 크기로 조정
+    let finalX = Math.max(10, Math.min(90, x));
+    let finalY = Math.max(10, Math.min(90, y));
+    let newWidth: number | undefined;
+    let newHeight: number | undefined;
+    let snappedTo: string | undefined;
+
+    if (nearestFurniture) {
+      finalX = nearestFurniture.percentX;
+      finalY = nearestFurniture.percentY;
+      const size = calculateProductSize(nearestFurniture);
+      newWidth = size.width;
+      newHeight = size.height;
+      snappedTo = nearestFurniture.file;
+    }
+
     setProducts((prev) =>
       prev.map((p) =>
         p.id === draggedProduct
-          ? { ...p, x: Math.max(10, Math.min(90, x)), y: Math.max(10, Math.min(90, y)) }
+          ? { 
+              ...p, 
+              x: finalX, 
+              y: finalY, 
+              width: newWidth, 
+              height: newHeight,
+              snappedTo 
+            }
           : p
       )
     );
     setDraggedProduct(null);
     setSelectedPreset(null);
+    setHoveredFurniture(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!draggedProduct) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    const nearestFurniture = findNearestFurniture(x, y, furniture2D, 12);
+    setHoveredFurniture(nearestFurniture?.file || null);
   };
 
   const applyPreset = (presetId: string) => {
@@ -172,6 +230,15 @@ export const LayoutSimulator3D = () => {
   const improvement = selectedPreset 
     ? ((targetMetrics.conversion - metrics.conversion) / metrics.conversion * 100).toFixed(1)
     : "0";
+
+  // 가구 카테고리별 그룹핑 (범례용)
+  const furnitureCategories = useMemo(() => {
+    const categories = new Map<string, number>();
+    furniture2D.forEach(f => {
+      categories.set(f.category, (categories.get(f.category) || 0) + 1);
+    });
+    return Array.from(categories.entries());
+  }, [furniture2D]);
 
   return (
     <div className="space-y-6">
@@ -237,47 +304,119 @@ export const LayoutSimulator3D = () => {
           </div>
 
           <Card
-            className="glass relative h-72 overflow-hidden"
+            className="glass relative h-[400px] overflow-hidden"
             onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={handleDragOver}
+            onDragLeave={() => setHoveredFurniture(null)}
           >
             {/* 그리드 가이드 */}
-            <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 pointer-events-none">
-              {Array.from({ length: 16 }).map((_, i) => (
-                <div key={i} className="border border-dashed border-border/20" />
+            <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 pointer-events-none">
+              {Array.from({ length: 36 }).map((_, i) => (
+                <div key={i} className="border border-dashed border-border/10" />
               ))}
             </div>
             
             {/* 입구/출구 표시 */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500/20 text-green-500 text-xs rounded-t">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500/20 text-green-500 text-xs rounded-t z-20">
               입구
             </div>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-500/20 text-red-500 text-xs rounded-b">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-500/20 text-red-500 text-xs rounded-b z-20">
               계산대
             </div>
+
+            {/* 가구 표시 */}
+            {furniture2D.map((furniture, index) => {
+              const colorClass = FURNITURE_COLORS[furniture.category] || 'bg-gray-500/30 border-gray-400';
+              const isHovered = hoveredFurniture === furniture.file;
+              
+              // 가구 크기 계산 (% 단위)
+              let widthPercent = 8;
+              let heightPercent = 8;
+              if (furniture.dimensions) {
+                const isRotated = Math.abs(furniture.rotationY) === 90 || Math.abs(furniture.rotationY) === 270;
+                const w = isRotated ? furniture.dimensions.depth : furniture.dimensions.width;
+                const d = isRotated ? furniture.dimensions.width : furniture.dimensions.depth;
+                widthPercent = Math.max(4, Math.min(15, (w / 15) * 100));
+                heightPercent = Math.max(4, Math.min(15, (d / 14) * 100));
+              }
+
+              return (
+                <div
+                  key={`furniture-${index}`}
+                  className={`absolute border rounded transition-all pointer-events-none ${colorClass} ${
+                    isHovered ? 'ring-2 ring-primary scale-110 z-10' : ''
+                  }`}
+                  style={{
+                    left: `${furniture.percentX}%`,
+                    top: `${furniture.percentY}%`,
+                    width: `${widthPercent}%`,
+                    height: `${heightPercent}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] text-foreground/70 font-medium truncate px-0.5">
+                    {furniture.label}
+                  </span>
+                </div>
+              );
+            })}
             
-            {products.map((product) => (
-              <div
-                key={product.id}
-                draggable
-                onDragStart={() => handleDragStart(product.id)}
-                className={`absolute w-14 h-14 rounded-lg ${product.color} cursor-move flex flex-col items-center justify-center text-white font-bold shadow-lg transition-all hover:scale-110 hover:shadow-xl`}
-                style={{ left: `${product.x}%`, top: `${product.y}%`, transform: "translate(-50%, -50%)" }}
-              >
-                <span className="text-lg">{product.id}</span>
-                <span className="text-[10px] opacity-80">{product.name}</span>
-              </div>
-            ))}
+            {/* 상품 박스 */}
+            {products.map((product) => {
+              const boxWidth = product.width || 14;
+              const boxHeight = product.height || 14;
+              
+              return (
+                <div
+                  key={product.id}
+                  draggable
+                  onDragStart={() => handleDragStart(product.id)}
+                  className={`absolute rounded-lg ${product.color} cursor-move flex flex-col items-center justify-center text-white font-bold shadow-lg transition-all hover:scale-110 hover:shadow-xl z-10`}
+                  style={{ 
+                    left: `${product.x}%`, 
+                    top: `${product.y}%`, 
+                    transform: "translate(-50%, -50%)",
+                    width: `${boxWidth}%`,
+                    height: `${boxHeight}%`,
+                    minWidth: '40px',
+                    minHeight: '40px',
+                  }}
+                >
+                  <span className="text-lg">{product.id}</span>
+                  <span className="text-[9px] opacity-80">{product.name}</span>
+                  {product.snappedTo && (
+                    <span className="absolute -bottom-4 text-[7px] text-muted-foreground whitespace-nowrap">
+                      📍 스냅됨
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </Card>
           
-          {/* 제품 범례 */}
-          <div className="flex flex-wrap gap-2">
-            {products.map((p) => (
-              <Badge key={p.id} variant="outline" className="text-xs">
-                <span className={`w-2 h-2 rounded-full ${p.color} mr-1`} />
-                {p.id}: {p.name}
-              </Badge>
-            ))}
+          {/* 범례 */}
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground font-medium">상품</div>
+            <div className="flex flex-wrap gap-2">
+              {products.map((p) => (
+                <Badge key={p.id} variant="outline" className="text-xs">
+                  <span className={`w-2 h-2 rounded-full ${p.color} mr-1`} />
+                  {p.id}: {p.name}
+                </Badge>
+              ))}
+            </div>
+            <div className="text-xs text-muted-foreground font-medium mt-2">가구</div>
+            <div className="flex flex-wrap gap-2">
+              {furnitureCategories.map(([category, count]) => {
+                const colorClass = FURNITURE_COLORS[category] || 'bg-gray-500/30';
+                return (
+                  <Badge key={category} variant="outline" className="text-xs">
+                    <span className={`w-2 h-2 rounded ${colorClass.split(' ')[0]} mr-1`} />
+                    {category} ({count})
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
         </div>
 

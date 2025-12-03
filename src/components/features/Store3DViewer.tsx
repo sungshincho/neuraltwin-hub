@@ -370,7 +370,7 @@ const ShelfUnit = ({ position, products }: { position: [number, number, number];
 // ============================================================
 // 가구/제품 레이아웃 데이터 (furniture_product_layout.csv 기반)
 // ============================================================
-const furnitureLayout = [
+export const furnitureLayout = [
   // Shelf_WallShelf
   { file: 'Shelf_WallShelf1_1.7x2.5x0.5.glb', x: -7.1, y: 3.2, z: 0.0, rotationY: 90 },
   { file: 'Shelf_WallShelf2_1.7x2.5x0.5.glb', x: -7.1, y: 1.3, z: 0.0, rotationY: 90 },
