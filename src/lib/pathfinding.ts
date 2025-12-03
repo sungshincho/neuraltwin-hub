@@ -497,15 +497,18 @@ function convertToOrthogonalPath(path: [number, number, number][]): [number, num
 }
 
 /**
- * 시간대 기반 랜덤 고객 경로 생성
+ * 시간대 기반 랜덤 고객 경로 생성 (경로와 케이스 인덱스 반환)
  */
-export function generateRandomCustomerPath(timeRange: string): [number, number, number][] {
+export function generateRandomCustomerPath(timeRange: string): { path: [number, number, number][]; caseIndex: number } {
   const timeSlot = getTimeSlotFromRange(timeRange);
   const weights = TIME_SLOT_WEIGHTS[timeSlot];
   const caseIndex = weightedRandomSelect(weights);
   
   // 대각선 이동을 수평/수직으로 변환하여 반환
-  return convertToOrthogonalPath([...PATH_CASES[caseIndex]]);
+  return {
+    path: convertToOrthogonalPath([...PATH_CASES[caseIndex]]),
+    caseIndex
+  };
 }
 
 /**
@@ -517,12 +520,25 @@ export function getPathByCase(caseNumber: number): [number, number, number][] {
 }
 
 /**
- * 경로가 계산대에 도달하는지 확인
- * 계산대 위치: z <= -3 영역
+ * 재방문자로 강제 지정된 케이스들 (체크아웃에 도달하지만 재방문자로 표시)
+ * Case 1, 3, 5, 7, 9 (홀수 케이스 중 일부)를 재방문자로 표시
+ * 이를 통해 재방문자도 계산대/원형테이블 근처까지 오는 동선을 가질 수 있음
  */
-export function pathReachesCheckout(path: [number, number, number][]): boolean {
-  // 조건 반전: 체크아웃 미도달 → 신규, 체크아웃 도달 → 재방문
-  return !path.some(point => point[2] <= -3);
+const FORCE_RETURNING_CASES = new Set([0, 2, 4, 6, 8]); // 0-indexed: Case 1, 3, 5, 7, 9
+
+/**
+ * 경로가 계산대에 도달하는지 확인 (신규 방문자 여부)
+ * 계산대 위치: z <= -3 영역
+ * - 기본: 체크아웃 도달 = 신규 방문자 (true 반환)
+ * - FORCE_RETURNING_CASES에 해당하는 케이스는 재방문자로 처리 (false 반환)
+ */
+export function pathReachesCheckout(path: [number, number, number][], caseIndex?: number): boolean {
+  // 강제 재방문자 케이스인 경우 false 반환 (재방문자로 표시)
+  if (caseIndex !== undefined && FORCE_RETURNING_CASES.has(caseIndex)) {
+    return false;
+  }
+  // 원래 로직: 체크아웃 도달 = 신규 방문자
+  return path.some(point => point[2] <= -3);
 }
 
 /**
