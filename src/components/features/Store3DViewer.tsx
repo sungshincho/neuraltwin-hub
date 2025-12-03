@@ -1,11 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, Cylinder, useGLTF } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useMemo, useState, Component, ReactNode } from "react";
 import * as THREE from "three";
-import { 
-  generateRandomCustomerPath,
-  pathReachesCheckout
-} from "@/lib/pathfinding";
 
 interface CustomerPath {
   id: string;
@@ -17,10 +13,8 @@ interface CustomerPath {
 interface Store3DViewerProps {
   mode: "footfall" | "layout" | "heatmap";
   // Footfall props
-  timeRange?: [number, number];
   showReturning?: boolean;
   showNew?: boolean;
-  showHeatmap?: boolean;
   customerPaths?: CustomerPath[];
   isPlaying?: boolean;
   // Layout props
@@ -29,7 +23,6 @@ interface Store3DViewerProps {
   timeOfDay?: number;
   heatmapData?: Array<{ x: number; y: number; intensity: number }>;
   hotspots?: Array<{ x: number; y: number; intensity: number }>;
-  allowedHeatmapPositions?: Array<[number, number]>;
 }
 
 // 애니메이션되는 고객 구체
@@ -208,164 +201,6 @@ const HeatmapCell = ({
   );
 };
 
-// ============================================================
-// threejs기존백업 - 기존 procedural 매장 컴포넌트들
-// 필요시 주석 해제하여 사용 가능
-// ============================================================
-
-/*
-// [threejs기존백업] 매장 벽 컴포넌트
-const StoreWalls = () => {
-  return (
-    <>
-      <Box args={[20.4, 4, 0.2]} position={[0, 2, -7.6]}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
-      </Box>
-      <Box args={[0.2, 4, 15.2]} position={[-10.1, 2, 0]}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
-      </Box>
-      <Box args={[0.2, 4, 15.2]} position={[10.1, 2, 0]}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
-      </Box>
-      <Box args={[7, 4, 0.2]} position={[-6.5, 2, 7.6]}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
-      </Box>
-      <Box args={[7, 4, 0.2]} position={[6.5, 2, 7.6]}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
-      </Box>
-      <Box args={[6, 1, 0.2]} position={[0, 3.5, 7.6]}>
-        <meshStandardMaterial color="#e8e8e8" roughness={0.95} />
-      </Box>
-    </>
-  );
-};
-
-// [threejs기존백업] 입구 컴포넌트
-const Entrance = () => {
-  return (
-    <group position={[0, 0, 7.5]}>
-      <Box args={[0.15, 3, 0.3]} position={[-3, 1.5, 0]}>
-        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
-      </Box>
-      <Box args={[0.15, 3, 0.3]} position={[3, 1.5, 0]}>
-        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
-      </Box>
-      <Box args={[6.3, 0.2, 0.3]} position={[0, 3.1, 0]}>
-        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
-      </Box>
-      <Box args={[2.8, 2.8, 0.05]} position={[-1.5, 1.4, 0]}>
-        <meshStandardMaterial color="#87ceeb" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
-      </Box>
-      <Box args={[2.8, 2.8, 0.05]} position={[1.5, 1.4, 0]}>
-        <meshStandardMaterial color="#87ceeb" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
-      </Box>
-      <Box args={[5, 0.05, 1.5]} position={[0, 0.025, 0.5]}>
-        <meshStandardMaterial color="#4a4a4a" roughness={0.9} />
-      </Box>
-      <Box args={[0.3, 0.1, 0.1]} position={[-2.5, 2.8, 0]}>
-        <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
-      </Box>
-      <Box args={[0.3, 0.1, 0.1]} position={[2.5, 2.8, 0]}>
-        <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
-      </Box>
-      <Box args={[4, 0.3, 0.05]} position={[0, 3.4, 0.2]}>
-        <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
-      </Box>
-    </group>
-  );
-};
-
-// [threejs기존백업] 계산대 컴포넌트
-const CheckoutCounter = () => {
-  return (
-    <group position={[0, 0, -6]}>
-      <Box args={[4, 1.1, 1.5]} position={[0, 0.55, 0]}>
-        <meshStandardMaterial color="#2c3e50" metalness={0.4} roughness={0.5} />
-      </Box>
-      <Box args={[4.2, 0.08, 1.7]} position={[0, 1.14, 0]}>
-        <meshStandardMaterial color="#1a252f" metalness={0.6} roughness={0.3} />
-      </Box>
-      <Box args={[0.6, 0.5, 0.08]} position={[-1.2, 1.55, 0.3]}>
-        <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.1} />
-      </Box>
-      <Box args={[0.55, 0.45, 0.02]} position={[-1.2, 1.55, 0.35]}>
-        <meshStandardMaterial color="#0066cc" emissive="#0066cc" emissiveIntensity={0.3} />
-      </Box>
-      <Box args={[0.15, 0.3, 0.15]} position={[-1.2, 1.25, 0.3]}>
-        <meshStandardMaterial color="#333333" metalness={0.7} />
-      </Box>
-      <Box args={[0.15, 0.12, 0.25]} position={[-0.3, 1.2, 0.4]}>
-        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
-      </Box>
-      <Box args={[0.12, 0.08, 0.03]} position={[-0.3, 1.22, 0.55]}>
-        <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.6} />
-      </Box>
-      <Box args={[0.2, 0.15, 0.3]} position={[0.5, 1.22, 0.4]}>
-        <meshStandardMaterial color="#333333" metalness={0.7} roughness={0.3} />
-      </Box>
-      <Box args={[0.15, 0.1, 0.02]} position={[0.5, 1.27, 0.56]}>
-        <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.4} />
-      </Box>
-      <Box args={[0.25, 0.2, 0.25]} position={[1.3, 1.2, 0.3]}>
-        <meshStandardMaterial color="#f5f5f5" roughness={0.8} />
-      </Box>
-      <group position={[0, 2.5, 0]}>
-        <Box args={[2, 0.4, 0.1]}>
-          <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.4} />
-        </Box>
-        <Box args={[0.05, 1, 0.05]} position={[-0.9, -0.7, 0]}>
-          <meshStandardMaterial color="#666666" metalness={0.6} />
-        </Box>
-        <Box args={[0.05, 1, 0.05]} position={[0.9, -0.7, 0]}>
-          <meshStandardMaterial color="#666666" metalness={0.6} />
-        </Box>
-      </group>
-      <Box args={[0.6, 0.6, 0.6]} position={[0, 0.3, -1]}>
-        <meshStandardMaterial color="#6b7280" roughness={0.7} />
-      </Box>
-    </group>
-  );
-};
-
-// [threejs기존백업] 진열대 컴포넌트
-const ShelfUnit = ({ position, products }: { position: [number, number, number]; products?: string[] }) => {
-  const defaultColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
-  
-  return (
-    <group position={position}>
-      {[[-1.4, -0.4], [1.4, -0.4], [-1.4, 0.4], [1.4, 0.4]].map(([x, z], i) => (
-        <Box key={i} args={[0.08, 2, 0.08]} position={[x, 1, z]}>
-          <meshStandardMaterial color="#5d4037" metalness={0.3} roughness={0.7} />
-        </Box>
-      ))}
-      {[0.4, 0.9, 1.4, 1.9].map((y, i) => (
-        <Box key={i} args={[3, 0.04, 1]} position={[0, y, 0]}>
-          <meshStandardMaterial color="#8d6e63" roughness={0.6} />
-        </Box>
-      ))}
-      <Box args={[3, 2, 0.04]} position={[0, 1, -0.52]}>
-        <meshStandardMaterial color="#d7ccc8" />
-      </Box>
-      {Array.from({ length: 9 }).map((_, i) => (
-        <Box 
-          key={i} 
-          args={[0.25, 0.35, 0.25]} 
-          position={[-1 + (i % 3) * 0.5, 0.6 + Math.floor(i / 3) * 0.5, 0.25]}
-        >
-          <meshStandardMaterial 
-            color={defaultColors[i % defaultColors.length]} 
-            roughness={0.4}
-            metalness={0.1}
-          />
-        </Box>
-      ))}
-    </group>
-  );
-};
-*/
-// ============================================================
-// threejs기존백업 끝
-// ============================================================
 
 // ============================================================
 // 가구/제품 레이아웃 데이터 (furniture_product_layout.csv 기반)
@@ -511,44 +346,15 @@ const FurnitureLayout = () => {
 // 3D 매장 모델
 const StoreModel = ({ 
   mode, 
-  timeRange = [0, 24],
   showReturning = true,
   showNew = true,
-  showHeatmap = false,
   customerPaths = [],
   isPlaying = true,
   layoutProducts = [],
   timeOfDay = 14,
   heatmapData = [],
   hotspots = [],
-  allowedHeatmapPositions, 
 }: Store3DViewerProps) => {
-  
-  // 기본 고객 동선 생성 (pathfinding 기반)
-  const defaultPaths = useMemo(() => {
-    const paths: CustomerPath[] = [];
-    const pathCount = Math.floor((timeRange[1] - timeRange[0]) / 3);
-    
-    // timeRange를 문자열로 변환 (예: "09:00-12:00")
-    const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
-    
-    for (let i = 0; i < pathCount; i++) {
-      const { path: points, caseIndex } = generateRandomCustomerPath(timeRangeStr);
-      const wentToCheckout = pathReachesCheckout(points, caseIndex);
-      
-      paths.push({
-        id: `path-${i}`,
-        points,
-        isReturning: !wentToCheckout,
-        dwellTime: wentToCheckout ? Math.random() * 12 + 3 : Math.random() * 2 + 0.5
-      });
-    }
-    
-    return paths;
-  }, [timeRange]);
-
-  // Use customerPaths if provided and not empty, otherwise use defaultPaths
-  const activePaths = customerPaths && customerPaths.length > 0 ? customerPaths : defaultPaths;
 
   return (
     <>
@@ -562,7 +368,7 @@ const StoreModel = ({
       {mode === "footfall" && (
         <>
           {/* 고객 동선 라인 */}
-          {activePaths.map((path, i) => {
+          {customerPaths.map((path, i) => {
             if ((path.isReturning && !showReturning) || (!path.isReturning && !showNew)) {
               return null;
             }
@@ -573,33 +379,14 @@ const StoreModel = ({
                   isReturning={path.isReturning} 
                 />
                 <AnimatedCustomer 
-              path={path.points} 
-              isReturning={path.isReturning}
-              speed={1.5 + Math.random() * 1.0}
-              isPlaying={isPlaying}
-            />
+                  path={path.points} 
+                  isReturning={path.isReturning}
+                  speed={1.5 + Math.random() * 1.0}
+                  isPlaying={isPlaying}
+                />
               </group>
             );
           })}
-
-          {/* 히트맵 오버레이 */}
-          {showHeatmap && (
-            <>
-              <Plane args={[6, 4]} rotation={[-Math.PI / 2, 0, 0]} position={[-5, 0.02, 0]}>
-                <meshStandardMaterial color="#ef4444" transparent opacity={0.35} emissive="#ef4444" emissiveIntensity={0.2} />
-              </Plane>
-              <Plane args={[6, 4]} rotation={[-Math.PI / 2, 0, 0]} position={[5, 0.02, 0]}>
-                <meshStandardMaterial color="#f97316" transparent opacity={0.3} emissive="#f97316" emissiveIntensity={0.15} />
-              </Plane>
-              <Plane args={[4, 3]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 1]}>
-                <meshStandardMaterial color="#eab308" transparent opacity={0.4} emissive="#eab308" emissiveIntensity={0.25} />
-              </Plane>
-              <Plane args={[5, 2]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -5.5]}>
-                <meshStandardMaterial color="#ef4444" transparent opacity={0.5} emissive="#ef4444" emissiveIntensity={0.3} />
-              </Plane>
-            </>
-          )}
-
         </>
       )}
 
@@ -648,7 +435,7 @@ const StoreModel = ({
                     emissive={color}
                     emissiveIntensity={0.25}
                     transparent
-                    opacity={0.9}
+                    opacity={0.65}
                   />
                 </Box>
                 {/* 바닥 강조 */}

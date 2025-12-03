@@ -76,7 +76,6 @@ export const FootfallVisualizer3D = () => {
       {/* 3D 뷰어 */}
       <Store3DViewer 
         mode="footfall"
-        timeRange={[timeRange[0], currentHour]}
         showReturning={showReturning}
         showNew={showNew}
         customerPaths={filteredPaths}
