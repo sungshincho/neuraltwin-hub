@@ -46,7 +46,7 @@ interface KPIPreset {
 
 // 초기 상품 위치는 useEffect에서 가구 위치 기반으로 설정
 const initialProducts: Product[] = [
-  { id: "A", name: "신상품", x: 50, y: 50, color: "bg-primary" },
+  { id: "A", name: "신상품", x: 50, y: 50, color: "bg-yellow-500" },
   { id: "B", name: "인기상품", x: 50, y: 50, color: "bg-blue-500" },
   { id: "C", name: "할인상품", x: 50, y: 50, color: "bg-purple-500" },
   { id: "D", name: "프리미엄", x: 50, y: 50, color: "bg-amber-500" },
@@ -197,9 +197,12 @@ export const LayoutSimulator3D = () => {
       if (targetFurniture) {
         const size = calculateProductSize(targetFurniture);
         const furniture2DSize = calculateFurniture2DSize(targetFurniture);
+        // 오른쪽 벽면선반은 좌측으로 2% 이동 (레이아웃 표시와 일치)
+        const isRightWallShelf = targetFurniture.category === 'WallShelf' && targetFurniture.percentX > 90;
+        const adjustedPercentX = isRightWallShelf ? targetFurniture.percentX - 2 : targetFurniture.percentX;
         return {
           ...product,
-          x: targetFurniture.percentX,
+          x: adjustedPercentX,
           y: targetFurniture.percentY,
           width: size.width,
           height: size.height,
@@ -268,7 +271,9 @@ export const LayoutSimulator3D = () => {
     let snappedHeightPercent: number | undefined;
 
     if (nearestFurniture) {
-      finalX = nearestFurniture.percentX;
+      // 오른쪽 벽면선반은 좌측으로 2% 이동 (레이아웃 표시와 일치)
+      const isRightWallShelf = nearestFurniture.category === 'WallShelf' && nearestFurniture.percentX > 90;
+      finalX = isRightWallShelf ? nearestFurniture.percentX - 2 : nearestFurniture.percentX;
       finalY = nearestFurniture.percentY;
       const size = calculateProductSize(nearestFurniture);
       newWidth = size.width;
