@@ -356,15 +356,10 @@ export const LayoutSimulator3D = () => {
               
               // 마네킹은 동일한 크기로 통일
               const isMannequin = furniture.category === 'FullMannequin' || furniture.category === 'HalfMannequin';
-              const isHanger = furniture.category === 'Hanger';
               
               if (isMannequin) {
                 widthPercent = 5;
                 heightPercent = 5;
-              } else if (isHanger) {
-                // 행거는 높이(Y) 줄여서 겹침 방지
-                widthPercent = 8;
-                heightPercent = 3;
               } else if (furniture.dimensions) {
                 const isRotated = Math.abs(furniture.rotationY) === 90 || Math.abs(furniture.rotationY) === 270;
                 const w = isRotated ? furniture.dimensions.depth : furniture.dimensions.width;
