@@ -521,7 +521,8 @@ export function getPathByCase(caseNumber: number): [number, number, number][] {
  * 계산대 위치: z <= -3 영역
  */
 export function pathReachesCheckout(path: [number, number, number][]): boolean {
-  return path.some(point => point[2] <= -3);
+  // 조건 반전: 체크아웃 미도달 → 신규, 체크아웃 도달 → 재방문
+  return !path.some(point => point[2] <= -3);
 }
 
 /**
