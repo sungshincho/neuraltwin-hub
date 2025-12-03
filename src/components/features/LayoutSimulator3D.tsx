@@ -353,13 +353,25 @@ export const LayoutSimulator3D = () => {
               // 가구 크기 계산 (% 단위)
               let widthPercent = 8;
               let heightPercent = 8;
-              if (furniture.dimensions) {
+              
+              // 마네킹은 동일한 크기로 통일
+              const isMannequin = furniture.category === 'FullMannequin' || furniture.category === 'HalfMannequin';
+              if (isMannequin) {
+                widthPercent = 5;
+                heightPercent = 5;
+              } else if (furniture.dimensions) {
                 const isRotated = Math.abs(furniture.rotationY) === 90 || Math.abs(furniture.rotationY) === 270;
                 const w = isRotated ? furniture.dimensions.depth : furniture.dimensions.width;
                 const d = isRotated ? furniture.dimensions.width : furniture.dimensions.depth;
                 widthPercent = Math.max(4, Math.min(15, (w / 15) * 100));
                 heightPercent = Math.max(4, Math.min(15, (d / 14) * 100));
               }
+              
+              // 행거는 라벨 크기 줄임 (겹침 방지)
+              const isHanger = furniture.category === 'Hanger';
+              // 오른쪽 벽면선반은 좌측으로 2% 이동 (잘림 방지)
+              const isRightWallShelf = furniture.category === 'WallShelf' && furniture.percentX > 90;
+              const adjustedPercentX = isRightWallShelf ? furniture.percentX - 2 : furniture.percentX;
 
               return (
                 <div
@@ -368,14 +380,16 @@ export const LayoutSimulator3D = () => {
                     isHovered ? 'ring-2 ring-primary scale-110 z-10' : ''
                   }`}
                   style={{
-                    left: `${furniture.percentX}%`,
+                    left: `${adjustedPercentX}%`,
                     top: `${furniture.percentY}%`,
                     width: `${widthPercent}%`,
                     height: `${heightPercent}%`,
                     transform: 'translate(-50%, -50%)',
                   }}
                 >
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] text-foreground/70 font-medium truncate px-0.5">
+                  <span className={`absolute inset-0 flex items-center justify-center text-foreground/70 font-medium truncate px-0.5 ${
+                    isHanger ? 'text-[6px]' : 'text-[8px]'
+                  }`}>
                     {furniture.label}
                   </span>
                 </div>
