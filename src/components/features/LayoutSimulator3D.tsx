@@ -46,7 +46,7 @@ interface KPIPreset {
 
 // 초기 상품 위치는 useEffect에서 가구 위치 기반으로 설정
 const initialProducts: Product[] = [
-  { id: "A", name: "신상품", x: 50, y: 50, color: "bg-yellow-500" },
+  { id: "A", name: "신상품", x: 50, y: 50, color: "bg-pink-500" },
   { id: "B", name: "인기상품", x: 50, y: 50, color: "bg-blue-500" },
   { id: "C", name: "할인상품", x: 50, y: 50, color: "bg-purple-500" },
   { id: "D", name: "프리미엄", x: 50, y: 50, color: "bg-amber-500" },
