@@ -1,7 +1,9 @@
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, useGLTF } from "@react-three/drei";
-import { Suspense, useRef, useMemo, useState, Component, ReactNode } from "react";
+import { Suspense, useRef, useMemo, useState, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as THREE from "three";
+import { RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CustomerPath {
   id: string;
@@ -487,21 +489,58 @@ const StoreModel = ({
 useGLTF.preload('/models/store-kolon.glb');
 furnitureLayout.forEach(item => useGLTF.preload(`/models/${item.file}`));
 
-export const Store3DViewer = (props: Store3DViewerProps) => {
+// 기본 카메라 설정
+const DEFAULT_CAMERA_POSITION: [number, number, number] = [18, 14, 18];
+const DEFAULT_TARGET: [number, number, number] = [0, 0, 0];
+
+// 카메라 컨트롤러 (리셋 기능 제공)
+interface CameraControllerHandle {
+  reset: () => void;
+}
+
+const CameraController = forwardRef<CameraControllerHandle, object>((_, ref) => {
+  const { camera } = useThree();
+  const controlsRef = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (controlsRef.current) {
+        camera.position.set(...DEFAULT_CAMERA_POSITION);
+        controlsRef.current.target.set(...DEFAULT_TARGET);
+        controlsRef.current.update();
+      }
+    }
+  }));
+
   return (
-    <div className="w-full h-[500px] rounded-xl overflow-hidden bg-gradient-to-b from-muted/10 to-muted/30 border border-border/50">
+    <OrbitControls
+      ref={controlsRef}
+      enablePan={true}
+      enableZoom={true}
+      enableRotate={true}
+      minDistance={8}
+      maxDistance={45}
+      maxPolarAngle={Math.PI / 2.1}
+      target={DEFAULT_TARGET}
+    />
+  );
+});
+
+CameraController.displayName = 'CameraController';
+
+export const Store3DViewer = (props: Store3DViewerProps) => {
+  const cameraControllerRef = useRef<CameraControllerHandle>(null);
+
+  const handleResetCamera = useCallback(() => {
+    cameraControllerRef.current?.reset();
+  }, []);
+
+  return (
+    <div className="relative w-full h-[500px] rounded-xl overflow-hidden bg-gradient-to-b from-muted/10 to-muted/30 border border-border/50">
       <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }}>
         <Suspense fallback={null}>
-          <PerspectiveCamera makeDefault position={[18, 14, 18]} fov={50} />
-          <OrbitControls 
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
-            minDistance={8}
-            maxDistance={45}
-            maxPolarAngle={Math.PI / 2.1}
-            target={[0, 0, 0]}
-          />
+          <PerspectiveCamera makeDefault position={DEFAULT_CAMERA_POSITION} fov={50} />
+          <CameraController ref={cameraControllerRef} />
           
           {/* 조명 */}
           <ambientLight intensity={0.5} />
@@ -539,6 +578,17 @@ export const Store3DViewer = (props: Store3DViewerProps) => {
           <StoreModel {...props} />
         </Suspense>
       </Canvas>
+      
+      {/* 카메라 리셋 버튼 */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleResetCamera}
+        className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm hover:bg-background/90 border-border/50"
+      >
+        <RotateCcw className="w-4 h-4 mr-1.5" />
+        리셋 카메라뷰
+      </Button>
     </div>
   );
 };
