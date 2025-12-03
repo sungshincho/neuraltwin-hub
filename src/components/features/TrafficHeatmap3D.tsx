@@ -352,7 +352,7 @@ export const TrafficHeatmap3D = () => {
 
     const interval = setInterval(() => {
       setTimeOfDay((prev) => {
-        const next = prev >= 23 ? 9 : prev + 1;
+        const next = prev >= 20 ? 10 : prev + 1;
         return next;
       });
     }, 800);
@@ -419,8 +419,8 @@ export const TrafficHeatmap3D = () => {
               </span>
             </div>
             <Slider
-              min={9}
-              max={23}
+              min={10}
+              max={20}
               step={1}
               value={[timeOfDay]}
               onValueChange={(value) => setTimeOfDay(value[0])}
