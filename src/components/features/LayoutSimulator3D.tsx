@@ -275,57 +275,107 @@ export const LayoutSimulator3D = () => {
     // 가장 가까운 가구 찾기 (스냅)
     const nearestFurniture = findNearestFurniture(x, y, furniture2D, 12);
     
-    // 스냅된 가구가 있으면 해당 위치와 크기로 조정
-    let finalX = Math.max(10, Math.min(90, x));
-    let finalY = Math.max(10, Math.min(90, y));
-    let newWidth: number | undefined;
-    let newHeight: number | undefined;
-    let snappedTo: string | undefined;
-    let worldX: number | undefined;
-    let worldY: number | undefined;
-    let rotationY: number | undefined;
+    // 드래그 중인 상품의 현재 정보
+    const draggedProductData = products.find(p => p.id === draggedProduct);
+    
+    // 이미 해당 가구에 스냅된 상품이 있는지 확인
+    const existingProductOnFurniture = nearestFurniture 
+      ? products.find(p => p.snappedTo === nearestFurniture.file && p.id !== draggedProduct)
+      : null;
 
-    let snappedWidthPercent: number | undefined;
-    let snappedHeightPercent: number | undefined;
-
-    if (nearestFurniture) {
-      // 오른쪽 벽면선반은 좌측으로 2% 이동 (레이아웃 표시와 일치)
+    if (nearestFurniture && existingProductOnFurniture && draggedProductData) {
+      // 스위칭: 기존 상품은 드래그 상품의 원래 위치로, 드래그 상품은 가구 위치로
       const isRightWallShelf = nearestFurniture.category === 'WallShelf' && nearestFurniture.percentX > 90;
-      finalX = isRightWallShelf ? nearestFurniture.percentX - 2 : nearestFurniture.percentX;
-      finalY = nearestFurniture.percentY;
+      const adjustedPercentX = isRightWallShelf ? nearestFurniture.percentX - 2 : nearestFurniture.percentX;
       const size = calculateProductSize(nearestFurniture);
-      newWidth = size.width;
-      newHeight = size.height;
-      snappedTo = nearestFurniture.file;
-      // 가구의 실제 3D 좌표 저장 (furnitureLayout에서 x, y는 3D 좌표)
-      worldX = nearestFurniture.x;
-      worldY = nearestFurniture.y;
-      rotationY = nearestFurniture.rotationY;
-      // 가구의 2D 표시 크기 저장
       const furniture2DSize = calculateFurniture2DSize(nearestFurniture);
-      snappedWidthPercent = furniture2DSize.widthPercent;
-      snappedHeightPercent = furniture2DSize.heightPercent;
+
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (p.id === draggedProduct) {
+            // 드래그 상품 → 타겟 가구로 이동
+            return {
+              ...p,
+              x: adjustedPercentX,
+              y: nearestFurniture.percentY,
+              width: size.width,
+              height: size.height,
+              snappedTo: nearestFurniture.file,
+              worldX: nearestFurniture.x,
+              worldY: nearestFurniture.y,
+              rotationY: nearestFurniture.rotationY,
+              snappedWidthPercent: furniture2DSize.widthPercent,
+              snappedHeightPercent: furniture2DSize.heightPercent,
+            };
+          } else if (p.id === existingProductOnFurniture.id) {
+            // 기존 상품 → 드래그 상품의 원래 위치로 이동
+            return {
+              ...p,
+              x: draggedProductData.x,
+              y: draggedProductData.y,
+              width: draggedProductData.width,
+              height: draggedProductData.height,
+              snappedTo: draggedProductData.snappedTo,
+              worldX: draggedProductData.worldX,
+              worldY: draggedProductData.worldY,
+              rotationY: draggedProductData.rotationY,
+              snappedWidthPercent: draggedProductData.snappedWidthPercent,
+              snappedHeightPercent: draggedProductData.snappedHeightPercent,
+            };
+          }
+          return p;
+        })
+      );
+    } else {
+      // 기존 로직: 빈 가구에 스냅 또는 자유 배치
+      let finalX = Math.max(10, Math.min(90, x));
+      let finalY = Math.max(10, Math.min(90, y));
+      let newWidth: number | undefined;
+      let newHeight: number | undefined;
+      let snappedTo: string | undefined;
+      let worldX: number | undefined;
+      let worldY: number | undefined;
+      let rotationY: number | undefined;
+      let snappedWidthPercent: number | undefined;
+      let snappedHeightPercent: number | undefined;
+
+      if (nearestFurniture) {
+        const isRightWallShelf = nearestFurniture.category === 'WallShelf' && nearestFurniture.percentX > 90;
+        finalX = isRightWallShelf ? nearestFurniture.percentX - 2 : nearestFurniture.percentX;
+        finalY = nearestFurniture.percentY;
+        const size = calculateProductSize(nearestFurniture);
+        newWidth = size.width;
+        newHeight = size.height;
+        snappedTo = nearestFurniture.file;
+        worldX = nearestFurniture.x;
+        worldY = nearestFurniture.y;
+        rotationY = nearestFurniture.rotationY;
+        const furniture2DSize = calculateFurniture2DSize(nearestFurniture);
+        snappedWidthPercent = furniture2DSize.widthPercent;
+        snappedHeightPercent = furniture2DSize.heightPercent;
+      }
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === draggedProduct
+            ? { 
+                ...p, 
+                x: finalX, 
+                y: finalY, 
+                width: newWidth, 
+                height: newHeight,
+                snappedTo,
+                worldX,
+                worldY,
+                rotationY,
+                snappedWidthPercent,
+                snappedHeightPercent,
+              }
+            : p
+        )
+      );
     }
 
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === draggedProduct
-          ? { 
-              ...p, 
-              x: finalX, 
-              y: finalY, 
-              width: newWidth, 
-              height: newHeight,
-              snappedTo,
-              worldX,
-              worldY,
-              rotationY,
-              snappedWidthPercent,
-              snappedHeightPercent,
-            }
-          : p
-      )
-    );
     setDraggedProduct(null);
     setSelectedPreset(null);
     setHoveredFurniture(null);
