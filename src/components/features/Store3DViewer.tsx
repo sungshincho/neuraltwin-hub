@@ -600,12 +600,6 @@ const StoreModel = ({
             </>
           )}
 
-          {/* 구역 라벨 */}
-          <group position={[0, 2.5, 7]}>
-            <Box args={[1.5, 0.3, 0.05]}>
-              <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
-            </Box>
-          </group>
         </>
       )}
 
