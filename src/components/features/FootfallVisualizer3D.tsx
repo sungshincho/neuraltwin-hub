@@ -51,22 +51,6 @@ export const FootfallVisualizer3D = () => {
   
   const customerPaths = useMemo(() => generateDemoData(timeRange), [timeRange]);
   
-  // 시간 재생 효과
-  useEffect(() => {
-    if (!isPlaying) return;
-    
-    const interval = setInterval(() => {
-      setCurrentHour((prev) => {
-        if (prev >= timeRange[1]) {
-          setIsPlaying(false);
-          return timeRange[0];
-        }
-        return prev + 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [isPlaying, timeRange]);
 
   // 통계 계산
   const filteredPaths = customerPaths.filter(
