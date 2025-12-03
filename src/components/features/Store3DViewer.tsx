@@ -533,8 +533,8 @@ const StoreModel = ({
     const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
     
     for (let i = 0; i < pathCount; i++) {
-      const points = generateRandomCustomerPath(timeRangeStr);
-      const wentToCheckout = pathReachesCheckout(points);
+      const { path: points, caseIndex } = generateRandomCustomerPath(timeRangeStr);
+      const wentToCheckout = pathReachesCheckout(points, caseIndex);
       
       paths.push({
         id: `path-${i}`,

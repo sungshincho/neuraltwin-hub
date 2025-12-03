@@ -24,8 +24,8 @@ const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
   const timeRangeStr = `${String(timeRange[0]).padStart(2, '0')}:00-${String(timeRange[1]).padStart(2, '0')}:00`;
   
   for (let i = 0; i < pathCount; i++) {
-    const points = generateRandomCustomerPath(timeRangeStr);
-    const wentToCheckout = pathReachesCheckout(points);
+    const { path: points, caseIndex } = generateRandomCustomerPath(timeRangeStr);
+    const wentToCheckout = pathReachesCheckout(points, caseIndex);
     
     const dwellTime = wentToCheckout 
       ? Math.random() * 12 + 3
