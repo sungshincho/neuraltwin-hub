@@ -356,9 +356,15 @@ export const LayoutSimulator3D = () => {
               
               // 마네킹은 동일한 크기로 통일
               const isMannequin = furniture.category === 'FullMannequin' || furniture.category === 'HalfMannequin';
+              const isHanger = furniture.category === 'Hanger';
+              
               if (isMannequin) {
                 widthPercent = 5;
                 heightPercent = 5;
+              } else if (isHanger) {
+                // 행거는 높이(Y) 줄여서 겹침 방지
+                widthPercent = 8;
+                heightPercent = 3;
               } else if (furniture.dimensions) {
                 const isRotated = Math.abs(furniture.rotationY) === 90 || Math.abs(furniture.rotationY) === 270;
                 const w = isRotated ? furniture.dimensions.depth : furniture.dimensions.width;
@@ -367,8 +373,6 @@ export const LayoutSimulator3D = () => {
                 heightPercent = Math.max(4, Math.min(15, (d / 14) * 100));
               }
               
-              // 행거는 라벨 크기 줄임 (겹침 방지)
-              const isHanger = furniture.category === 'Hanger';
               // 오른쪽 벽면선반은 좌측으로 2% 이동 (잘림 방지)
               const isRightWallShelf = furniture.category === 'WallShelf' && furniture.percentX > 90;
               const adjustedPercentX = isRightWallShelf ? furniture.percentX - 2 : furniture.percentX;
@@ -387,9 +391,7 @@ export const LayoutSimulator3D = () => {
                     transform: 'translate(-50%, -50%)',
                   }}
                 >
-                  <span className={`absolute inset-0 flex items-center justify-center text-foreground/70 font-medium truncate px-0.5 ${
-                    isHanger ? 'text-[6px]' : 'text-[8px]'
-                  }`}>
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] text-foreground/70 font-medium truncate px-0.5">
                     {furniture.label}
                   </span>
                 </div>
