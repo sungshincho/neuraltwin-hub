@@ -2,8 +2,34 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useMemo, useState, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as THREE from "three";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Mouse, MoveHorizontal, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// 마우스 조작 가이드 컴포넌트
+const ControlsGuide = () => (
+  <div className="absolute top-3 right-3 flex flex-col gap-1.5 bg-background/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="relative w-5 h-5 flex items-center justify-center">
+        <Mouse className="w-4 h-4" />
+        <span className="absolute -top-0.5 -left-0.5 text-[8px] font-bold text-primary">L</span>
+      </div>
+      <span>카메라 회전</span>
+    </div>
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="relative w-5 h-5 flex items-center justify-center">
+        <Mouse className="w-4 h-4" />
+        <span className="absolute -top-0.5 -right-0.5 text-[8px] font-bold text-primary">R</span>
+      </div>
+      <span>카메라 이동</span>
+    </div>
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="w-5 h-5 flex items-center justify-center">
+        <ZoomIn className="w-4 h-4" />
+      </div>
+      <span>축소 / 확대</span>
+    </div>
+  </div>
+);
 
 interface CustomerPath {
   id: string;
@@ -589,6 +615,9 @@ export const Store3DViewer = (props: Store3DViewerProps) => {
         <RotateCcw className="w-4 h-4 mr-1.5" />
         리셋 카메라뷰
       </Button>
+      
+      {/* 마우스 조작 가이드 */}
+      <ControlsGuide />
     </div>
   );
 };
