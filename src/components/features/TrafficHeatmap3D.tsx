@@ -374,10 +374,10 @@ export const TrafficHeatmap3D = () => {
 
   // 시간대 분류
   const getTimeCategory = (hour: number) => {
-    if (hour >= 9 && hour < 12) return { label: "오전", status: "보통" };
+    if (hour >= 10 && hour < 12) return { label: "오전", status: "보통" };
     if (hour >= 12 && hour < 14) return { label: "점심", status: "피크" };
     if (hour >= 14 && hour < 18) return { label: "오후", status: "보통" };
-    if (hour >= 18 && hour < 21) return { label: "저녁", status: "피크" };
+    if (hour >= 18 && hour < 20) return { label: "저녁", status: "피크" };
     return { label: "야간", status: "한산" };
   };
 
@@ -426,8 +426,8 @@ export const TrafficHeatmap3D = () => {
               onValueChange={(value) => setTimeOfDay(value[0])}
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>09:00 오픈</span>
-              <span>23:00 마감</span>
+              <span>10:00 오픈</span>
+              <span>20:00 마감</span>
             </div>
           </div>
 
