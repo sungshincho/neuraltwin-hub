@@ -24,7 +24,7 @@ interface Store3DViewerProps {
   customerPaths?: CustomerPath[];
   isPlaying?: boolean;
   // Layout props
-  layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string; worldX?: number; worldY?: number }>;
+  layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string; worldX?: number; worldY?: number; rotationY?: number }>;
   // Heatmap props
   timeOfDay?: number;
   heatmapData?: Array<{ x: number; y: number; intensity: number }>;
@@ -611,6 +611,8 @@ const StoreModel = ({
             // 스냅된 가구가 있으면 해당 가구의 실제 3D 좌표 사용
             const x3d = product.worldX !== undefined ? product.worldX : (product.x / 100) * 16 - 8;
             const z3d = product.worldY !== undefined ? product.worldY : (product.y / 100) * 12 - 6;
+            // 스냅된 가구의 회전값 적용 (degree → radian)
+            const rotationY = product.rotationY !== undefined ? (product.rotationY * Math.PI) / 180 : 0;
             
             const colorMap: { [key: string]: string } = {
               'bg-primary': '#0EA5E9',
@@ -621,7 +623,7 @@ const StoreModel = ({
             const color = colorMap[product.color] || '#0EA5E9';
 
             return (
-              <group key={product.id} position={[x3d, 0, z3d]}>
+              <group key={product.id} position={[x3d, 0, z3d]} rotation={[0, rotationY, 0]}>
                 {/* 제품 진열대 */}
                 <Box args={[1.8, 1.5, 1.2]} position={[0, 0.75, 0]}>
                   <meshStandardMaterial 
@@ -632,14 +634,6 @@ const StoreModel = ({
                     opacity={0.9}
                   />
                 </Box>
-                {/* 상단 마커 */}
-                <Sphere args={[0.25]} position={[0, 1.8, 0]}>
-                  <meshStandardMaterial 
-                    color={color} 
-                    emissive={color} 
-                    emissiveIntensity={0.7} 
-                  />
-                </Sphere>
                 {/* 바닥 강조 */}
                 <Plane args={[2.2, 1.6]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
                   <meshStandardMaterial 

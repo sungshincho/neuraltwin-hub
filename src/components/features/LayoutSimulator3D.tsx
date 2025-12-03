@@ -26,6 +26,7 @@ interface Product {
   snappedTo?: string; // 스냅된 가구 파일명
   worldX?: number; // 스냅된 가구의 실제 3D X 좌표
   worldY?: number; // 스냅된 가구의 실제 3D Y 좌표 (Z축으로 사용됨)
+  rotationY?: number; // 스냅된 가구의 Y축 회전값
 }
 
 interface KPIPreset {
@@ -122,10 +123,10 @@ export const LayoutSimulator3D = () => {
   const [activeKPI, setActiveKPI] = useState("conversion");
   const [hoveredFurniture, setHoveredFurniture] = useState<string | null>(null);
 
-  // 가구 데이터를 2D용으로 변환 (Product 제외)
+  // 가구 데이터를 2D용으로 변환 (Product_, CheckoutCounter 제외 - 스냅 불가)
   const furniture2D = useMemo(() => {
     const nonProductFurniture = furnitureLayout.filter(
-      item => !item.file.startsWith('Product_')
+      item => !item.file.startsWith('Product_') && !item.file.includes('CheckoutCounter')
     );
     return convertFurnitureFor2D(nonProductFurniture);
   }, []);
@@ -177,6 +178,7 @@ export const LayoutSimulator3D = () => {
     let snappedTo: string | undefined;
     let worldX: number | undefined;
     let worldY: number | undefined;
+    let rotationY: number | undefined;
 
     if (nearestFurniture) {
       finalX = nearestFurniture.percentX;
@@ -188,6 +190,7 @@ export const LayoutSimulator3D = () => {
       // 가구의 실제 3D 좌표 저장 (furnitureLayout에서 x, y는 3D 좌표)
       worldX = nearestFurniture.x;
       worldY = nearestFurniture.y;
+      rotationY = nearestFurniture.rotationY;
     }
 
     setProducts((prev) =>
@@ -201,7 +204,8 @@ export const LayoutSimulator3D = () => {
               height: newHeight,
               snappedTo,
               worldX,
-              worldY
+              worldY,
+              rotationY
             }
           : p
       )
@@ -325,11 +329,19 @@ export const LayoutSimulator3D = () => {
               ))}
             </div>
             
-            {/* 입구/출구 표시 */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500/20 text-green-500 text-xs rounded-t z-20">
+            {/* 입구/계산대 표시 (실제 3D 좌표 기준 위치) */}
+            {/* 입구: 3D좌표 약 (0, 6) → 2D% 약 (50%, 100%) */}
+            <div 
+              className="absolute px-3 py-1 bg-green-500/20 text-green-500 text-xs rounded z-20 pointer-events-none"
+              style={{ left: '50%', top: '100%', transform: 'translate(-50%, -100%)' }}
+            >
               입구
             </div>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-500/20 text-red-500 text-xs rounded-b z-20">
+            {/* 계산대: 3D좌표 약 (-6.1, -7.4) → worldToPercent 사용 */}
+            <div 
+              className="absolute px-3 py-1 bg-red-500/20 text-red-500 text-xs rounded z-20 pointer-events-none"
+              style={{ left: '9.3%', top: '4.3%', transform: 'translate(-50%, -50%)' }}
+            >
               계산대
             </div>
 
