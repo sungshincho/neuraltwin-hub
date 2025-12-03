@@ -342,7 +342,6 @@ export const TrafficHeatmap3D = () => {
   const [timeOfDay, setTimeOfDay] = useState(14);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showHotspots, setShowHotspots] = useState(true);
-  const [showRealtime, setShowRealtime] = useState(true);
 
   const heatmapData = useMemo(() => generateHeatmapData(timeOfDay), [timeOfDay]);
   const hotspots = useMemo(() => detectHotspots(heatmapData), [heatmapData]);
@@ -473,18 +472,6 @@ export const TrafficHeatmap3D = () => {
                 id="show-hotspots"
                 checked={showHotspots}
                 onCheckedChange={setShowHotspots}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-realtime" className="flex items-center gap-2">
-                <TrendingUp className="w-3 h-3 text-green-500" />
-                실시간 업데이트
-              </Label>
-              <Switch
-                id="show-realtime"
-                checked={showRealtime}
-                onCheckedChange={setShowRealtime}
               />
             </div>
           </div>
