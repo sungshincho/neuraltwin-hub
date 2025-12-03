@@ -27,6 +27,8 @@ interface Product {
   worldX?: number; // 스냅된 가구의 실제 3D X 좌표
   worldY?: number; // 스냅된 가구의 실제 3D Y 좌표 (Z축으로 사용됨)
   rotationY?: number; // 스냅된 가구의 Y축 회전값
+  snappedWidthPercent?: number; // 스냅된 가구의 2D 표시 너비 %
+  snappedHeightPercent?: number; // 스냅된 가구의 2D 표시 높이 %
 }
 
 interface KPIPreset {
@@ -42,12 +44,34 @@ interface KPIPreset {
   };
 }
 
+// 초기 상품 위치는 useEffect에서 가구 위치 기반으로 설정
 const initialProducts: Product[] = [
-  { id: "A", name: "신상품", x: 25, y: 25, color: "bg-primary" },
-  { id: "B", name: "인기상품", x: 75, y: 25, color: "bg-blue-500" },
-  { id: "C", name: "할인상품", x: 25, y: 75, color: "bg-purple-500" },
-  { id: "D", name: "프리미엄", x: 75, y: 75, color: "bg-amber-500" },
+  { id: "A", name: "신상품", x: 50, y: 50, color: "bg-primary" },
+  { id: "B", name: "인기상품", x: 50, y: 50, color: "bg-blue-500" },
+  { id: "C", name: "할인상품", x: 50, y: 50, color: "bg-purple-500" },
+  { id: "D", name: "프리미엄", x: 50, y: 50, color: "bg-amber-500" },
 ];
+
+// 가구에서 2D 표시 크기 계산 (가구 라벨과 동일한 크기)
+const calculateFurniture2DSize = (furniture: FurnitureItem): { widthPercent: number; heightPercent: number } => {
+  const isMannequin = furniture.category === 'FullMannequin' || furniture.category === 'HalfMannequin';
+  
+  if (isMannequin) {
+    return { widthPercent: 5, heightPercent: 5 };
+  }
+  
+  if (furniture.dimensions) {
+    const isRotated = Math.abs(furniture.rotationY) === 90 || Math.abs(furniture.rotationY) === 270;
+    const w = isRotated ? furniture.dimensions.depth : furniture.dimensions.width;
+    const d = isRotated ? furniture.dimensions.width : furniture.dimensions.depth;
+    return {
+      widthPercent: Math.max(4, Math.min(15, (w / 15) * 100)),
+      heightPercent: Math.max(4, Math.min(15, (d / 14) * 100))
+    };
+  }
+  
+  return { widthPercent: 8, heightPercent: 8 };
+};
 
 const kpiPresets: KPIPreset[] = [
   {
@@ -131,6 +155,66 @@ export const LayoutSimulator3D = () => {
     return convertFurnitureFor2D(nonProductFurniture);
   }, []);
 
+  // 초기 로드 시 상품을 지정된 가구에 스냅
+  useEffect(() => {
+    if (furniture2D.length === 0) return;
+
+    // 신상품 → 중앙테이블 (CenterTable)
+    const centerTable = furniture2D.find(f => f.category === 'CenterTable');
+    // 할인상품 → 원형테이블 (CircularTable)
+    const circularTable = furniture2D.find(f => f.category === 'CircularTable');
+    // 프리미엄 → 가장 좌측 가장 위 선반 (WallShelf 중 percentX 최소, percentY 최소)
+    const wallShelves = furniture2D.filter(f => f.category === 'WallShelf');
+    const leftmostTopShelf = wallShelves.length > 0 
+      ? wallShelves.reduce((best, shelf) => {
+          // 좌측 우선, 그 다음 위쪽 우선
+          if (shelf.percentX < best.percentX - 5) return shelf;
+          if (shelf.percentX <= best.percentX + 5 && shelf.percentY < best.percentY) return shelf;
+          return best;
+        }, wallShelves[0])
+      : null;
+    // 인기상품 → 마네킹 (FullMannequin 또는 HalfMannequin)
+    const mannequin = furniture2D.find(f => f.category === 'FullMannequin' || f.category === 'HalfMannequin');
+
+    setProducts(prev => prev.map(product => {
+      let targetFurniture: FurnitureItem | null = null;
+
+      switch (product.id) {
+        case 'A': // 신상품 → 중앙테이블
+          targetFurniture = centerTable || null;
+          break;
+        case 'B': // 인기상품 → 마네킹
+          targetFurniture = mannequin || null;
+          break;
+        case 'C': // 할인상품 → 원형테이블
+          targetFurniture = circularTable || null;
+          break;
+        case 'D': // 프리미엄 → 좌측 상단 선반
+          targetFurniture = leftmostTopShelf || null;
+          break;
+      }
+
+      if (targetFurniture) {
+        const size = calculateProductSize(targetFurniture);
+        const furniture2DSize = calculateFurniture2DSize(targetFurniture);
+        return {
+          ...product,
+          x: targetFurniture.percentX,
+          y: targetFurniture.percentY,
+          width: size.width,
+          height: size.height,
+          snappedTo: targetFurniture.file,
+          worldX: targetFurniture.x,
+          worldY: targetFurniture.y,
+          rotationY: targetFurniture.rotationY,
+          snappedWidthPercent: furniture2DSize.widthPercent,
+          snappedHeightPercent: furniture2DSize.heightPercent,
+        };
+      }
+      return product;
+    }));
+  }, [furniture2D]);
+
   const metrics = useMemo(() => generateMetrics(products), [products]);
   const currentPreset = kpiPresets.find(p => p.id === selectedPreset);
   const targetMetrics = currentPreset?.metrics || metrics;
@@ -180,6 +264,9 @@ export const LayoutSimulator3D = () => {
     let worldY: number | undefined;
     let rotationY: number | undefined;
 
+    let snappedWidthPercent: number | undefined;
+    let snappedHeightPercent: number | undefined;
+
     if (nearestFurniture) {
       finalX = nearestFurniture.percentX;
       finalY = nearestFurniture.percentY;
@@ -191,6 +278,10 @@ export const LayoutSimulator3D = () => {
       worldX = nearestFurniture.x;
       worldY = nearestFurniture.y;
       rotationY = nearestFurniture.rotationY;
+      // 가구의 2D 표시 크기 저장
+      const furniture2DSize = calculateFurniture2DSize(nearestFurniture);
+      snappedWidthPercent = furniture2DSize.widthPercent;
+      snappedHeightPercent = furniture2DSize.heightPercent;
     }
 
     setProducts((prev) =>
@@ -205,7 +296,9 @@ export const LayoutSimulator3D = () => {
               snappedTo,
               worldX,
               worldY,
-              rotationY
+              rotationY,
+              snappedWidthPercent,
+              snappedHeightPercent,
             }
           : p
       )
@@ -243,15 +336,6 @@ export const LayoutSimulator3D = () => {
   const improvement = selectedPreset 
     ? ((targetMetrics.conversion - metrics.conversion) / metrics.conversion * 100).toFixed(1)
     : "0";
-
-  // 가구 카테고리별 그룹핑 (범례용)
-  const furnitureCategories = useMemo(() => {
-    const categories = new Map<string, number>();
-    furniture2D.forEach(f => {
-      categories.set(f.category, (categories.get(f.category) || 0) + 1);
-    });
-    return Array.from(categories.entries());
-  }, [furniture2D]);
 
   return (
     <div className="space-y-6">
@@ -395,8 +479,13 @@ export const LayoutSimulator3D = () => {
             
             {/* 상품 박스 */}
             {products.map((product) => {
-              const boxWidth = product.width || 14;
-              const boxHeight = product.height || 14;
+              // 스냅된 경우 가구와 동일한 크기 사용, 아니면 기본 크기
+              const boxWidth = product.snappedTo && product.snappedWidthPercent 
+                ? product.snappedWidthPercent 
+                : 14;
+              const boxHeight = product.snappedTo && product.snappedHeightPercent 
+                ? product.snappedHeightPercent 
+                : 14;
               
               return (
                 <div
@@ -436,18 +525,6 @@ export const LayoutSimulator3D = () => {
                   {p.id}: {p.name}
                 </Badge>
               ))}
-            </div>
-            <div className="text-xs text-muted-foreground font-medium mt-2">가구</div>
-            <div className="flex flex-wrap gap-2">
-              {furnitureCategories.map(([category, count]) => {
-                const colorClass = FURNITURE_COLORS[category] || 'bg-gray-500/30';
-                return (
-                  <Badge key={category} variant="outline" className="text-xs">
-                    <span className={`w-2 h-2 rounded ${colorClass.split(' ')[0]} mr-1`} />
-                    {category} ({count})
-                  </Badge>
-                );
-              })}
             </div>
           </div>
         </div>
