@@ -24,6 +24,8 @@ interface Product {
   width?: number;
   height?: number;
   snappedTo?: string; // 스냅된 가구 파일명
+  worldX?: number; // 스냅된 가구의 실제 3D X 좌표
+  worldY?: number; // 스냅된 가구의 실제 3D Y 좌표 (Z축으로 사용됨)
 }
 
 interface KPIPreset {
@@ -173,6 +175,8 @@ export const LayoutSimulator3D = () => {
     let newWidth: number | undefined;
     let newHeight: number | undefined;
     let snappedTo: string | undefined;
+    let worldX: number | undefined;
+    let worldY: number | undefined;
 
     if (nearestFurniture) {
       finalX = nearestFurniture.percentX;
@@ -181,6 +185,9 @@ export const LayoutSimulator3D = () => {
       newWidth = size.width;
       newHeight = size.height;
       snappedTo = nearestFurniture.file;
+      // 가구의 실제 3D 좌표 저장 (furnitureLayout에서 x, y는 3D 좌표)
+      worldX = nearestFurniture.x;
+      worldY = nearestFurniture.y;
     }
 
     setProducts((prev) =>
@@ -192,7 +199,9 @@ export const LayoutSimulator3D = () => {
               y: finalY, 
               width: newWidth, 
               height: newHeight,
-              snappedTo 
+              snappedTo,
+              worldX,
+              worldY
             }
           : p
       )

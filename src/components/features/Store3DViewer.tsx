@@ -24,7 +24,7 @@ interface Store3DViewerProps {
   customerPaths?: CustomerPath[];
   isPlaying?: boolean;
   // Layout props
-  layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string }>;
+  layoutProducts?: Array<{ id: string; name: string; x: number; y: number; color: string; worldX?: number; worldY?: number }>;
   // Heatmap props
   timeOfDay?: number;
   heatmapData?: Array<{ x: number; y: number; intensity: number }>;
@@ -608,8 +608,9 @@ const StoreModel = ({
         <>
           {/* 사용자가 배치한 제품들 시각화 */}
           {layoutProducts.map((product) => {
-            const x3d = (product.x / 100) * 16 - 8;
-            const z3d = (product.y / 100) * 12 - 6;
+            // 스냅된 가구가 있으면 해당 가구의 실제 3D 좌표 사용
+            const x3d = product.worldX !== undefined ? product.worldX : (product.x / 100) * 16 - 8;
+            const z3d = product.worldY !== undefined ? product.worldY : (product.y / 100) * 12 - 6;
             
             const colorMap: { [key: string]: string } = {
               'bg-primary': '#0EA5E9',
