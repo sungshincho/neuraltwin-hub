@@ -618,7 +618,8 @@ const StoreModel = ({
               'bg-primary': '#0EA5E9',
               'bg-blue-500': '#3b82f6',
               'bg-purple-500': '#a855f7',
-              'bg-amber-500': '#f59e0b'
+              'bg-amber-500': '#f59e0b',
+              'bg-yellow-500': '#eab308'
             };
             const color = colorMap[product.color] || '#0EA5E9';
 
