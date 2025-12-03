@@ -330,17 +330,17 @@ export const LayoutSimulator3D = () => {
             </div>
             
             {/* 입구/계산대 표시 (실제 3D 좌표 기준 위치) */}
-            {/* 입구: 3D좌표 약 (0, 6) → 2D% 약 (50%, 100%) */}
+            {/* 입구: 3D좌표 (2, 5) → percentX: 63.33%, percentY: 92.86% */}
             <div 
               className="absolute px-3 py-1 bg-green-500/20 text-green-500 text-xs rounded z-20 pointer-events-none"
-              style={{ left: '50%', top: '100%', transform: 'translate(-50%, -100%)' }}
+              style={{ left: '63.33%', top: '92.86%', transform: 'translate(-50%, -50%)' }}
             >
               입구
             </div>
-            {/* 계산대: 3D좌표 약 (-6.1, -7.4) → worldToPercent 사용 */}
+            {/* 계산대: 3D좌표 (3, -4) → percentX: 70%, percentY: 28.57% */}
             <div 
               className="absolute px-3 py-1 bg-red-500/20 text-red-500 text-xs rounded z-20 pointer-events-none"
-              style={{ left: '9.3%', top: '4.3%', transform: 'translate(-50%, -50%)' }}
+              style={{ left: '70%', top: '28.57%', transform: 'translate(-50%, -50%)' }}
             >
               계산대
             </div>
