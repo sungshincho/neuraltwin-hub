@@ -43,11 +43,11 @@ const generateDemoData = (timeRange: [number, number]): CustomerPath[] => {
 };
 
 export const FootfallVisualizer3D = () => {
-  const [timeRange, setTimeRange] = useState<[number, number]>([9, 21]);
+  const [timeRange, setTimeRange] = useState<[number, number]>([10, 20]);
   const [showReturning, setShowReturning] = useState(true);
   const [showNew, setShowNew] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [currentHour, setCurrentHour] = useState(9);
+  const [currentHour, setCurrentHour] = useState(10);
   
   const customerPaths = useMemo(() => generateDemoData(timeRange), [timeRange]);
   
@@ -118,8 +118,8 @@ export const FootfallVisualizer3D = () => {
               영업 시간: {timeRange[0]}시 - {timeRange[1]}시
             </Label>
             <Slider
-              min={6}
-              max={24}
+              min={10}
+              max={20}
               step={1}
               value={timeRange}
               onValueChange={(value) => {
