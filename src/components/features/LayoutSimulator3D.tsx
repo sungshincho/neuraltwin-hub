@@ -73,53 +73,71 @@ const calculateFurniture2DSize = (furniture: FurnitureItem): { widthPercent: num
   return { widthPercent: 8, heightPercent: 8 };
 };
 
+// KPI별 가구 매핑 (가구 파일명 or 카테고리로 지정)
+interface KPIFurnitureMapping {
+  productId: string;
+  furniturePattern: string; // 가구 파일명 패턴 또는 카테고리
+  fallbackIndex?: number; // 여러 개 있을 경우 인덱스
+}
+
+const kpiFurnitureMappings: Record<string, KPIFurnitureMapping[]> = {
+  // 전환율 최적화: 신상품→전면벽면(WallShelf1,2), 인기상품→입구근처행거, 프리미엄→중앙, 할인상품→계산대근처
+  conversion: [
+    { productId: "A", furniturePattern: "WallShelf1" }, // 신상품 → 입구 가까운 전면 벽선반
+    { productId: "B", furniturePattern: "Hanger1" }, // 인기상품 → 입구 근처 행거
+    { productId: "C", furniturePattern: "WallShelf9" }, // 할인상품 → 계산대 근처 (오른쪽 벽)
+    { productId: "D", furniturePattern: "CenterTable" }, // 프리미엄 → 중앙 진열
+  ],
+  // 동선 최적화: 신상품→중전면(WallShelf3,4), 인기상품→넓은중앙, 프리미엄→후면, 할인상품→측면
+  traffic: [
+    { productId: "A", furniturePattern: "WallShelf3" }, // 신상품 → 매장 앞쪽 아닌 중전면
+    { productId: "B", furniturePattern: "CenterTable" }, // 인기상품 → 넓은 중앙
+    { productId: "C", furniturePattern: "WallShelf6" }, // 할인상품 → 측면 (하단 벽)
+    { productId: "D", furniturePattern: "WallShelf11" }, // 프리미엄 → 후면 벽면 (오른쪽 위)
+  ],
+  // 매출 최적화: 프리미엄→중앙+후면, 인기상품→프리미엄주변, 신상품→전면일부, 할인상품→계산대
+  revenue: [
+    { productId: "D", furniturePattern: "CircularTable" }, // 프리미엄 → 중앙 진열
+    { productId: "B", furniturePattern: "Hanger5" }, // 인기상품 → 프리미엄 주변 행거
+    { productId: "A", furniturePattern: "WallShelf2" }, // 신상품 → 전면 벽선반
+    { productId: "C", furniturePattern: "WallShelf10" }, // 할인상품 → 계산대 근처 (오른쪽)
+  ],
+  // 체류시간 최적화: 프리미엄→중앙/후면, 신상품→중후면, 인기상품→측면, 할인상품→후면
+  dwell: [
+    { productId: "D", furniturePattern: "CenterTable" }, // 프리미엄 → 중앙/후면
+    { productId: "A", furniturePattern: "WallShelf10" }, // 신상품 → 중후면 (오른쪽 벽)
+    { productId: "B", furniturePattern: "WallShelf7" }, // 인기상품 → 측면 (하단 벽)
+    { productId: "C", furniturePattern: "WallShelf4" }, // 할인상품 → 후면/사이드 (왼쪽 벽 하단)
+  ],
+};
+
 const kpiPresets: KPIPreset[] = [
   {
     id: "conversion",
     name: "전환율 최적화",
     description: "구매 전환율을 최대화하는 레이아웃",
-    layout: [
-      { id: "A", name: "신상품", x: 50, y: 20, color: "bg-primary" },
-      { id: "B", name: "인기상품", x: 25, y: 40, color: "bg-blue-500" },
-      { id: "C", name: "할인상품", x: 75, y: 40, color: "bg-purple-500" },
-      { id: "D", name: "프리미엄", x: 50, y: 70, color: "bg-amber-500" },
-    ],
+    layout: [], // applyPreset에서 동적으로 생성
     metrics: { conversion: 23.5, traffic: 420, avgPurchase: 85000, dwellTime: 12.5 }
   },
   {
     id: "traffic",
     name: "동선 최적화",
     description: "고객 이동 경로를 최적화하는 레이아웃",
-    layout: [
-      { id: "A", name: "신상품", x: 20, y: 30, color: "bg-primary" },
-      { id: "B", name: "인기상품", x: 80, y: 30, color: "bg-blue-500" },
-      { id: "C", name: "할인상품", x: 20, y: 70, color: "bg-purple-500" },
-      { id: "D", name: "프리미엄", x: 80, y: 70, color: "bg-amber-500" },
-    ],
+    layout: [],
     metrics: { conversion: 18.2, traffic: 580, avgPurchase: 72000, dwellTime: 8.3 }
   },
   {
     id: "revenue",
     name: "매출 최적화",
     description: "객단가를 최대화하는 레이아웃",
-    layout: [
-      { id: "D", name: "프리미엄", x: 50, y: 25, color: "bg-amber-500" },
-      { id: "A", name: "신상품", x: 30, y: 50, color: "bg-primary" },
-      { id: "B", name: "인기상품", x: 70, y: 50, color: "bg-blue-500" },
-      { id: "C", name: "할인상품", x: 50, y: 80, color: "bg-purple-500" },
-    ],
+    layout: [],
     metrics: { conversion: 19.8, traffic: 390, avgPurchase: 125000, dwellTime: 15.2 }
   },
   {
     id: "dwell",
     name: "체류시간 최적화",
     description: "고객 체류시간을 늘리는 레이아웃",
-    layout: [
-      { id: "A", name: "신상품", x: 15, y: 30, color: "bg-primary" },
-      { id: "B", name: "인기상품", x: 40, y: 50, color: "bg-blue-500" },
-      { id: "C", name: "할인상품", x: 60, y: 50, color: "bg-purple-500" },
-      { id: "D", name: "프리미엄", x: 85, y: 30, color: "bg-amber-500" },
-    ],
+    layout: [],
     metrics: { conversion: 21.3, traffic: 350, avgPurchase: 95000, dwellTime: 18.7 }
   }
 ];
@@ -327,8 +345,39 @@ export const LayoutSimulator3D = () => {
 
   const applyPreset = (presetId: string) => {
     const preset = kpiPresets.find(p => p.id === presetId);
-    if (preset) {
-      setProducts(preset.layout);
+    const mappings = kpiFurnitureMappings[presetId];
+    
+    if (preset && mappings && furniture2D.length > 0) {
+      const newProducts: Product[] = mappings.map(mapping => {
+        // 가구 패턴으로 가구 찾기
+        const targetFurniture = furniture2D.find(f => f.file.includes(mapping.furniturePattern));
+        const baseProduct = initialProducts.find(p => p.id === mapping.productId)!;
+        
+        if (targetFurniture) {
+          const size = calculateProductSize(targetFurniture);
+          const furniture2DSize = calculateFurniture2DSize(targetFurniture);
+          const isRightWallShelf = targetFurniture.category === 'WallShelf' && targetFurniture.percentX > 90;
+          const adjustedPercentX = isRightWallShelf ? targetFurniture.percentX - 2 : targetFurniture.percentX;
+          
+          return {
+            ...baseProduct,
+            x: adjustedPercentX,
+            y: targetFurniture.percentY,
+            width: size.width,
+            height: size.height,
+            snappedTo: targetFurniture.file,
+            worldX: targetFurniture.x,
+            worldY: targetFurniture.y,
+            rotationY: targetFurniture.rotationY,
+            snappedWidthPercent: furniture2DSize.widthPercent,
+            snappedHeightPercent: furniture2DSize.heightPercent,
+          };
+        }
+        
+        return baseProduct;
+      });
+      
+      setProducts(newProducts);
       setSelectedPreset(presetId);
     }
   };
