@@ -52,10 +52,10 @@ export const parseFurnitureCategory = (filename: string): string => {
 
 // 가구 라벨 (한글)
 export const FURNITURE_LABELS: Record<string, string> = {
-  'WallShelf': '벽면선반',
-  'SideShelf': '측면선반',
+  'WallShelf': '선반',
+  'SideShelf': '선반',
   'FullMannequin': '마네킹',
-  'HalfMannequin': '반신마네킹',
+  'HalfMannequin': '마네킹',
   'CenterTable': '중앙테이블',
   'CircularTable': '원형테이블',
   'CheckoutCounter': '계산대',
