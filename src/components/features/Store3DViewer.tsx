@@ -2,12 +2,28 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useMemo, useState, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as THREE from "three";
-import { RotateCcw, Mouse, MoveHorizontal, ZoomIn } from "lucide-react";
+import { RotateCcw, Mouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// 마우스 휠 아이콘 (휠 부분만 채워진 형태)
+const MouseWheelIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect x="6" y="3" width="12" height="18" rx="6" />
+    <rect x="10" y="6" width="4" height="5" rx="2" fill="currentColor" />
+  </svg>
+);
 
 // 마우스 조작 가이드 컴포넌트
 const ControlsGuide = () => (
-  <div className="absolute top-3 right-3 flex flex-col gap-1.5 bg-background/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
+  <div className="absolute bottom-3 left-3 flex flex-col gap-1.5 bg-background/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <div className="relative w-5 h-5 flex items-center justify-center">
         <Mouse className="w-4 h-4" />
@@ -24,7 +40,7 @@ const ControlsGuide = () => (
     </div>
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <div className="w-5 h-5 flex items-center justify-center">
-        <ZoomIn className="w-4 h-4" />
+        <MouseWheelIcon className="w-4 h-4" />
       </div>
       <span>축소 / 확대</span>
     </div>
