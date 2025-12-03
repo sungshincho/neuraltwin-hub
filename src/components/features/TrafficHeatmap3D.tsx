@@ -390,7 +390,6 @@ export const TrafficHeatmap3D = () => {
         timeOfDay={timeOfDay}
         heatmapData={heatmapData}
         hotspots={showHotspots ? hotspots : []}
-        allowedHeatmapPositions={allowedHeatmapPositions}
       />
 
       <div className="grid md:grid-cols-3 gap-6">
