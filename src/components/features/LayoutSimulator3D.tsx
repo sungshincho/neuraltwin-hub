@@ -492,22 +492,20 @@ export const LayoutSimulator3D = () => {
                   key={product.id}
                   draggable
                   onDragStart={() => handleDragStart(product.id)}
-                  className={`absolute rounded-lg ${product.color} cursor-move flex flex-col items-center justify-center text-white font-bold shadow-lg transition-all hover:scale-110 hover:shadow-xl z-10`}
+                  className={`absolute rounded ${product.color} cursor-move flex flex-col items-center justify-center text-white font-bold shadow-lg transition-all hover:scale-110 hover:shadow-xl z-10`}
                   style={{ 
                     left: `${product.x}%`, 
                     top: `${product.y}%`, 
                     transform: "translate(-50%, -50%)",
                     width: `${boxWidth}%`,
                     height: `${boxHeight}%`,
-                    minWidth: '40px',
-                    minHeight: '40px',
                   }}
                 >
-                  <span className="text-lg">{product.id}</span>
-                  <span className="text-[9px] opacity-80">{product.name}</span>
+                  <span className="text-sm">{product.id}</span>
+                  <span className="text-[7px] opacity-80 truncate w-full text-center px-0.5">{product.name}</span>
                   {product.snappedTo && (
-                    <span className="absolute -bottom-4 text-[7px] text-muted-foreground whitespace-nowrap">
-                      📍 스냅됨
+                    <span className="absolute -bottom-3 text-[6px] text-muted-foreground whitespace-nowrap">
+                      📍
                     </span>
                   )}
                 </div>
