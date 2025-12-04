@@ -1,7 +1,58 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Linkedin } from "lucide-react";
+
 export const Footer = () => {
-  return <footer className="border-t border-border/50 bg-card/50">
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handlePricingClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === "/pricing") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      navigate("/pricing");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+    }
+  };
+
+  const handleFeatureClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === "/product") {
+      const element = document.getElementById("license-features");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      navigate("/product#license-features");
+      setTimeout(() => {
+        const element = document.getElementById("license-features");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  };
+
+  const handleTechnologyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === "/product") {
+      const element = document.getElementById("technology-pipeline");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      navigate("/product#technology-pipeline");
+      setTimeout(() => {
+        const element = document.getElementById("technology-pipeline");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  };
+
+  return (
+    <footer className="border-t border-border/50 bg-card/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -26,19 +77,31 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4">제품</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/product" className="text-muted-foreground hover:text-foreground transition-smooth">
+                <a 
+                  href="/product#license-features" 
+                  onClick={handleFeatureClick}
+                  className="text-muted-foreground hover:text-foreground transition-smooth cursor-pointer"
+                >
                   기능
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-smooth">
+                <a 
+                  href="/pricing" 
+                  onClick={handlePricingClick}
+                  className="text-muted-foreground hover:text-foreground transition-smooth cursor-pointer"
+                >
                   가격
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/technology" className="text-muted-foreground hover:text-foreground transition-smooth">
+                <a 
+                  href="/product#technology-pipeline" 
+                  onClick={handleTechnologyClick}
+                  className="text-muted-foreground hover:text-foreground transition-smooth cursor-pointer"
+                >
                   기술
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -47,8 +110,6 @@ export const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">회사</h3>
             <ul className="space-y-2 text-sm">
-              
-              
               <li>
                 <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-smooth">
                   문의
@@ -81,5 +142,6 @@ export const Footer = () => {
           </p>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };

@@ -3,7 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { BarChart3, Brain, TrendingUp, Zap, LineChart, ArrowRight, Database, Clock, Layers, Network, Shield, Box } from "lucide-react";
 import { FootfallVisualizer3D } from "@/components/features/FootfallVisualizer3D";
 import { LayoutSimulator3D } from "@/components/features/LayoutSimulator3D";
@@ -29,12 +29,26 @@ import storeAnalyticsImage from "@/assets/dashboard-store-analytics.png";
 
 const Product = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   
   useEffect(() => {
     // Track page view with funnel step 2 (mini-features)
     trackPageView('Product', 2);
     trackFunnelStep(2, 'view_product');
   }, []);
+
+  // Handle hash-based scrolling
+  useEffect(() => {
+    if (location.hash) {
+      const elementId = location.hash.replace('#', '');
+      setTimeout(() => {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [location.hash]);
 
   const handleFeatureInteraction = (featureId: string) => {
     trackMiniFeature(featureId, 'interact');
@@ -126,7 +140,7 @@ const Product = () => {
       </section>
 
       {/* License Dashboard Features Section */}
-      <section className="py-20 bg-gradient-to-b from-muted/20 to-background">
+      <section id="license-features" className="py-20 bg-gradient-to-b from-muted/20 to-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Dashboard Features Section */}
           <div className="max-w-6xl mx-auto">
@@ -641,7 +655,7 @@ const Product = () => {
       </section>
 
       {/* Technology Stack Section */}
-      <section className="py-20 bg-gradient-to-b from-muted/20 to-background">
+      <section id="technology-pipeline" className="py-20 bg-gradient-to-b from-muted/20 to-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
