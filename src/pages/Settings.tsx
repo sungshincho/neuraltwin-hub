@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -25,6 +25,21 @@ const Settings = () => {
   const [organization, setOrganization] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [licenses, setLicenses] = useState<any[]>([]);
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<"profile" | "subscription" | "notifications" | "security">(
+  (() => {
+    const tabFromState = (location.state as any)?.tab;
+    if (
+      tabFromState === "subscription" ||
+      tabFromState === "notifications" ||
+      tabFromState === "security" ||
+      tabFromState === "profile"
+    ) {
+      return tabFromState;
+    }
+    return "profile";
+  })()
+);
   
   // Form states
   const [displayName, setDisplayName] = useState("");
@@ -178,7 +193,7 @@ const Settings = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="profile" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "profile" | "subscription" | "notifications" | "security")} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
