@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
-import { Mail, Linkedin, Twitter } from "lucide-react";
-
+import { Linkedin } from "lucide-react";
 export const Footer = () => {
-  return (
-    <footer className="border-t border-border/50 bg-card/50">
+  return <footer className="border-t border-border/50 bg-card/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -21,10 +19,10 @@ export const Footer = () => {
                 <Linkedin size={20} />
               </a>
               <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
-                <Twitter size={20} />
+                
               </a>
               <a href="mailto:contact@neuraltwin.ai" className="text-muted-foreground hover:text-primary transition-smooth">
-                <Mail size={20} />
+                
               </a>
             </div>
           </div>
@@ -55,11 +53,7 @@ export const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">회사</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/about" className="text-muted-foreground hover:text-foreground transition-smooth">
-                  팀
-                </Link>
-              </li>
+              
               <li>
                 <Link to="/case" className="text-muted-foreground hover:text-foreground transition-smooth">
                   케이스
@@ -97,6 +91,5 @@ export const Footer = () => {
           </p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
