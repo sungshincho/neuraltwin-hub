@@ -80,62 +80,81 @@ export const Header = () => {
             {/* <LanguageToggle /> */}
           </div>
 
-          {/* Auth Buttons */}
-          <div className="hidden md:flex md:items-center md:space-x-2">
-            {user ? <DropdownMenu>
-                <DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button
-      variant="ghost"
-      className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 flex items-center justify-center"
-    >
-      <Avatar
-        className="
-          h-10 w-10 rounded-full
-          border border-transparent
-          hover:border-transparent
-          hover:ring-2 hover:ring-foreground hover:ring-offset-2 hover:ring-offset-background
-          transition-all
-        "
-      >
-        <AvatarImage
-          src={profile?.avatar_url}
-          alt={profile?.display_name || 'User'}
-        />
-        <AvatarFallback>
-          {/* 아이콘은 항상 검정/전경색 유지 */}
-          <User className="h-5 w-5 text-foreground" />
-        </AvatarFallback>
-      </Avatar>
-    </Button>
-  </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{profile?.display_name || "사용자"}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </div>
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>내 계정 관리</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>로그아웃</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu> : <>
-                <Button variant="ghost" asChild>
-                  <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
-                </Button>
-                <Button asChild variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background">
-                 <Link to="/auth" state={{ tab: "signup" }} className="border-0">회원가입</Link>
-                </Button>
-              </>}
+         {/* Auth Buttons */}
+<div className="hidden md:flex md:items-center md:space-x-2">
+  {user ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent
+                     focus-visible:ring-0 focus-visible:ring-offset-0
+                     flex items-center justify-center"
+        >
+          <Avatar
+            className="
+              h-10 w-10 rounded-full
+              border border-transparent      /* 항상 두께 고정, 레이아웃 안 밀리게 */
+              hover:border-transparent
+              hover:ring-2 hover:ring-foreground  /* 호버 시 2px 아웃라인 */
+              hover:ring-offset-2 hover:ring-offset-background
+              transition-all
+            "
+          >
+            <AvatarImage
+              src={profile?.avatar_url}
+              alt={profile?.display_name || 'User'}
+            />
+            <AvatarFallback>
+              {/* 아이콘 색은 항상 동일한 전경색(검정 계열) 유지 */}
+              <User className="h-5 w-5 text-foreground" />
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="flex items-center justify-start gap-2 p-2">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">
+              {profile?.display_name || "사용자"}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
           </div>
+        </div>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/profile" className="flex items-center">
+            <User className="mr-2 h-4 w-4" />
+            <span>내 계정 관리</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>로그아웃</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : (
+    <>
+      <Button variant="ghost" asChild>
+        <Link to="/auth" state={{ tab: "login" }}>
+          로그인
+        </Link>
+      </Button>
+      <Button
+        asChild
+        variant="outline"
+        className="border-foreground text-foreground hover:bg-foreground hover:text-background"
+      >
+        <Link to="/auth" state={{ tab: "signup" }} className="border-0">
+          회원가입
+        </Link>
+      </Button>
+    </>
+  )}
+</div>
 
           {/* Mobile menu button */}
           <button type="button" className="md:hidden p-2 rounded-lg text-foreground hover:bg-muted/50" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
