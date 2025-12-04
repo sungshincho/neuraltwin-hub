@@ -111,7 +111,11 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4">회사</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-smooth">
+                <Link 
+                  to="/contact" 
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="text-muted-foreground hover:text-foreground transition-smooth"
+                >
                   문의
                 </Link>
               </li>
@@ -123,12 +127,20 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4">법적 고지</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-smooth">
+                <Link 
+                  to="/privacy" 
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="text-muted-foreground hover:text-foreground transition-smooth"
+                >
                   개인정보처리방침
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-smooth">
+                <Link 
+                  to="/terms" 
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="text-muted-foreground hover:text-foreground transition-smooth"
+                >
                   이용약관
                 </Link>
               </li>
