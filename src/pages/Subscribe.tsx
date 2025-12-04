@@ -20,7 +20,7 @@ const Subscribe = () => {
   const [selectedLicense, setSelectedLicense] = useState<LicenseType>(
     licenseTypeParam === 'STORE' ? 'STORE' : 'HQ_SEAT'
   );
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | "">(1);
   const [isLoading, setIsLoading] = useState(false);
   const [userOrgId, setUserOrgId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -94,15 +94,32 @@ const Subscribe = () => {
   };
 
   const selectedLicenseData = LICENSE_PRICING[selectedLicense];
+  const safeQuantity = typeof quantity === "number" ? quantity : 1;
   const totalCost = selectedLicenseData.price * quantity;
   const monthlyCost = totalCost;
 
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 1 && value <= 999) {
-      setQuantity(value);
+const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value;
+
+  // 1) 완전히 지운 상태("")는 그대로 허용
+  if (value === "") {
+    setQuantity("");
+    return;
+  }
+
+  // 2) 숫자로 파싱해서 범위 체크
+  const num = parseInt(value, 10);
+
+  if (!isNaN(num)) {
+    if (num < 1) {
+      setQuantity(1);
+    } else if (num > 999) {
+      setQuantity(999);
+    } else {
+      setQuantity(num);
     }
-  };
+  }
+};
 
   const handleCheckout = async () => {
     if (!userOrgId) {
@@ -255,7 +272,7 @@ const Subscribe = () => {
                         type="number"
                         min={1}
                         max={999}
-                        value={quantity}
+                        value={quantity === "" ? "" : quantity}
                         onChange={handleQuantityChange}
                         className="max-w-[120px]"
                       />
@@ -264,7 +281,7 @@ const Subscribe = () => {
                       </span>
                     </div>
                     
-                    {quantity > 1 && (
+                    {safeQuantity > 1 && (
                       <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                         <p className="text-sm">
                           <span className="font-semibold">{quantity}개</span>의 {selectedLicenseData.name}를 구매합니다.
@@ -315,7 +332,7 @@ const Subscribe = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">수량</span>
-                      <span className="font-medium">{quantity}개</span>
+                      <span className="font-medium">{safeQuantity}개</span>
                     </div>
                   </div>
 
