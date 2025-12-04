@@ -285,6 +285,9 @@ export const furnitureLayout = [
   { file: 'Rack_Hanger6_1.7x1.5x0.5.glb', x: 2.0, y: -0.3, z: 0.0, rotationY: -90 },
   { file: 'Rack_Hanger7_1.7x1.5x0.5.glb', x: 5.0, y: 1.6, z: 0.0, rotationY: -90 },
   { file: 'Rack_Hanger8_1.7x1.5x0.5.glb', x: 5.0, y: -0.3, z: 0.0, rotationY: -90 },
+  // Product_set
+  { file: 'Product_set_1.glb', x: -3, y: 1.15, z: 0.0, rotationY: 0 },
+  { file: 'Product_set_2.glb', x: -3.5, y: -4.45, z: 0.0, rotationY: 0 },
 ];
 
 
