@@ -83,16 +83,32 @@ export const Header = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex md:items-center md:space-x-2">
             {user ? <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0">
-                    <Avatar className="h-10 w-10 border border-transparent hover:border-foreground/30 transition-colors">
-                      <AvatarImage src={profile?.avatar_url} alt={profile?.display_name || "User"} />
-                      <AvatarFallback>
-                        <User className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button
+      variant="ghost"
+      className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 flex items-center justify-center"
+    >
+      <Avatar
+        className="
+          h-10 w-10 rounded-full
+          border border-transparent
+          hover:border-transparent
+          hover:ring-2 hover:ring-foreground hover:ring-offset-2 hover:ring-offset-background
+          transition-all
+        "
+      >
+        <AvatarImage
+          src={profile?.avatar_url}
+          alt={profile?.display_name || 'User'}
+        />
+        <AvatarFallback>
+          {/* 아이콘은 항상 검정/전경색 유지 */}
+          <User className="h-5 w-5 text-foreground" />
+        </AvatarFallback>
+      </Avatar>
+    </Button>
+  </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1">
