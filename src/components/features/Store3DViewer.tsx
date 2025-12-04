@@ -266,7 +266,7 @@ export const furnitureLayout = [
   { file: 'Shelf_WallShelf13_1.7x2.5x0.5.glb', x: 4.0, y: 5.0, z: 0.0, rotationY: -180 },
   // Shelf_SideShelf
   { file: 'Shelf_SideShelf1_1.3x0.8x0.5.glb', x: -0.8, y: 1.2, z: 0.1, rotationY: 90 },
-  { file: 'Shelf_SideShelf2_1.9x0.8x0.5.glb', x: 3.6, y: -1.0, z: 0.1, rotationY: 0 },
+  { file: 'Shelf_SideShelf2_1.9x1.0x0.5.glb', x: 3.6, y: -1.0, z: 0.1, rotationY: 0 },
   // Mannequin
   { file: 'Mannequin_FullMannequin1_0.7x1.9x0.7.glb', x: -2.4, y: 5.0, z: 0.1, rotationY: 0 },
   { file: 'Mannequin_FullMannequin2_0.6x1.9x0.6.glb', x: -1.2, y: 5.0, z: 0.1, rotationY: 0 },
