@@ -174,7 +174,7 @@ const Dashboard = () => {
                         {new Date(subscription.current_period_end).toLocaleDateString('ko-KR')}
                       </p>
                     </div>
-                    <Button variant="outline" onClick={() => navigate('/subscribe')}>
+                    <Button variant="outline" onClick={() => navigate("/settings", { state: { tab: "subscription" } })}>
                       구독 관리
                     </Button>
                   </div>
