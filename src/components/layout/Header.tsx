@@ -84,8 +84,8 @@ export const Header = () => {
           <div className="hidden md:flex md:items-center md:space-x-2">
             {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0">
+                    <Avatar className="h-10 w-10 border border-transparent hover:border-foreground/30 transition-colors">
                       <AvatarImage src={profile?.avatar_url} alt={profile?.display_name || "User"} />
                       <AvatarFallback>
                         <User className="h-5 w-5" />
