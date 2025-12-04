@@ -484,13 +484,13 @@ export default {
         planning: "검토 중",
       },
       features: "관심 있는 기능",
+      featuresPlaceholder: "관심 있는 기능을 선택해주세요",
       featureOptions: {
-        footfall: "고객 동선 분석",
-        heatmap: "히트맵",
-        forecast: "수요 예측",
-        layout: "레이아웃 최적화",
-        digitaltwin: "3D 디지털 트윈",
-        integration: "데이터 통합",
+        footfall: "유입·체류 분석", // Footfall & Dwell Analysis
+        forecast: "수요 예측", // Demand Forecasting
+        layout: "레이아웃 시뮬레이션", // Layout Simulation
+        ai: "AI 기반 최적화", // AI Optimization
+        all: "전체 기능", // All Features
       },
       message: "문의 내용",
       messagePlaceholder: "도입 관련 문의사항이나 궁금한 점을 자유롭게 작성해주세요",

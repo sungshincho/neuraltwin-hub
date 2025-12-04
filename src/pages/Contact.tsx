@@ -30,9 +30,9 @@ const Contact = () => {
 
   useEffect(() => {
     // Track page view with funnel step 3 (contact)
-    trackPageView('Contact', 3);
-    trackFunnelStep(3, 'view_contact');
-    trackContactForm('start');
+    trackPageView("Contact", 3);
+    trackFunnelStep(3, "view_contact");
+    trackContactForm("start");
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,7 +40,7 @@ const Contact = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('submit-contact', {
+      const { data, error } = await supabase.functions.invoke("submit-contact", {
         body: {
           name: formData.name,
           company: formData.company,
@@ -50,13 +50,13 @@ const Contact = () => {
           features: formData.features.length > 0 ? formData.features : undefined,
           timeline: formData.timeline || undefined,
           message: formData.message,
-        }
+        },
       });
 
       if (error) throw error;
 
       // Track successful submission
-      trackContactForm('submit');
+      trackContactForm("submit");
 
       toast({
         title: t("contact.success"),
@@ -75,10 +75,10 @@ const Contact = () => {
         message: "",
       });
     } catch (error) {
-      console.error('Form submission error:', error);
-      
+      console.error("Form submission error:", error);
+
       // Track error
-      trackContactForm('error', error instanceof Error ? error.message : 'Unknown error');
+      trackContactForm("error", error instanceof Error ? error.message : "Unknown error");
 
       toast({
         title: t("contact.error"),
@@ -102,9 +102,7 @@ const Contact = () => {
               <h1 className="text-5xl md:text-6xl font-bold">
                 <span className="gradient-text">{t("contact.title")}</span>
               </h1>
-              <p className="text-xl text-muted-foreground">
-                {t("contact.subtitle")}
-              </p>
+              <p className="text-xl text-muted-foreground">{t("contact.subtitle")}</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -114,10 +112,10 @@ const Contact = () => {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">{t("contact.form.name")} *</Label>
-                      <Input 
-                        id="name" 
+                      <Input
+                        id="name"
                         name="name"
-                        required 
+                        required
                         placeholder={t("contact.form.namePlaceholder")}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -125,10 +123,10 @@ const Contact = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="company">{t("contact.form.company")} *</Label>
-                      <Input 
-                        id="company" 
+                      <Input
+                        id="company"
                         name="company"
-                        required 
+                        required
                         placeholder={t("contact.form.companyPlaceholder")}
                         value={formData.company}
                         onChange={(e) => setFormData({ ...formData, company: e.target.value })}
@@ -139,11 +137,11 @@ const Contact = () => {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="email">{t("contact.form.email")} *</Label>
-                      <Input 
-                        id="email" 
+                      <Input
+                        id="email"
                         name="email"
-                        type="email" 
-                        required 
+                        type="email"
+                        required
                         placeholder={t("contact.form.emailPlaceholder")}
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -151,10 +149,10 @@ const Contact = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">{t("contact.form.phone")}</Label>
-                      <Input 
-                        id="phone" 
+                      <Input
+                        id="phone"
                         name="phone"
-                        type="tel" 
+                        type="tel"
                         placeholder={t("contact.form.phonePlaceholder")}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -164,10 +162,10 @@ const Contact = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="stores">{t("contact.form.stores")}</Label>
-                    <Input 
-                      id="stores" 
+                    <Input
+                      id="stores"
                       name="stores"
-                      type="number" 
+                      type="number"
                       placeholder={t("contact.form.storesPlaceholder")}
                       value={formData.stores}
                       onChange={(e) => setFormData({ ...formData, stores: e.target.value })}
@@ -176,7 +174,7 @@ const Contact = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="features">{t("contact.form.features")}</Label>
-                    <Select 
+                    <Select
                       value={formData.features[0] || ""}
                       onValueChange={(value) => setFormData({ ...formData, features: [value] })}
                     >
@@ -184,18 +182,18 @@ const Contact = () => {
                         <SelectValue placeholder={t("contact.form.featuresPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="analyze">Footfall & Dwell Analysis</SelectItem>
-                        <SelectItem value="forecast">Demand Forecasting</SelectItem>
-                        <SelectItem value="simulate">Layout Simulation</SelectItem>
-                        <SelectItem value="optimize">AI Optimization</SelectItem>
-                        <SelectItem value="all">All Features</SelectItem>
+                        <SelectItem value="analyze">{t("contact.form.featureOptions.footfall")}</SelectItem>
+                        <SelectItem value="forecast">{t("contact.form.featureOptions.forecast")}</SelectItem>
+                        <SelectItem value="simulate">{t("contact.form.featureOptions.layout")}</SelectItem>
+                        <SelectItem value="optimize">{t("contact.form.featureOptions.ai")}</SelectItem>
+                        <SelectItem value="all">{t("contact.form.featureOptions.all")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="timeline">{t("contact.form.timeline")}</Label>
-                    <Select 
+                    <Select
                       value={formData.timeline}
                       onValueChange={(value) => setFormData({ ...formData, timeline: value })}
                     >
@@ -203,10 +201,11 @@ const Contact = () => {
                         <SelectValue placeholder={t("contact.form.timelinePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediate">{t("contact.timeline.immediate")}</SelectItem>
-                        <SelectItem value="1month">{t("contact.timeline.month1")}</SelectItem>
-                        <SelectItem value="3months">{t("contact.timeline.month3")}</SelectItem>
-                        <SelectItem value="exploring">{t("contact.timeline.exploring")}</SelectItem>
+                        <SelectItem value="immediate">{t("contact.form.timelineOptions.immediate")}</SelectItem>
+                        <SelectItem value="month1">{t("contact.form.timelineOptions.month1")}</SelectItem>
+                        <SelectItem value="month3">{t("contact.form.timelineOptions.month3")}</SelectItem>
+                        <SelectItem value="month6">{t("contact.form.timelineOptions.month6")}</SelectItem>
+                        <SelectItem value="planning">{t("contact.form.timelineOptions.planning")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -239,7 +238,10 @@ const Contact = () => {
                     </div>
                     <div>
                       <div className="font-semibold mb-1">{t("contact.info.email")}</div>
-                      <a href="mailto:neuraltwin.hq@neuraltwin.io" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                      <a
+                        href="mailto:neuraltwin.hq@neuraltwin.io"
+                        className="text-sm text-muted-foreground hover:text-primary transition-smooth"
+                      >
                         neuraltwin.hq@neuraltwin.io
                       </a>
                     </div>
@@ -251,18 +253,14 @@ const Contact = () => {
                     </div>
                     <div>
                       <div className="font-semibold mb-1">{t("contact.info.address")}</div>
-                      <p className="text-sm text-muted-foreground">
-                        Seoul, South Korea
-                      </p>
+                      <p className="text-sm text-muted-foreground">Seoul, South Korea</p>
                     </div>
                   </div>
                 </Card>
 
                 <Card className="glass p-6">
                   <h3 className="font-semibold mb-4">{t("contact.subtitle")}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t("contact.subtitle")}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">{t("contact.subtitle")}</p>
                   <Button variant="outline" className="w-full" asChild>
                     <a href="https://calendly.com" target="_blank" rel="noopener noreferrer">
                       {t("hero.cta1")}
