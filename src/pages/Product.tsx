@@ -37,18 +37,19 @@ const Product = () => {
     trackFunnelStep(2, 'view_product');
   }, []);
 
-  // Handle hash-based scrolling
+  // Handle state-based or hash-based scrolling (instant, no animation)
   useEffect(() => {
-    if (location.hash) {
-      const elementId = location.hash.replace('#', '');
-      setTimeout(() => {
-        const element = document.getElementById(elementId);
+    const scrollTarget = location.state?.scrollTo || (location.hash ? location.hash.replace('#', '') : null);
+    if (scrollTarget) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        const element = document.getElementById(scrollTarget);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
+          element.scrollIntoView({ behavior: 'instant' });
         }
-      }, 100);
+      });
     }
-  }, [location.hash]);
+  }, [location.state, location.hash]);
 
   const handleFeatureInteraction = (featureId: string) => {
     trackMiniFeature(featureId, 'interact');

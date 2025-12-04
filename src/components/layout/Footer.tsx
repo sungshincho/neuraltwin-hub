@@ -8,10 +8,10 @@ export const Footer = () => {
   const handlePricingClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (location.pathname === "/pricing") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo(0, 0);
     } else {
+      window.scrollTo(0, 0);
       navigate("/pricing");
-      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
     }
   };
 
@@ -20,16 +20,10 @@ export const Footer = () => {
     if (location.pathname === "/product") {
       const element = document.getElementById("license-features");
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        element.scrollIntoView({ behavior: "instant" });
       }
     } else {
-      navigate("/product#license-features");
-      setTimeout(() => {
-        const element = document.getElementById("license-features");
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
+      navigate("/product", { state: { scrollTo: "license-features" } });
     }
   };
 
@@ -38,16 +32,10 @@ export const Footer = () => {
     if (location.pathname === "/product") {
       const element = document.getElementById("technology-pipeline");
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        element.scrollIntoView({ behavior: "instant" });
       }
     } else {
-      navigate("/product#technology-pipeline");
-      setTimeout(() => {
-        const element = document.getElementById("technology-pipeline");
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
+      navigate("/product", { state: { scrollTo: "technology-pipeline" } });
     }
   };
 
