@@ -8,22 +8,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const { user, signOut } = useAuth();
+  const {
+    user,
+    signOut
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { toast } = useToast();
-
+  const {
+    t
+  } = useTranslation();
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     if (user) {
       fetchProfile(user.id);
@@ -31,36 +31,39 @@ export const Header = () => {
       setProfile(null);
     }
   }, [user]);
-
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
-
+    const {
+      data
+    } = await supabase.from("profiles").select("*").eq("id", userId).single();
     if (data) {
       setProfile(data);
     }
   };
-
   const handleSignOut = async () => {
     await signOut();
     setProfile(null);
-
     toast({
       title: "로그아웃 완료",
-      description: "성공적으로 로그아웃되었습니다.",
+      description: "성공적으로 로그아웃되었습니다."
     });
-
-    navigate("/", { replace: true });
+    navigate("/", {
+      replace: true
+    });
   };
-
-  const navigation = [
-    { name: t("nav.product"), href: "/product" },
-    { name: t("nav.pricing"), href: "/pricing" },
-    { name: t("nav.contact"), href: "/contact" },
-    { name: "대시보드", href: "/dashboard" },
-  ];
-
-  return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
+  const navigation = [{
+    name: t("nav.product"),
+    href: "/product"
+  }, {
+    name: t("nav.pricing"),
+    href: "/pricing"
+  }, {
+    name: t("nav.contact"),
+    href: "/contact"
+  }, {
+    name: "대시보드",
+    href: "/dashboard"
+  }];
+  return <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -71,26 +74,15 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-1">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-smooth ${
-                  location.pathname === item.href
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
+            {navigation.map(item => <Link key={item.href} to={item.href} className={`px-4 py-2 rounded-lg text-sm font-medium transition-smooth ${location.pathname === item.href ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 {item.name}
-              </Link>
-            ))}
+              </Link>)}
             {/* <LanguageToggle /> */}
           </div>
 
           {/* Auth Buttons */}
           <div className="hidden md:flex md:items-center md:space-x-2">
-            {user ? (
-              <DropdownMenu>
+            {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10">
@@ -125,51 +117,31 @@ export const Header = () => {
                     <span>로그아웃</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
+              </DropdownMenu> : <>
                 <Button variant="ghost" asChild>
                   <Link to="/auth">로그인</Link>
                 </Button>
                 <Button asChild variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background">
-                  <Link to="/auth">회원가입</Link>
+                  <Link to="/auth" className="border-0">회원가입</Link>
                 </Button>
-              </>
-            )}
+              </>}
           </div>
 
           {/* Mobile menu button */}
-          <button
-            type="button"
-            className="md:hidden p-2 rounded-lg text-foreground hover:bg-muted/50"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+          <button type="button" className="md:hidden p-2 rounded-lg text-foreground hover:bg-muted/50" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </nav>
 
       {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden glass border-t border-border/50">
+      {mobileMenuOpen && <div className="md:hidden glass border-t border-border/50">
           <div className="container mx-auto px-4 py-4 space-y-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`block px-4 py-3 rounded-lg text-base font-medium transition-smooth ${
-                  location.pathname === item.href
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
+            {navigation.map(item => <Link key={item.href} to={item.href} className={`block px-4 py-3 rounded-lg text-base font-medium transition-smooth ${location.pathname === item.href ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`} onClick={() => setMobileMenuOpen(false)}>
                 {item.name}
-              </Link>
-            ))}
+              </Link>)}
             <div className="pt-2 border-t border-border/50">{/* <LanguageToggle /> */}</div>
-            {user ? (
-              <div className="pt-4 space-y-2">
+            {user ? <div className="pt-4 space-y-2">
                 <div className="flex items-center gap-2 px-4 py-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.avatar_url} alt={profile?.display_name || "User"} />
@@ -187,20 +159,14 @@ export const Header = () => {
                     <User className="mr-2 h-4 w-4" />내 정보
                   </Link>
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    handleSignOut();
-                    setMobileMenuOpen(false);
-                  }}
-                >
+                <Button variant="outline" className="w-full" onClick={() => {
+            handleSignOut();
+            setMobileMenuOpen(false);
+          }}>
                   <LogOut className="mr-2 h-4 w-4" />
                   로그아웃
                 </Button>
-              </div>
-            ) : (
-              <div className="pt-4 space-y-2">
+              </div> : <div className="pt-4 space-y-2">
                 <Button asChild variant="outline" className="w-full">
                   <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                     로그인
@@ -211,11 +177,8 @@ export const Header = () => {
                     회원가입
                   </Link>
                 </Button>
-              </div>
-            )}
+              </div>}
           </div>
-        </div>
-      )}
-    </header>
-  );
+        </div>}
+    </header>;
 };
