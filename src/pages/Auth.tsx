@@ -516,7 +516,7 @@ useEffect(() => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-company">회사명 (조직명) *</Label>
-                    <Input id="signup-company" type="text" placeholder="주식회사 TCAG" value={company} onChange={e => setCompany(e.target.value)} disabled={loading} required />
+                    <Input id="signup-company" type="text" placeholder="주식회사 NEURALTWIN" value={company} onChange={e => setCompany(e.target.value)} disabled={loading} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-phone">전화번호 *</Label>
