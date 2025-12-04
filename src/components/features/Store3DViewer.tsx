@@ -282,9 +282,9 @@ export const furnitureLayout = [
   { file: 'Rack_Hanger3_1.7x1.5x0.5.glb', x: -0.2, y: -2.6, z: 0.0, rotationY: -90 },
   { file: 'Rack_Hanger4_1.7x1.5x0.5.glb', x: -0.2, y: -4.5, z: 0.0, rotationY: -90 },
   { file: 'Rack_Hanger5_1.7x1.5x0.5.glb', x: 2.0, y: 1.6, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger6_1.7x1.5x0.5.glb', x: 2.0, y: 0.3, z: 0.0, rotationY: -90 },
+  { file: 'Rack_Hanger6_1.7x1.5x0.5.glb', x: 2.0, y: -0.3, z: 0.0, rotationY: -90 },
   { file: 'Rack_Hanger7_1.7x1.5x0.5.glb', x: 5.0, y: 1.6, z: 0.0, rotationY: -90 },
-  { file: 'Rack_Hanger8_1.7x1.5x0.5.glb', x: 5.0, y: 0.3, z: 0.0, rotationY: -90 },
+  { file: 'Rack_Hanger8_1.7x1.5x0.5.glb', x: 5.0, y: -0.3, z: 0.0, rotationY: -90 },
   // Products
   { file: 'Product_TopA_0.4x0.1x0.4.glb', x: -3.5, y: 0.9, z: 0.9, rotationY: 180 },
   { file: 'Product_BottomA_0.4x0.1x0.4.glb', x: -2.7, y: 1.5, z: 0.9, rotationY: 0 },
