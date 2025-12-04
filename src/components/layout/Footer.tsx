@@ -82,15 +82,6 @@ export const Footer = () => {
                   가격
                 </a>
               </li>
-              <li>
-                <a 
-                  href="/product#technology-pipeline" 
-                  onClick={handleTechnologyClick}
-                  className="text-muted-foreground hover:text-foreground transition-smooth cursor-pointer"
-                >
-                  기술
-                </a>
-              </li>
             </ul>
           </div>
 
