@@ -473,7 +473,9 @@ export default {
       companyPlaceholder: "회사명을 입력하세요",
       stores: "매장 수",
       storesPlaceholder: "예: 10",
-      timeline: "도입 희망 시기",
+      timeline: "희망 도입 시",
+      timelinePlaceholder: "언제부터 도입을 희망하시나요?",
+      featuresPlaceholder: "관심 있는 기능을 선택해주세요",
       timelineOptions: {
         immediate: "즉시",
         month1: "1개월 이내",
@@ -481,7 +483,7 @@ export default {
         month6: "6개월 이내",
         planning: "검토 중",
       },
-      features: "관심 기능",
+      features: "관심 있는 기능",
       featureOptions: {
         footfall: "고객 동선 분석",
         heatmap: "히트맵",
