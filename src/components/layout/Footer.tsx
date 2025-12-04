@@ -15,7 +15,12 @@ export const Footer = () => {
               궁극의 AI OS
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.linkedin.com/company/neuraltwin" className="text-muted-foreground hover:text-primary transition-smooth" target="_blank" rel="noopener noreferrer">
+              <a 
+                href="https://www.linkedin.com/company/neuraltwin" 
+                className="text-muted-foreground hover:text-primary transition-smooth"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Linkedin size={20} />
               </a>
             </div>
@@ -48,7 +53,11 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4">회사</h3>
             <ul className="space-y-2 text-sm">
               
-              
+              <li>
+                <Link to="/case" className="text-muted-foreground hover:text-foreground transition-smooth">
+                  케이스
+                </Link>
+              </li>
               <li>
                 <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-smooth">
                   문의
