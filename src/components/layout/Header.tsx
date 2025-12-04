@@ -122,7 +122,7 @@ export const Header = () => {
                   <Link to="/auth">로그인</Link>
                 </Button>
                 <Button asChild variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background">
-                  <Link to="/auth" className="border-0">회원가입</Link>
+                 <Link to="/auth" state={{ tab: "signup" }} className="border-0">회원가입</Link>
                 </Button>
               </>}
           </div>
@@ -173,7 +173,7 @@ export const Header = () => {
                   </Link>
                 </Button>
                 <Button asChild className="w-full">
-                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/auth" state={{ tab: "signup"}} onClick={() => setMobileMenuOpen(false)}>
                     회원가입
                   </Link>
                 </Button>
