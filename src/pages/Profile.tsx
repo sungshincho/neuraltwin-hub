@@ -260,9 +260,7 @@ const Profile = () => {
             <h1 className="text-4xl font-bold mb-2">
               <span className="gradient-text">내 계정 관리</span>
             </h1>
-            <p className="text-muted-foreground text-lg">
-              계정 정보 및 환경설정을 관리하세요
-            </p>
+            
           </div>
 
           <Tabs value={activeTab} onValueChange={value => setActiveTab(value as "account" | "subscription" | "notifications" | "security")} className="space-y-6">
