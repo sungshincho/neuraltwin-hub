@@ -15,7 +15,9 @@ export const Footer = () => {
               궁극의 AI OS
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+              <a href="https://www.linkedin.com/company/neuraltwin" className="text-muted-foreground hover:text-primary transition-smooth"
+                target="_blank"
+                rel="noopener noreferrer>
                 <Linkedin size={20} />
               </a>
               <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
