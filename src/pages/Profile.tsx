@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Bell, CreditCard, Shield } from "lucide-react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif"];
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -34,6 +37,9 @@ const Profile = () => {
     push: false,
     marketing: false
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [activeTab, setActiveTab] = useState<"account" | "subscription" | "notifications" | "security">(
     (() => {
@@ -138,6 +144,37 @@ const Profile = () => {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast({
+        title: "지원하지 않는 파일 형식",
+        description: "JPG, PNG 또는 GIF 파일만 업로드 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "파일 크기 초과",
+        description: "파일 크기는 2MB 이하여야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setFilePreview(previewUrl);
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -146,15 +183,46 @@ const Profile = () => {
     try {
       setLoading(true);
       
+      let avatarUrl = profile.avatar_url;
+
+      // Upload file if selected
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, selectedFile);
+
+        if (uploadError) {
+          throw new Error(`파일 업로드 실패: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        avatarUrl = publicUrl;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
           display_name: profile.display_name,
-          avatar_url: profile.avatar_url,
+          avatar_url: avatarUrl,
         })
         .eq("id", user.id);
 
       if (error) throw error;
+
+      // Update local state
+      setProfile({ ...profile, avatar_url: avatarUrl });
+      setSelectedFile(null);
+      if (filePreview) {
+        URL.revokeObjectURL(filePreview);
+        setFilePreview(null);
+      }
 
       toast({
         title: "프로필 업데이트 완료",
@@ -311,16 +379,34 @@ const Profile = () => {
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-6">
                     <Avatar className="w-24 h-24">
-                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarImage src={filePreview || profile.avatar_url} />
                       <AvatarFallback className="text-2xl">
                         {profile.display_name?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-2">
-                      <Button variant="outline">사진 변경</Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        accept=".jpg,.jpeg,.png,.gif"
+                        className="hidden"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        사진 변경
+                      </Button>
                       <p className="text-sm text-muted-foreground">
                         JPG, PNG 또는 GIF (최대 2MB)
                       </p>
+                      {selectedFile && (
+                        <p className="text-sm text-primary">
+                          선택됨: {selectedFile.name}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -336,17 +422,6 @@ const Profile = () => {
                           setProfile({ ...profile, display_name: e.target.value })
                         }
                         placeholder="이름을 입력하세요"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="avatar_url">프로필 이미지 URL</Label>
-                      <Input
-                        id="avatar_url"
-                        value={profile.avatar_url}
-                        onChange={(e) =>
-                          setProfile({ ...profile, avatar_url: e.target.value })
-                        }
-                        placeholder="https://example.com/avatar.jpg"
                       />
                     </div>
                     <Button type="submit" disabled={loading}>
