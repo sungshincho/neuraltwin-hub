@@ -280,17 +280,15 @@ const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         개 × ${selectedLicenseData.price} = ${totalCost}/월
                       </span>
                     </div>
-                    
-                    {safeQuantity > 1 && (
                       <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                         <p className="text-sm">
-                          <span className="font-semibold">{quantity}개</span>의 {selectedLicenseData.name}를 구매합니다.
+                          <span className="font-semibold">{safeQuantity}개</span>의 {selectedLicenseData.name}를 구매합니다.
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           라이선스는 구매 후 조직 멤버에게 할당할 수 있습니다.
                         </p>
                       </div>
-                    )}
+      
                   </div>
                 </CardContent>
               </Card>
