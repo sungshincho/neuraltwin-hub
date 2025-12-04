@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, uselocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,19 @@ import { Separator } from "@/components/ui/separator";
 import { trackPageView, trackFunnelStep } from "@/lib/analytics";
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+const [activeTab, setActiveTab] = useState<"login" | "signup">(
+  (location.state as any)?.tab === "signup" ? "signup" : "login"
+);
+
+// 혹시 /auth 페이지에 있는 상태에서 다시 회원가입 버튼을 눌렀을 때도 반응하도록
+useEffect(() => {
+  const tabFromState = (location.state as any)?.tab;
+  if (tabFromState === "login" || tabFromState === "signup") {
+    setActiveTab(tabFromState);
+  }
+}, [location]);
+
   const {
     toast
   } = useToast();
@@ -454,8 +467,7 @@ const Auth = () => {
               리테일 디지털 트윈 플랫폼
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+          <CardContent><Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">로그인</TabsTrigger>
                 <TabsTrigger value="signup">회원가입</TabsTrigger>
