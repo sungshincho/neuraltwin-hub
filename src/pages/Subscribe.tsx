@@ -95,7 +95,7 @@ const Subscribe = () => {
 
   const selectedLicenseData = LICENSE_PRICING[selectedLicense];
   const safeQuantity = typeof quantity === "number" ? quantity : 1;
-  const totalCost = selectedLicenseData.price * quantity;
+  const totalCost = selectedLicenseData.price * safeQuantity;
   const monthlyCost = totalCost;
 
 const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -456,7 +456,6 @@ export default {
       storesPlaceholder: "e.g., 10",
       timeline: "Desired Timeline",
       timelinePlaceholder: "When would you like to start using NEURALTWIN?",
-      featuresPlaceholder: "Select the features you're most interested in",
       timelineOptions: {
         immediate: "Immediately",
         month1: "Within 1 month",

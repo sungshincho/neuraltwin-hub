@@ -475,7 +475,6 @@ export default {
       storesPlaceholder: "예: 10",
       timeline: "희망 도입 시",
       timelinePlaceholder: "언제부터 도입을 희망하시나요?",
-      featuresPlaceholder: "관심 있는 기능을 선택해주세요",
       timelineOptions: {
         immediate: "즉시",
         month1: "1개월 이내",
