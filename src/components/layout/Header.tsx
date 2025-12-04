@@ -131,7 +131,7 @@ export const Header = () => {
                 <Button variant="ghost" asChild>
                   <Link to="/auth">로그인</Link>
                 </Button>
-                <Button asChild className="glow">
+                <Button asChild variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background">
                   <Link to="/auth">회원가입</Link>
                 </Button>
               </>
