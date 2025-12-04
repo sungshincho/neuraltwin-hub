@@ -11,7 +11,6 @@ import Contact from "./pages/Contact";
 import Subscribe from "./pages/Subscribe";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -33,7 +32,6 @@ const App = () => (
           <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
