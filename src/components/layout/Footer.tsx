@@ -45,9 +45,8 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow glow" />
-              <span className="text-xl font-bold gradient-text">NEURALTWIN</span>
+            <Link to="/" className="flex items-center">
+              <img src="/images/neuraltwin-logo.png" alt="NEURALTWIN" className="h-5 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground">
               오프라인 리테일을 위한<br />
@@ -101,8 +100,8 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal */}
-          <div>
+          {/* Legal - Hidden for now */}
+          {/* <div>
             <h3 className="font-semibold mb-4">법적 고지</h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -124,7 +123,7 @@ export const Footer = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-12 pt-8 border-t border-border/50">
