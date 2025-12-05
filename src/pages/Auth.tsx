@@ -11,6 +11,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Separator } from "@/components/ui/separator";
 import { trackPageView, trackFunnelStep } from "@/lib/analytics";
+import neuraltwinLogo from "@/assets/neuraltwin-logo.png";
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -457,8 +458,8 @@ const Auth = () => {
       <main className="flex-1 flex items-center justify-center p-4 pt-24">
         <Card className="w-full max-w-md glass">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
-              <span className="gradient-text">NEURALTWIN</span>
+            <CardTitle className="text-2xl font-bold text-center flex justify-center">
+              <img src={neuraltwinLogo} alt="NEURALTWIN" className="h-6 w-auto" />
             </CardTitle>
             <CardDescription className="text-center">
               리테일 디지털 트윈 플랫폼

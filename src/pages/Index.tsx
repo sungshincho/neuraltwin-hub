@@ -136,11 +136,13 @@ const Index = () => {
       <section className="relative bg-background">
         <div className="relative w-full aspect-video max-h-screen overflow-hidden">
           <iframe
-            src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1&playsinline=1&quality=auto"
+            src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1&playsinline=1&quality=auto&dnt=1"
             frameBorder="0"
             allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+            allowFullScreen
             className="absolute inset-0 w-full h-full"
             title="NeuralTwin"
+            style={{ pointerEvents: 'none' }}
           />
         </div>
       </section>
