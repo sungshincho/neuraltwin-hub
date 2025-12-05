@@ -6,7 +6,7 @@ import { ArrowRight, BarChart3, Brain, Target, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { trackPageView, trackCTAClick, trackFunnelStep } from "@/lib/analytics";
-import heroMainBuilding from "@/assets/hero-main-building.png";
+import heroMainImage from "@/assets/hero-main-image.png";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -31,21 +31,18 @@ const Index = () => {
     <div className="min-h-screen">
       <Header />
 
-      {/* Hero Section */}
+      {/* Hero Section with Image */}
       <section className="relative">
-        {/* Background Video */}
+        {/* Hero Image */}
         <div className="relative w-full h-screen overflow-hidden">
-          <iframe
-            src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1"
-            frameBorder="0"
-            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
+          <img
+            src={heroMainImage}
+            alt="NeuralTwin"
             className="absolute top-0 left-0 w-full h-full object-cover"
-            title="NeuralTwin"
           />
         </div>
 
-        {/* Content Below Video */}
+        {/* Content Below Image */}
         <div className="bg-background py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center space-y-4 animate-fade-in-up">
@@ -133,6 +130,20 @@ const Index = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Video Section */}
+      <section className="relative">
+        <div className="relative w-full h-screen overflow-hidden">
+          <iframe
+            src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1"
+            frameBorder="0"
+            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className="absolute top-0 left-0 w-full h-full object-cover"
+            title="NeuralTwin"
+          />
         </div>
       </section>
 
