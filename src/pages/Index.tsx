@@ -32,32 +32,31 @@ const Index = () => {
       <Header />
 
       {/* Hero Section with Image */}
-      <section className="relative">
+      <section className="relative h-screen">
         {/* Hero Image */}
-        <div className="relative w-full h-screen overflow-hidden">
-          <img
-            src={heroMainImage}
-            alt="NeuralTwin"
-            className="absolute top-0 left-0 w-full h-full object-cover"
-          />
-        </div>
+        <img
+          src={heroMainImage}
+          alt="NeuralTwin"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
 
-        {/* Content Below Image */}
-        <div className="bg-background py-20">
+        {/* Content Overlay */}
+        <div className="absolute inset-0 flex items-end pb-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center space-y-4 animate-fade-in-up">
               {/* Headline */}
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
-                {t("hero.headline1")}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground drop-shadow-lg">
+                궁극의 AI 리테일 인텔리전스 <span className="text-primary">NEURALTWIN</span>
                 <br />
-                <span className="text-primary">{t("hero.headline2")}</span>
+                가장 진보한 스마트 리테일의 미래.
               </h1>
 
               {/* Subheadline */}
-              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-                {t("hero.subheadline1")}
-                <br />
-                {t("hero.subheadline2")}
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto drop-shadow-md">
+                1분 만에 시작하고 바로 상담을 받아보세요
               </p>
 
               {/* CTAs */}
@@ -69,7 +68,7 @@ const Index = () => {
                   onClick={() => trackCTAClick('meeting_request_hero', '/contact', 1)}
                 >
                   <Link to="/contact">
-                    {t("hero.cta1")}
+                    미팅 요청
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
                 </Button>
@@ -77,13 +76,13 @@ const Index = () => {
                   asChild 
                   variant="outline" 
                   size="default" 
-                  className="text-sm px-5 py-4"
+                  className="text-sm px-5 py-4 bg-background/50 backdrop-blur-sm"
                   onClick={() => {
                     trackCTAClick('mini_features_hero', '/product#mini', 2);
                     trackFunnelStep(2, 'click_mini_features');
                   }}
                 >
-                  <Link to="/product#mini">{t("hero.cta2")}</Link>
+                  <Link to="/product#mini">미니피쳐 둘러보기</Link>
                 </Button>
               </div>
             </div>
