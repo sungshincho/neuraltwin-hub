@@ -44,7 +44,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
 
         {/* Content Overlay */}
-        <div className="absolute inset-0 flex items-end pb-20">
+        <div className="absolute inset-0 flex items-center justify-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center space-y-4 animate-fade-in-up">
               {/* Headline */}
