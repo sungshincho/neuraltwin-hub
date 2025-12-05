@@ -93,7 +93,7 @@ export const Header = () => {
                      flex items-center justify-center"
         >
           <Avatar
-            className="h-10 w-10 rounded-full hover:ring-2 hover:ring-foreground transition-all"
+            className="h-9 w-9 rounded-full hover:ring-1 hover:ring-foreground transition-all"
           >
             <AvatarImage
               src={profile?.avatar_url}
