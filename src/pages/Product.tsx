@@ -175,7 +175,7 @@ const Product = () => {
                   <h3 className="text-2xl md:text-3xl font-bold">데이터수집</h3>
                   <p className="text-base text-muted-foreground leading-relaxed">
                     매장 내 IoT 센서를 통해 실시간으로 고객 동선, 체류 시간, 상품 관심도 등의 데이터를 수집합니다.
-                    정확한 데이터 수집이 모든 분석의 시작입니다.
+                    <br />정확한 데이터 수집이 모든 분석의 시작입니다.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2">
@@ -208,8 +208,8 @@ const Product = () => {
                   </div>
                   <h3 className="text-2xl md:text-3xl font-bold">데이터 통합 관리</h3>
                   <p className="text-base text-muted-foreground leading-relaxed">
-                    수집된 매장 데이터를 실시간으로 통합하여 대시보드에 시각화합니다. 단일 매장 운영에 최적화된
-                    인사이트를 제공합니다.
+                    수집된 매장 데이터를 실시간으로 통합하여 대시보드에
+                    <br />시각화합니다. 단일 매장 운영에 최적화된 인사이트를 제공합니다.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2">
