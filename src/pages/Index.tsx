@@ -133,14 +133,13 @@ const Index = () => {
       </section>
 
       {/* Video Section */}
-      <section className="relative">
-        <div className="relative w-full h-screen overflow-hidden bg-background">
+      <section className="relative bg-background">
+        <div className="relative w-full aspect-video max-h-screen overflow-hidden">
           <iframe
-            src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1&playsinline=1"
+            src="https://player.vimeo.com/video/1142028485?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&loop=1&background=1&playsinline=1&quality=auto"
             frameBorder="0"
             allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto"
-            style={{ aspectRatio: '16/9' }}
+            className="absolute inset-0 w-full h-full"
             title="NeuralTwin"
           />
         </div>
