@@ -83,7 +83,7 @@ export const Header = () => {
          {/* Auth Buttons */}
 <div className="hidden md:flex md:items-center md:space-x-2">
   {user ? (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
