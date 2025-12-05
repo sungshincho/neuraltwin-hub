@@ -93,14 +93,7 @@ export const Header = () => {
                      flex items-center justify-center"
         >
           <Avatar
-            className="
-              h-10 w-10 rounded-full
-              border border-transparent      /* 항상 두께 고정, 레이아웃 안 밀리게 */
-              hover:border-transparent
-              hover:ring-2 hover:ring-foreground  /* 호버 시 2px 아웃라인 */
-              hover:ring-offset-2 hover:ring-offset-background
-              transition-all
-            "
+            className="h-10 w-10 rounded-full hover:ring-2 hover:ring-foreground transition-all"
           >
             <AvatarImage
               src={profile?.avatar_url}
