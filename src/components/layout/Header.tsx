@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import neuraltwinLogo from "@/assets/neuraltwin-logo.png";
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -67,9 +68,8 @@ export const Header = () => {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow glow" />
-            <span className="text-xl font-bold gradient-text">NEURALTWIN</span>
+          <Link to="/" className="flex items-center">
+            <img src={neuraltwinLogo} alt="NEURALTWIN" className="h-5 sm:h-6 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
