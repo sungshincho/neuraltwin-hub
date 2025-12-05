@@ -87,8 +87,9 @@ export const Header = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent
+          className="relative h-10 w-10 min-w-10 rounded-full p-0 hover:bg-transparent
                      focus-visible:ring-0 focus-visible:ring-offset-0
+                     data-[state=open]:bg-transparent flex-shrink-0
                      flex items-center justify-center"
         >
           <Avatar
