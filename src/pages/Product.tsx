@@ -337,16 +337,16 @@ const Product = () => {
               </p>
             </div>
 
-            <div className="glass p-8 rounded-3xl">
+            <div className="glass p-4 sm:p-8 rounded-3xl">
               <Tabs defaultValue="footfall" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8 items-center">
-                  <TabsTrigger value="footfall" className="self-center" onClick={() => handleFeatureInteraction('footfall-visualizer')}>
+                <TabsList className="grid w-full grid-cols-3 mb-8 items-center h-auto gap-1">
+                  <TabsTrigger value="footfall" className="self-center text-xs sm:text-sm px-2 py-2 whitespace-normal h-auto leading-tight" onClick={() => handleFeatureInteraction('footfall-visualizer')}>
                     {t("product.miniFeatures.tabs.footfall.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="layout" className="self-center" onClick={() => handleFeatureInteraction('layout-simulator')}>
+                  <TabsTrigger value="layout" className="self-center text-xs sm:text-sm px-2 py-2 whitespace-normal h-auto leading-tight" onClick={() => handleFeatureInteraction('layout-simulator')}>
                     {t("product.miniFeatures.tabs.layout.title")}
                   </TabsTrigger>
-                  <TabsTrigger value="heatmap" className="self-center" onClick={() => handleFeatureInteraction('traffic-heatmap')}>
+                  <TabsTrigger value="heatmap" className="self-center text-xs sm:text-sm px-2 py-2 whitespace-normal h-auto leading-tight" onClick={() => handleFeatureInteraction('traffic-heatmap')}>
                     {t("product.miniFeatures.tabs.heatmap.title")}
                   </TabsTrigger>
                 </TabsList>
