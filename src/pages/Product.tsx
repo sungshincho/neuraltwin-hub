@@ -209,9 +209,9 @@ const Product = () => {
                   </div>
                   <h3 className="text-2xl md:text-3xl font-bold">데이터 통합 관리</h3>
                   <p className="text-base text-muted-foreground leading-relaxed">
-                    수집된 매장 데이터를 실시간으로 통합하여 대시보드에
+                    수집된 매장 데이터를 실시간으로
                     <br />
-                    시각화합니다.
+                    통합하여 대시보드에 시각화합니다.
                     <br />
                     단일 매장 운영에 최적화된 인사이트를 제공합니다.
                   </p>
