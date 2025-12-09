@@ -242,8 +242,11 @@ const Product = () => {
                   </div>
                   <h3 className="text-2xl md:text-3xl font-bold">매장 현황 분석</h3>
                   <p className="text-base text-muted-foreground leading-relaxed">
-                    매장의 현재 상황을 정확하게 파악합니다. 일일 매출, 고객 행동, 재고 현황 등 매장 운영에 필요한 핵심
-                    지표를 분석합니다.
+                    매장의 현재 상황을 정확하게 파악합니다.
+                    <br />
+                    일일 매출, 고객 행동, 재고 현황 등
+                    <br />
+                    매장 운영에 필요한 핵심지표를 분석합니다.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2">
