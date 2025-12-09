@@ -281,7 +281,9 @@ const Product = () => {
                   <p className="text-base text-muted-foreground leading-relaxed">
                     매장 레이아웃 변경이나 상품 배치 최적화를 사전에
                     <br />
-                    시뮬레이션합니다. 실제 적용 전 효과를 미리 확인할 수 있습니다.
+                    시뮬레이션합니다. 실제 적용 전 효과를
+                    <br />
+                    미리 확인할 수 있습니다.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2">
