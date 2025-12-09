@@ -174,7 +174,9 @@ const Product = () => {
                   </div>
                   <h3 className="text-2xl md:text-3xl font-bold">데이터수집</h3>
                   <p className="text-base text-muted-foreground leading-relaxed">
-                    매장 내 IoT 센서를 통해 실시간으로 고객 동선, 체류 시간, 상품 관심도 등의 데이터를 수집합니다.
+                    매장 내 IoT 센서를 통해 실시간으로
+                    <br />
+                    고객 동선,체류 시간,상품 관심도 등의 데이터를 수집합니다.
                     <br />
                     정확한 데이터 수집이 모든 분석의 시작입니다.
                   </p>
