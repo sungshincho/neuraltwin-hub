@@ -437,11 +437,10 @@ export default {
   },
   contact: {
     title: "Contact NEURALTWIN",
-    subtitle: "Tell us about your stores, goals, and challenges. We'll follow up with a tailored proposal.",
-    leadMagnet: "Get a free ROI analysis report for your store when you inquire now",
+    subtitle: "Get a free ROI analysis report from our experts.",
+    benefit1: "3 months free trial included",
+    benefit2: "On-site expert assessment provided",
     description: "Our retail experts will propose a solution optimized for your business",
-    noticeLine1: "Inquire now for 3 months free trial and",
-    noticeLine2: "complimentary on-site expert assessment",
     info: {
       email: "contact@neuraltwin.com",
       address: "Seoul, Republic of Korea",
