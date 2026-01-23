@@ -456,8 +456,9 @@ export default {
   },
   contact: {
     title: "NEURALTWIN 도입 문의",
-    subtitle: "매장 수, 목표, 고민 중인 과제를 알려주시면 맞춤 제안을 드립니다.",
+    subtitle: "지금 문의 시 우리 매장 예상 ROI 분석 리포트 무료 제공",
     description: "리테일 전문가가 귀사의 비즈니스에 최적화된 솔루션을 제안해드립니다",
+    notice: "지금 문의 시 3개월 무료 사용 및 전문가 현장 실사 진단 제공",
     info: {
       email: "neuraltwin.hq@neuraltwin.io",
       address: "대한민국 서울",
@@ -496,8 +497,8 @@ export default {
       submit: "문의 보내기",
       submitting: "전송 중...",
     },
-    success: "문의가 성공적으로 전송되었습니다!",
-    successDesc: "영업팀이 빠른 시일 내에 연락드리겠습니다.",
+    successTitle: "감사합니다!",
+    successMessage: "ROI 분석 리포트 관련 안내 이메일을 발송하였습니다.",
     error: "문의 전송 실패",
     errorDesc: "다시 시도해주세요",
   },

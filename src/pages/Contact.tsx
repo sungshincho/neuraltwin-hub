@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin, Gift, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackContactForm, trackFunnelStep } from "@/lib/analytics";
@@ -17,6 +18,7 @@ const Contact = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -58,10 +60,8 @@ const Contact = () => {
       // Track successful submission
       trackContactForm("submit");
 
-      toast({
-        title: t("contact.success"),
-        description: t("contact.form.submit"),
-      });
+      // Show success dialog
+      setSuccessDialogOpen(true);
 
       // Reset form
       setFormData({
@@ -258,20 +258,35 @@ const Contact = () => {
                   </div>
                 </Card>
 
-                <Card className="glass p-6">
-                  <h3 className="font-semibold mb-4">{t("contact.subtitle")}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{t("contact.subtitle")}</p>
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="https://calendly.com" target="_blank" rel="noopener noreferrer">
-                      {t("hero.cta1")}
-                    </a>
-                  </Button>
+                <Card className="glass p-6 border-primary/30 bg-primary/5">
+                  <div className="flex items-start gap-3">
+                    <Gift className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <p className="text-sm font-medium">
+                      {t("contact.notice")}
+                    </p>
+                  </div>
                 </Card>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Success Dialog */}
+      <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader className="items-center">
+            <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+            <DialogTitle className="text-2xl">{t("contact.successTitle")}</DialogTitle>
+            <DialogDescription className="text-base mt-2">
+              {t("contact.successMessage")}
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => setSuccessDialogOpen(false)} className="mt-4">
+            확인
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
