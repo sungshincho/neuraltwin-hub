@@ -86,13 +86,13 @@ const Contact = () => {
   const statsCardsRef = useRef<HTMLDivElement>(null);
   const [isStatsVisible, setIsStatsVisible] = useState(false);
 
-  // Statistics data with different colors
+  // Statistics data with colors: green for positive (+), red for negative (-)
   const statsData = [
     { value: 12, prefix: "+", suffix: "%", labelKey: "contact.stats.salesIncrease", colorClass: "text-emerald-500" },
-    { value: 85, prefix: "", suffix: "%+", labelKey: "contact.stats.aiAccuracy", colorClass: "text-blue-500" },
-    { value: 80, prefix: "-", suffix: "%", labelKey: "contact.stats.decisionSpeed", colorClass: "text-violet-500" },
-    { value: 20, prefix: "+", suffix: "%", labelKey: "contact.stats.dwellTime", colorClass: "text-amber-500" },
-    { value: 15, prefix: "-", suffix: "%", labelKey: "contact.stats.resourceSaving", colorClass: "text-rose-500" },
+    { value: 85, prefix: "", suffix: "%+", labelKey: "contact.stats.aiAccuracy", colorClass: "text-emerald-500" },
+    { value: 80, prefix: "-", suffix: "%", labelKey: "contact.stats.decisionSpeed", colorClass: "text-red-500" },
+    { value: 20, prefix: "+", suffix: "%", labelKey: "contact.stats.dwellTime", colorClass: "text-emerald-500" },
+    { value: 15, prefix: "-", suffix: "%", labelKey: "contact.stats.resourceSaving", colorClass: "text-red-500" },
   ];
 
   useEffect(() => {
