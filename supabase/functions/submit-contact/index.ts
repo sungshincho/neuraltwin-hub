@@ -16,6 +16,8 @@ const contactFormSchema = z.object({
   features: z.array(z.string()).optional(),
   timeline: z.string().max(50, 'Timeline must be less than 50 characters').optional(),
   message: z.string().trim().min(1, 'Message is required').max(2000, 'Message must be less than 2000 characters'),
+  privacyConsent: z.boolean().refine(val => val === true, 'Privacy consent is required'),
+  marketingConsent: z.boolean().default(false),
 });
 
 interface ContactFormData {
@@ -27,6 +29,8 @@ interface ContactFormData {
   features?: string[];
   timeline?: string;
   message: string;
+  privacyConsent: boolean;
+  marketingConsent: boolean;
 }
 
 // Simple in-memory rate limiting (resets on function restart)
@@ -126,6 +130,8 @@ Deno.serve(async (req) => {
         features: formData.features || [],
         timeline: formData.timeline,
         message: formData.message.trim(),
+        privacy_consent: formData.privacyConsent,
+        marketing_consent: formData.marketingConsent,
       })
       .select()
       .single();
