@@ -457,8 +457,8 @@ export default {
   contact: {
     title: "NEURALTWIN 도입 문의",
     subtitle: "전문가에게 무료로 ROI 분석 리포트를 받아보세요.",
-    benefit1: "3개월 무료 사용 혜택 제공해 드려요",
-    benefit2: "전문가가 현장 실사 진단을 해드려요",
+    benefit1: "3개월 무료 사용 혜택 제공해 드려요.",
+    benefit2: "전문가가 현장 실사 진단을 해 드려요.",
     description: "리테일 전문가가 귀사의 비즈니스에 최적화된 솔루션을 제안해드립니다",
     info: {
       email: "neuraltwin.hq@neuraltwin.io",
