@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, MapPin, CheckCircle, Check } from "lucide-react";
@@ -19,6 +20,8 @@ const Contact = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [privacyDialogOpen, setPrivacyDialogOpen] = useState(false);
+  const [marketingDialogOpen, setMarketingDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -28,6 +31,8 @@ const Contact = () => {
     features: [] as string[],
     timeline: "",
     message: "",
+    privacyConsent: false,
+    marketingConsent: false,
   });
 
   useEffect(() => {
@@ -39,6 +44,16 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate privacy consent
+    if (!formData.privacyConsent) {
+      toast({
+        title: t("contact.consent.privacyRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -52,6 +67,8 @@ const Contact = () => {
           features: formData.features.length > 0 ? formData.features : undefined,
           timeline: formData.timeline || undefined,
           message: formData.message,
+          privacyConsent: formData.privacyConsent,
+          marketingConsent: formData.marketingConsent,
         },
       });
 
@@ -73,6 +90,8 @@ const Contact = () => {
         features: [],
         timeline: "",
         message: "",
+        privacyConsent: false,
+        marketingConsent: false,
       });
     } catch (error) {
       console.error("Form submission error:", error);
@@ -235,6 +254,61 @@ const Contact = () => {
                     />
                   </div>
 
+                  {/* Consent Checkboxes */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="privacyConsent"
+                          checked={formData.privacyConsent}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, privacyConsent: checked as boolean })
+                          }
+                        />
+                        <label
+                          htmlFor="privacyConsent"
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          <span className="text-primary font-medium">{t("contact.consent.required")}</span>{" "}
+                          {t("contact.consent.privacy")}
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPrivacyDialogOpen(true)}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {t("contact.consent.view")}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="marketingConsent"
+                          checked={formData.marketingConsent}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, marketingConsent: checked as boolean })
+                          }
+                        />
+                        <label
+                          htmlFor="marketingConsent"
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          <span className="text-muted-foreground">{t("contact.consent.optional")}</span>{" "}
+                          {t("contact.consent.marketing")}
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMarketingDialogOpen(true)}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {t("contact.consent.view")}
+                      </button>
+                    </div>
+                  </div>
+
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? t("contact.form.submitting") : t("contact.form.submit")}
                   </Button>
@@ -288,6 +362,69 @@ const Contact = () => {
           </DialogHeader>
           <Button onClick={() => setSuccessDialogOpen(false)} className="mt-4">
             확인
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Privacy Consent Dialog */}
+      <Dialog open={privacyDialogOpen} onOpenChange={setPrivacyDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("contact.consent.privacyTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.purpose")}</h4>
+              <ul className="list-disc list-inside space-y-1">
+                <li>{t("contact.consent.privacyDoc.purpose1")}</li>
+                <li>{t("contact.consent.privacyDoc.purpose2")}</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.items")}</h4>
+              <ul className="list-disc list-inside space-y-1">
+                <li>{t("contact.consent.privacyDoc.items1")}</li>
+                <li>{t("contact.consent.privacyDoc.items2")}</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.period")}</h4>
+              <p>{t("contact.consent.privacyDoc.periodDesc")}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.rights")}</h4>
+              <p>{t("contact.consent.privacyDoc.rightsDesc")}</p>
+            </div>
+          </div>
+          <Button onClick={() => setPrivacyDialogOpen(false)} className="mt-4">
+            {t("contact.consent.close")}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Marketing Consent Dialog */}
+      <Dialog open={marketingDialogOpen} onOpenChange={setMarketingDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("contact.consent.marketingTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <p>{t("contact.consent.marketingDoc.intro")}</p>
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.marketingDoc.info")}</h4>
+              <ul className="list-disc list-inside space-y-1">
+                <li>{t("contact.consent.marketingDoc.info1")}</li>
+                <li>{t("contact.consent.marketingDoc.info2")}</li>
+                <li>{t("contact.consent.marketingDoc.info3")}</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.marketingDoc.withdraw")}</h4>
+              <p>{t("contact.consent.marketingDoc.withdrawDesc")}</p>
+            </div>
+          </div>
+          <Button onClick={() => setMarketingDialogOpen(false)} className="mt-4">
+            {t("contact.consent.close")}
           </Button>
         </DialogContent>
       </Dialog>
