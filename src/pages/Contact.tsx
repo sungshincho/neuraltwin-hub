@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,58 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MapPin, CheckCircle, Check } from "lucide-react";
+import { Mail, MapPin, CheckCircle, Check, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackContactForm, trackFunnelStep } from "@/lib/analytics";
+
+// Animated Counter Component
+interface AnimatedCounterProps {
+  targetValue: number;
+  prefix?: string;
+  suffix?: string;
+  duration?: number;
+  isVisible: boolean;
+  colorClass: string;
+}
+
+const AnimatedCounter = ({ targetValue, prefix = "", suffix = "", duration = 2000, isVisible, colorClass }: AnimatedCounterProps) => {
+  const [currentValue, setCurrentValue] = useState(0);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!isVisible || hasAnimated.current) return;
+
+    hasAnimated.current = true;
+    const startTime = performance.now();
+    const startValue = 0;
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease out cubic for smooth deceleration
+      const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+
+      const value = Math.round(startValue + (targetValue - startValue) * easeOutCubic);
+      setCurrentValue(value);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isVisible, targetValue, duration]);
+
+  return (
+    <div className={`text-3xl md:text-4xl font-bold ${colorClass} mb-2`}>
+      {prefix}{currentValue}{suffix}
+    </div>
+  );
+};
 
 const Contact = () => {
   const { toast } = useToast();
@@ -35,11 +82,43 @@ const Contact = () => {
     marketingConsent: false,
   });
 
+  // Stats cards animation
+  const statsCardsRef = useRef<HTMLDivElement>(null);
+  const [isStatsVisible, setIsStatsVisible] = useState(false);
+
+  // Statistics data with different colors
+  const statsData = [
+    { value: 12, prefix: "+", suffix: "%", labelKey: "contact.stats.salesIncrease", colorClass: "text-emerald-500" },
+    { value: 85, prefix: "", suffix: "%+", labelKey: "contact.stats.aiAccuracy", colorClass: "text-blue-500" },
+    { value: 80, prefix: "-", suffix: "%", labelKey: "contact.stats.decisionSpeed", colorClass: "text-violet-500" },
+    { value: 20, prefix: "+", suffix: "%", labelKey: "contact.stats.dwellTime", colorClass: "text-amber-500" },
+    { value: 15, prefix: "-", suffix: "%", labelKey: "contact.stats.resourceSaving", colorClass: "text-rose-500" },
+  ];
+
   useEffect(() => {
     // Track page view with funnel step 3 (contact)
     trackPageView("Contact", 3);
     trackFunnelStep(3, "view_contact");
     trackContactForm("start");
+  }, []);
+
+  // Intersection Observer for stats cards animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsStatsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (statsCardsRef.current) {
+      observer.observe(statsCardsRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -139,57 +218,41 @@ const Contact = () => {
                 </div>
               </div>
 
+              {/* Product Info Link */}
+              <Link
+                to="/product"
+                className="inline-flex items-center gap-1 mt-6 text-primary hover:text-primary/80 transition-colors cursor-pointer group"
+              >
+                <span className="text-sm font-medium underline underline-offset-4 decoration-primary/50 group-hover:decoration-primary">
+                  제품 정보 자세히 보기
+                </span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+
               {/* Statistics Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
-                {/* 매출 상승 */}
-                <div className="relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
-                  <div className="relative z-10">
-                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">+12%</div>
-                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.salesIncrease")}</div>
+              <div ref={statsCardsRef} className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
+                {statsData.map((stat, index) => (
+                  <div
+                    key={index}
+                    className={`relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300 ${
+                      index === 4 ? "col-span-2 md:col-span-1" : ""
+                    }`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
+                    <div className="relative z-10">
+                      <AnimatedCounter
+                        targetValue={stat.value}
+                        prefix={stat.prefix}
+                        suffix={stat.suffix}
+                        isVisible={isStatsVisible}
+                        colorClass={stat.colorClass}
+                        duration={1800}
+                      />
+                      <div className="text-sm font-medium text-gray-900">{t(stat.labelKey)}</div>
+                    </div>
                   </div>
-                </div>
-
-                {/* AI 신뢰도 */}
-                <div className="relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
-                  <div className="relative z-10">
-                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">85%+</div>
-                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.aiAccuracy")}</div>
-                  </div>
-                </div>
-
-                {/* 의사결정 속도 */}
-                <div className="relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
-                  <div className="relative z-10">
-                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">-80%</div>
-                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.decisionSpeed")}</div>
-                  </div>
-                </div>
-
-                {/* 체류시간 증가 */}
-                <div className="relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
-                  <div className="relative z-10">
-                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">+20%</div>
-                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.dwellTime")}</div>
-                  </div>
-                </div>
-
-                {/* 리소스 절약 */}
-                <div className="relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300 col-span-2 md:col-span-1">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
-                  <div className="relative z-10">
-                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">-15%</div>
-                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.resourceSaving")}</div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
