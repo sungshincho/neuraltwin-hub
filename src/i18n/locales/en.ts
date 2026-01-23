@@ -438,6 +438,9 @@ export default {
   contact: {
     title: "Contact NEURALTWIN",
     subtitle: "Get a free ROI analysis report from our experts.",
+    subtitleBefore: "Get a free ",
+    subtitleHighlight: "ROI Analysis Report",
+    subtitleAfter: " from our experts.",
     benefit1: "3 months free trial included",
     benefit2: "On-site expert assessment provided",
     description: "Our retail experts will propose a solution optimized for your business",
