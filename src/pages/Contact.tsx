@@ -368,32 +368,125 @@ const Contact = () => {
 
       {/* Privacy Consent Dialog */}
       <Dialog open={privacyDialogOpen} onOpenChange={setPrivacyDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t("contact.consent.privacyTitle")}</DialogTitle>
+            <DialogTitle className="text-xl">{t("contact.consent.privacyTitle")}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 text-sm text-muted-foreground">
+          <div className="space-y-5 text-sm text-muted-foreground">
+            <p>{t("contact.consent.privacyDoc.intro")}</p>
+
+            {/* 개인정보의 처리 목적 및 수집 항목 */}
             <div>
-              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.purpose")}</h4>
-              <ul className="list-disc list-inside space-y-1">
-                <li>{t("contact.consent.privacyDoc.purpose1")}</li>
-                <li>{t("contact.consent.privacyDoc.purpose2")}</li>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section1Title")}</h4>
+              <p className="mb-3">{t("contact.consent.privacyDoc.section1Desc")}</p>
+              <div className="space-y-3 pl-2">
+                <div>
+                  <p className="font-medium text-foreground">{t("contact.consent.privacyDoc.service")}</p>
+                  <p>• 수집 항목: {t("contact.consent.privacyDoc.serviceItems")}</p>
+                  <p>• 처리 목적: {t("contact.consent.privacyDoc.servicePurpose")}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">{t("contact.consent.privacyDoc.marketing")}</p>
+                  <p>• 수집 항목: {t("contact.consent.privacyDoc.marketingItems")}</p>
+                  <p>• 처리 목적: {t("contact.consent.privacyDoc.marketingPurpose")}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 개인정보의 처리 및 보유 기간 */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section2Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section2Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.retention1")}</li>
+                <li>{t("contact.consent.privacyDoc.retention2")}</li>
+                <li>{t("contact.consent.privacyDoc.retention3")}</li>
+                <li>{t("contact.consent.privacyDoc.retention4")}</li>
               </ul>
             </div>
+
+            {/* 개인정보의 제3자 제공 */}
             <div>
-              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.items")}</h4>
-              <ul className="list-disc list-inside space-y-1">
-                <li>{t("contact.consent.privacyDoc.items1")}</li>
-                <li>{t("contact.consent.privacyDoc.items2")}</li>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section3Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section3Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.thirdParty1")}</li>
+                <li>{t("contact.consent.privacyDoc.thirdParty2")}</li>
               </ul>
             </div>
+
+            {/* 개인정보처리의 위탁 */}
             <div>
-              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.period")}</h4>
-              <p>{t("contact.consent.privacyDoc.periodDesc")}</p>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section4Title")}</h4>
+              <p>{t("contact.consent.privacyDoc.section4Desc")}</p>
             </div>
+
+            {/* 정보주체의 권리·의무 및 행사방법 */}
             <div>
-              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.rights")}</h4>
-              <p>{t("contact.consent.privacyDoc.rightsDesc")}</p>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section5Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section5Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.rights1")}</li>
+                <li>{t("contact.consent.privacyDoc.rights2")}</li>
+                <li>{t("contact.consent.privacyDoc.rights3")}</li>
+                <li>{t("contact.consent.privacyDoc.rights4")}</li>
+              </ul>
+              <p className="mt-2">{t("contact.consent.privacyDoc.rightsNote")}</p>
+            </div>
+
+            {/* 개인정보의 파기 */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section6Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section6Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.destroy1")}</li>
+                <li>{t("contact.consent.privacyDoc.destroy2")}</li>
+              </ul>
+            </div>
+
+            {/* 개인정보의 안전성 확보조치 */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section7Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section7Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.safety1")}</li>
+                <li>{t("contact.consent.privacyDoc.safety2")}</li>
+                <li>{t("contact.consent.privacyDoc.safety3")}</li>
+              </ul>
+            </div>
+
+            {/* 개인정보 보호책임자 */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section8Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section8Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.officer")}</li>
+                <li>{t("contact.consent.privacyDoc.contact")}</li>
+              </ul>
+            </div>
+
+            {/* 권익침해 구제방법 */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section9Title")}</h4>
+              <p className="mb-2">{t("contact.consent.privacyDoc.section9Desc")}</p>
+              <ul className="list-disc list-inside space-y-1 pl-2">
+                <li>{t("contact.consent.privacyDoc.remedy1")}</li>
+                <li>{t("contact.consent.privacyDoc.remedy2")}</li>
+                <li>{t("contact.consent.privacyDoc.remedy3")}</li>
+                <li>{t("contact.consent.privacyDoc.remedy4")}</li>
+              </ul>
+            </div>
+
+            {/* 개인정보처리방침의 변경 */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section10Title")}</h4>
+              <p>{t("contact.consent.privacyDoc.section10Desc")}</p>
+            </div>
+
+            {/* 시행일 */}
+            <div className="pt-2 border-t">
+              <p>{t("contact.consent.privacyDoc.effectiveDate")}</p>
+              <p>{t("contact.consent.privacyDoc.implementDate")}</p>
             </div>
           </div>
           <Button onClick={() => setPrivacyDialogOpen(false)} className="mt-4">
@@ -404,24 +497,31 @@ const Contact = () => {
 
       {/* Marketing Consent Dialog */}
       <Dialog open={marketingDialogOpen} onOpenChange={setMarketingDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t("contact.consent.marketingTitle")}</DialogTitle>
+            <DialogTitle className="text-xl">{t("contact.consent.marketingTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-sm text-muted-foreground">
             <p>{t("contact.consent.marketingDoc.intro")}</p>
-            <div>
-              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.marketingDoc.info")}</h4>
-              <ul className="list-disc list-inside space-y-1">
-                <li>{t("contact.consent.marketingDoc.info1")}</li>
-                <li>{t("contact.consent.marketingDoc.info2")}</li>
-                <li>{t("contact.consent.marketingDoc.info3")}</li>
-              </ul>
+            <div className="space-y-3">
+              <div className="grid grid-cols-[100px_1fr] gap-2">
+                <span className="font-medium text-foreground">수집 항목</span>
+                <span>{t("contact.consent.marketingDoc.items")}</span>
+              </div>
+              <div className="grid grid-cols-[100px_1fr] gap-2">
+                <span className="font-medium text-foreground">이용 목적</span>
+                <span>{t("contact.consent.marketingDoc.purpose")}</span>
+              </div>
+              <div className="grid grid-cols-[100px_1fr] gap-2">
+                <span className="font-medium text-foreground">수신 방법</span>
+                <span>{t("contact.consent.marketingDoc.method")}</span>
+              </div>
+              <div className="grid grid-cols-[100px_1fr] gap-2">
+                <span className="font-medium text-foreground">보유 및 이용 기간</span>
+                <span>{t("contact.consent.marketingDoc.period")}</span>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.marketingDoc.withdraw")}</h4>
-              <p>{t("contact.consent.marketingDoc.withdrawDesc")}</p>
-            </div>
+            <p className="text-xs text-muted-foreground/80 pt-2">{t("contact.consent.marketingDoc.note")}</p>
           </div>
           <Button onClick={() => setMarketingDialogOpen(false)} className="mt-4">
             {t("contact.consent.close")}
