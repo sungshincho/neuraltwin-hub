@@ -456,9 +456,11 @@ export default {
   },
   contact: {
     title: "NEURALTWIN 도입 문의",
-    subtitle: "지금 문의 시 우리 매장 예상 ROI 분석 리포트 무료 제공",
+    subtitle: "매장 수, 목표, 고민 중인 과제를 알려주시면 맞춤 제안을 드립니다.",
+    leadMagnet: "지금 문의 시 우리 매장 예상 ROI 분석 리포트 무료 제공",
     description: "리테일 전문가가 귀사의 비즈니스에 최적화된 솔루션을 제안해드립니다",
-    notice: "지금 문의 시 3개월 무료 사용 및 전문가 현장 실사 진단 제공",
+    noticeLine1: "지금 문의 시 3개월 무료 사용 및",
+    noticeLine2: "전문가 현장 실사 진단 혜택 제공",
     info: {
       email: "neuraltwin.hq@neuraltwin.io",
       address: "대한민국 서울",

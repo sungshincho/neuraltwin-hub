@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MapPin, Gift, CheckCircle } from "lucide-react";
+import { Mail, MapPin, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackContactForm, trackFunnelStep } from "@/lib/analytics";
@@ -103,6 +103,11 @@ const Contact = () => {
                 <span className="gradient-text">{t("contact.title")}</span>
               </h1>
               <p className="text-xl text-muted-foreground">{t("contact.subtitle")}</p>
+
+              {/* Lead Magnet with Pulse Animation */}
+              <div className="inline-flex items-center justify-center px-6 py-3 mt-4 rounded-full bg-primary/10 border border-primary/30 animate-pulse">
+                <span className="text-primary font-semibold">{t("contact.leadMagnet")}</span>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -259,11 +264,9 @@ const Contact = () => {
                 </Card>
 
                 <Card className="glass p-6 border-primary/30 bg-primary/5">
-                  <div className="flex items-start gap-3">
-                    <Gift className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <p className="text-sm font-medium">
-                      {t("contact.notice")}
-                    </p>
+                  <div className="text-center space-y-1">
+                    <p className="text-sm font-medium">{t("contact.noticeLine1")}</p>
+                    <p className="text-sm font-medium">{t("contact.noticeLine2")}</p>
                   </div>
                 </Card>
               </div>
