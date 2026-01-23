@@ -443,6 +443,13 @@ export default {
     subtitleAfter: " from our experts.",
     benefit1: "3 months free trial included",
     benefit2: "On-site expert assessment provided",
+    stats: {
+      salesIncrease: "Sales Increase",
+      aiAccuracy: "AI Accuracy",
+      decisionSpeed: "Decision Speed",
+      dwellTime: "Dwell Time Increase",
+      resourceSaving: "Resource Saving",
+    },
     description: "Our retail experts will propose a solution optimized for your business",
     info: {
       email: "contact@neuraltwin.com",
