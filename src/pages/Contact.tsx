@@ -121,7 +121,11 @@ const Contact = () => {
               <h1 className="text-5xl md:text-6xl font-bold">
                 <span className="gradient-text">{t("contact.title")}</span>
               </h1>
-              <p className="text-lg text-foreground">{t("contact.subtitle")}</p>
+              <p className="text-lg text-foreground">
+                {t("contact.subtitleBefore")}
+                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight")}</span>
+                {t("contact.subtitleAfter")}
+              </p>
 
               {/* Benefits List */}
               <div className="flex flex-col items-center gap-2 mt-4">
