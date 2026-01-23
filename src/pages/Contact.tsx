@@ -138,6 +138,59 @@ const Contact = () => {
                   <span className="text-sm text-muted-foreground">{t("contact.benefit2")}</span>
                 </div>
               </div>
+
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
+                {/* 매출 상승 */}
+                <div className="relative bg-white rounded-lg p-6 text-center shadow-lg border border-white/50 overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 border border-white/20 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 1px rgba(0,0,0,0.05)' }} />
+                  <div className="relative z-10">
+                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">+12%</div>
+                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.salesIncrease")}</div>
+                  </div>
+                </div>
+
+                {/* AI 신뢰도 */}
+                <div className="relative bg-white rounded-lg p-6 text-center shadow-lg border border-white/50 overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 border border-white/20 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 1px rgba(0,0,0,0.05)' }} />
+                  <div className="relative z-10">
+                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">85%+</div>
+                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.aiAccuracy")}</div>
+                  </div>
+                </div>
+
+                {/* 의사결정 속도 */}
+                <div className="relative bg-white rounded-lg p-6 text-center shadow-lg border border-white/50 overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 border border-white/20 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 1px rgba(0,0,0,0.05)' }} />
+                  <div className="relative z-10">
+                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">-80%</div>
+                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.decisionSpeed")}</div>
+                  </div>
+                </div>
+
+                {/* 체류시간 증가 */}
+                <div className="relative bg-white rounded-lg p-6 text-center shadow-lg border border-white/50 overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 border border-white/20 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 1px rgba(0,0,0,0.05)' }} />
+                  <div className="relative z-10">
+                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">+20%</div>
+                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.dwellTime")}</div>
+                  </div>
+                </div>
+
+                {/* 리소스 절약 */}
+                <div className="relative bg-white rounded-lg p-6 text-center shadow-lg border border-white/50 overflow-hidden group hover:shadow-xl transition-shadow duration-300 col-span-2 md:col-span-1">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 border border-white/20 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 1px rgba(0,0,0,0.05)' }} />
+                  <div className="relative z-10">
+                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2">-15%</div>
+                    <div className="text-sm font-medium text-gray-900">{t("contact.stats.resourceSaving")}</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
