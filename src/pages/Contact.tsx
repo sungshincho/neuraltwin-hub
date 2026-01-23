@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MapPin, CheckCircle } from "lucide-react";
+import { Mail, MapPin, CheckCircle, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackContactForm, trackFunnelStep } from "@/lib/analytics";
@@ -102,11 +102,18 @@ const Contact = () => {
               <h1 className="text-5xl md:text-6xl font-bold">
                 <span className="gradient-text">{t("contact.title")}</span>
               </h1>
-              <p className="text-xl text-muted-foreground">{t("contact.subtitle")}</p>
+              <p className="text-lg text-foreground">{t("contact.subtitle")}</p>
 
-              {/* Lead Magnet with Pulse Animation */}
-              <div className="inline-flex items-center justify-center px-6 py-3 mt-4 rounded-full bg-primary/10 border border-primary/30 animate-pulse">
-                <span className="text-primary font-semibold">{t("contact.leadMagnet")}</span>
+              {/* Benefits List */}
+              <div className="flex flex-col items-center gap-2 mt-4">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-muted-foreground">{t("contact.benefit1")}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-muted-foreground">{t("contact.benefit2")}</span>
+                </div>
               </div>
             </div>
 
@@ -263,12 +270,6 @@ const Contact = () => {
                   </div>
                 </Card>
 
-                <Card className="glass p-6 border-primary/30 bg-primary/5">
-                  <div className="text-center space-y-1">
-                    <p className="text-sm font-medium">{t("contact.noticeLine1")}</p>
-                    <p className="text-sm font-medium">{t("contact.noticeLine2")}</p>
-                  </div>
-                </Card>
               </div>
             </div>
           </div>
