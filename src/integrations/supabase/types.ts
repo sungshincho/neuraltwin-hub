@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_batch_test_results: {
+        Row: {
+          combination_id: string | null
+          combination_variables: Json
+          created_at: string | null
+          diagnostic_issues_passed: Json | null
+          error_message: string | null
+          execution_time_ms: number | null
+          function_name: string
+          id: string
+          linked_simulation_id: string | null
+          request_body: Json
+          response_data: Json | null
+          response_metrics: Json | null
+          response_quality_score: number | null
+          success: boolean
+          test_batch_id: string
+          test_type: string
+        }
+        Insert: {
+          combination_id?: string | null
+          combination_variables?: Json
+          created_at?: string | null
+          diagnostic_issues_passed?: Json | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          function_name: string
+          id?: string
+          linked_simulation_id?: string | null
+          request_body?: Json
+          response_data?: Json | null
+          response_metrics?: Json | null
+          response_quality_score?: number | null
+          success?: boolean
+          test_batch_id: string
+          test_type: string
+        }
+        Update: {
+          combination_id?: string | null
+          combination_variables?: Json
+          created_at?: string | null
+          diagnostic_issues_passed?: Json | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          function_name?: string
+          id?: string
+          linked_simulation_id?: string | null
+          request_body?: Json
+          response_data?: Json | null
+          response_metrics?: Json | null
+          response_quality_score?: number | null
+          success?: boolean
+          test_batch_id?: string
+          test_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_batch_test_results_linked_simulation_id_fkey"
+            columns: ["linked_simulation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_batch_test_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_inference_logs: {
         Row: {
           application_id: string | null
@@ -341,6 +406,101 @@ export type Database = {
           },
         ]
       }
+      ai_response_logs: {
+        Row: {
+          ai_response: Json
+          completion_tokens: number | null
+          context_metadata: Json | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          fallback_used: boolean | null
+          function_name: string
+          had_error: boolean | null
+          id: string
+          input_variables: Json
+          is_good_example: boolean | null
+          model_used: string | null
+          parse_attempts: number | null
+          parse_success: boolean | null
+          prompt_tokens: number | null
+          quality_notes: string | null
+          quality_score: number | null
+          raw_response_length: number | null
+          response_summary: Json | null
+          schema_validation_errors: Json | null
+          simulation_type: string
+          store_id: string
+          updated_at: string | null
+          used_fallback: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_response?: Json
+          completion_tokens?: number | null
+          context_metadata?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          fallback_used?: boolean | null
+          function_name: string
+          had_error?: boolean | null
+          id?: string
+          input_variables?: Json
+          is_good_example?: boolean | null
+          model_used?: string | null
+          parse_attempts?: number | null
+          parse_success?: boolean | null
+          prompt_tokens?: number | null
+          quality_notes?: string | null
+          quality_score?: number | null
+          raw_response_length?: number | null
+          response_summary?: Json | null
+          schema_validation_errors?: Json | null
+          simulation_type: string
+          store_id: string
+          updated_at?: string | null
+          used_fallback?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_response?: Json
+          completion_tokens?: number | null
+          context_metadata?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          fallback_used?: boolean | null
+          function_name?: string
+          had_error?: boolean | null
+          id?: string
+          input_variables?: Json
+          is_good_example?: boolean | null
+          model_used?: string | null
+          parse_attempts?: number | null
+          parse_success?: boolean | null
+          prompt_tokens?: number | null
+          quality_notes?: string | null
+          quality_score?: number | null
+          raw_response_length?: number | null
+          response_summary?: Json | null
+          schema_validation_errors?: Json | null
+          simulation_type?: string
+          store_id?: string
+          updated_at?: string | null
+          used_fallback?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_response_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_scene_analysis: {
         Row: {
           analysis_type: string
@@ -494,54 +654,350 @@ export type Database = {
       }
       api_connections: {
         Row: {
+          api_body_template: Json | null
+          auth_config: Json | null
           auth_type: string | null
           auth_value: string | null
+          connection_category: string | null
           created_at: string
+          data_category: string | null
+          description: string | null
+          display_order: number | null
+          error_count: number | null
+          field_mappings: Json | null
           headers: Json | null
+          icon_name: string | null
           id: string
           is_active: boolean | null
+          is_credentials_encrypted: boolean | null
+          is_system_managed: boolean | null
+          last_error: string | null
           last_sync: string | null
+          last_sync_duration_ms: number | null
+          last_tested_at: string | null
+          max_retries: number | null
           method: string | null
           name: string
+          next_scheduled_sync: string | null
+          next_sync_at: string | null
           org_id: string | null
+          pagination_config: Json | null
+          pagination_type: string | null
+          provider: string | null
+          rate_limit_config: Json | null
+          request_config: Json | null
+          response_data_path: string | null
+          retry_count: number | null
+          status: string | null
+          store_id: string | null
+          successful_syncs: number | null
+          sync_config: Json | null
+          sync_cron: string | null
+          sync_frequency: string | null
+          target_table: string | null
+          total_records_synced: number | null
           type: string
           updated_at: string
           url: string
           user_id: string
         }
         Insert: {
+          api_body_template?: Json | null
+          auth_config?: Json | null
           auth_type?: string | null
           auth_value?: string | null
+          connection_category?: string | null
           created_at?: string
+          data_category?: string | null
+          description?: string | null
+          display_order?: number | null
+          error_count?: number | null
+          field_mappings?: Json | null
           headers?: Json | null
+          icon_name?: string | null
           id?: string
           is_active?: boolean | null
+          is_credentials_encrypted?: boolean | null
+          is_system_managed?: boolean | null
+          last_error?: string | null
           last_sync?: string | null
+          last_sync_duration_ms?: number | null
+          last_tested_at?: string | null
+          max_retries?: number | null
           method?: string | null
           name: string
+          next_scheduled_sync?: string | null
+          next_sync_at?: string | null
           org_id?: string | null
+          pagination_config?: Json | null
+          pagination_type?: string | null
+          provider?: string | null
+          rate_limit_config?: Json | null
+          request_config?: Json | null
+          response_data_path?: string | null
+          retry_count?: number | null
+          status?: string | null
+          store_id?: string | null
+          successful_syncs?: number | null
+          sync_config?: Json | null
+          sync_cron?: string | null
+          sync_frequency?: string | null
+          target_table?: string | null
+          total_records_synced?: number | null
           type: string
           updated_at?: string
           url: string
           user_id: string
         }
         Update: {
+          api_body_template?: Json | null
+          auth_config?: Json | null
           auth_type?: string | null
           auth_value?: string | null
+          connection_category?: string | null
           created_at?: string
+          data_category?: string | null
+          description?: string | null
+          display_order?: number | null
+          error_count?: number | null
+          field_mappings?: Json | null
           headers?: Json | null
+          icon_name?: string | null
           id?: string
           is_active?: boolean | null
+          is_credentials_encrypted?: boolean | null
+          is_system_managed?: boolean | null
+          last_error?: string | null
           last_sync?: string | null
+          last_sync_duration_ms?: number | null
+          last_tested_at?: string | null
+          max_retries?: number | null
           method?: string | null
           name?: string
+          next_scheduled_sync?: string | null
+          next_sync_at?: string | null
           org_id?: string | null
+          pagination_config?: Json | null
+          pagination_type?: string | null
+          provider?: string | null
+          rate_limit_config?: Json | null
+          request_config?: Json | null
+          response_data_path?: string | null
+          retry_count?: number | null
+          status?: string | null
+          store_id?: string | null
+          successful_syncs?: number | null
+          sync_config?: Json | null
+          sync_cron?: string | null
+          sync_frequency?: string | null
+          target_table?: string | null
+          total_records_synced?: number | null
           type?: string
           updated_at?: string
           url?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "api_connections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_mapping_templates: {
+        Row: {
+          auth_config_hints: Json | null
+          created_at: string | null
+          data_category: string
+          default_endpoint: string | null
+          default_headers: Json | null
+          default_method: string | null
+          description: string | null
+          field_mappings: Json
+          id: string
+          is_active: boolean | null
+          is_official: boolean | null
+          name: string
+          pagination_config: Json | null
+          pagination_type: string | null
+          provider: string
+          response_data_path: string | null
+          suggested_auth_type: string | null
+          target_table: string
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          auth_config_hints?: Json | null
+          created_at?: string | null
+          data_category: string
+          default_endpoint?: string | null
+          default_headers?: Json | null
+          default_method?: string | null
+          description?: string | null
+          field_mappings: Json
+          id?: string
+          is_active?: boolean | null
+          is_official?: boolean | null
+          name: string
+          pagination_config?: Json | null
+          pagination_type?: string | null
+          provider: string
+          response_data_path?: string | null
+          suggested_auth_type?: string | null
+          target_table: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          auth_config_hints?: Json | null
+          created_at?: string | null
+          data_category?: string
+          default_endpoint?: string | null
+          default_headers?: Json | null
+          default_method?: string | null
+          description?: string | null
+          field_mappings?: Json
+          id?: string
+          is_active?: boolean | null
+          is_official?: boolean | null
+          name?: string
+          pagination_config?: Json | null
+          pagination_type?: string | null
+          provider?: string
+          response_data_path?: string | null
+          suggested_auth_type?: string | null
+          target_table?: string
+          updated_at?: string | null
+          version?: string | null
+        }
         Relationships: []
+      }
+      api_sync_logs: {
+        Row: {
+          api_connection_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          duration_ms: number | null
+          error_details: Json | null
+          error_message: string | null
+          error_type: string | null
+          etl_run_id: string | null
+          fetch_completed_at: string | null
+          id: string
+          org_id: string | null
+          processing_completed_at: string | null
+          raw_import_id: string | null
+          records_created: number | null
+          records_failed: number | null
+          records_fetched: number | null
+          records_updated: number | null
+          request_headers: Json | null
+          request_url: string | null
+          response_headers: Json | null
+          response_size_bytes: number | null
+          response_status: number | null
+          started_at: string | null
+          status: string
+          sync_endpoint_id: string
+          sync_type: string | null
+        }
+        Insert: {
+          api_connection_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string | null
+          error_type?: string | null
+          etl_run_id?: string | null
+          fetch_completed_at?: string | null
+          id?: string
+          org_id?: string | null
+          processing_completed_at?: string | null
+          raw_import_id?: string | null
+          records_created?: number | null
+          records_failed?: number | null
+          records_fetched?: number | null
+          records_updated?: number | null
+          request_headers?: Json | null
+          request_url?: string | null
+          response_headers?: Json | null
+          response_size_bytes?: number | null
+          response_status?: number | null
+          started_at?: string | null
+          status: string
+          sync_endpoint_id: string
+          sync_type?: string | null
+        }
+        Update: {
+          api_connection_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string | null
+          error_type?: string | null
+          etl_run_id?: string | null
+          fetch_completed_at?: string | null
+          id?: string
+          org_id?: string | null
+          processing_completed_at?: string | null
+          raw_import_id?: string | null
+          records_created?: number | null
+          records_failed?: number | null
+          records_fetched?: number | null
+          records_updated?: number | null
+          request_headers?: Json | null
+          request_url?: string | null
+          response_headers?: Json | null
+          response_size_bytes?: number | null
+          response_status?: number | null
+          started_at?: string | null
+          status?: string
+          sync_endpoint_id?: string
+          sync_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_sync_logs_api_connection_id_fkey"
+            columns: ["api_connection_id"]
+            isOneToOne: false
+            referencedRelation: "api_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_sync_logs_etl_run_id_fkey"
+            columns: ["etl_run_id"]
+            isOneToOne: false
+            referencedRelation: "etl_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_sync_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_sync_logs_raw_import_id_fkey"
+            columns: ["raw_import_id"]
+            isOneToOne: false
+            referencedRelation: "raw_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_sync_logs_sync_endpoint_id_fkey"
+            columns: ["sync_endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "sync_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       applied_strategies: {
         Row: {
@@ -906,9 +1362,11 @@ export type Database = {
           email: string
           features: string[] | null
           id: string
+          marketing_consent: boolean | null
           message: string
           name: string
           phone: string | null
+          privacy_consent: boolean
           stores: number | null
           timeline: string | null
         }
@@ -918,9 +1376,11 @@ export type Database = {
           email: string
           features?: string[] | null
           id?: string
+          marketing_consent?: boolean | null
           message: string
           name: string
           phone?: string | null
+          privacy_consent?: boolean
           stores?: number | null
           timeline?: string | null
         }
@@ -930,9 +1390,11 @@ export type Database = {
           email?: string
           features?: string[] | null
           id?: string
+          marketing_consent?: boolean | null
           message?: string
           name?: string
           phone?: string | null
+          privacy_consent?: boolean
           stores?: number | null
           timeline?: string | null
         }
@@ -1166,6 +1628,7 @@ export type Database = {
           sales_per_labor_hour: number | null
           sales_per_sqm: number | null
           sales_per_visitor: number | null
+          source_trace: Json | null
           special_event: string | null
           store_id: string | null
           temperature: number | null
@@ -1196,6 +1659,7 @@ export type Database = {
           sales_per_labor_hour?: number | null
           sales_per_sqm?: number | null
           sales_per_visitor?: number | null
+          source_trace?: Json | null
           special_event?: string | null
           store_id?: string | null
           temperature?: number | null
@@ -1226,6 +1690,7 @@ export type Database = {
           sales_per_labor_hour?: number | null
           sales_per_sqm?: number | null
           sales_per_visitor?: number | null
+          source_trace?: Json | null
           special_event?: string | null
           store_id?: string | null
           temperature?: number | null
@@ -1733,6 +2198,84 @@ export type Database = {
         }
         Relationships: []
       }
+      etl_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          date_range_end: string | null
+          date_range_start: string | null
+          duration_ms: number | null
+          error_details: Json | null
+          error_message: string | null
+          etl_function: string
+          etl_version: string | null
+          id: string
+          input_record_count: number | null
+          metadata: Json | null
+          org_id: string | null
+          output_record_count: number | null
+          raw_import_ids: string[] | null
+          started_at: string | null
+          status: string | null
+          store_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          date_range_end?: string | null
+          date_range_start?: string | null
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string | null
+          etl_function: string
+          etl_version?: string | null
+          id?: string
+          input_record_count?: number | null
+          metadata?: Json | null
+          org_id?: string | null
+          output_record_count?: number | null
+          raw_import_ids?: string[] | null
+          started_at?: string | null
+          status?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          date_range_end?: string | null
+          date_range_start?: string | null
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string | null
+          etl_function?: string
+          etl_version?: string | null
+          id?: string
+          input_record_count?: number | null
+          metadata?: Json | null
+          org_id?: string | null
+          output_record_count?: number | null
+          raw_import_ids?: string[] | null
+          started_at?: string | null
+          status?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etl_runs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etl_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_data_sources: {
         Row: {
           api_key_encrypted: string | null
@@ -1777,6 +2320,92 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      feedback_reason_codes: {
+        Row: {
+          category: string
+          code: string
+          description: string | null
+          display_order: number | null
+          is_active: boolean | null
+          label_en: string
+          label_ko: string
+        }
+        Insert: {
+          category: string
+          code: string
+          description?: string | null
+          display_order?: number | null
+          is_active?: boolean | null
+          label_en: string
+          label_ko: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          description?: string | null
+          display_order?: number | null
+          is_active?: boolean | null
+          label_en?: string
+          label_ko?: string
+        }
+        Relationships: []
+      }
+      field_transform_rules: {
+        Row: {
+          created_at: string | null
+          default_value: string | null
+          id: string
+          is_active: boolean | null
+          on_error: string | null
+          priority: number | null
+          source_field: string
+          sync_endpoint_id: string
+          target_field: string
+          transform_config: Json | null
+          transform_type: string | null
+          updated_at: string | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_value?: string | null
+          id?: string
+          is_active?: boolean | null
+          on_error?: string | null
+          priority?: number | null
+          source_field: string
+          sync_endpoint_id: string
+          target_field: string
+          transform_config?: Json | null
+          transform_type?: string | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          default_value?: string | null
+          id?: string
+          is_active?: boolean | null
+          on_error?: string | null
+          priority?: number | null
+          source_field?: string
+          sync_endpoint_id?: string
+          target_field?: string
+          transform_config?: Json | null
+          transform_type?: string | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_transform_rules_sync_endpoint_id_fkey"
+            columns: ["sync_endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "sync_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       funnel_events: {
         Row: {
@@ -1886,6 +2515,13 @@ export type Database = {
             foreignKeyName: "funnel_events_zone_fk"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_events_zone_fk"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -1894,6 +2530,13 @@ export type Database = {
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "zones_dim"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_events_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -1967,10 +2610,12 @@ export type Database = {
           category: string | null
           created_at: string | null
           depth: number | null
+          facing: string | null
           furniture_code: string | null
           furniture_name: string | null
           furniture_type: string
           height: number | null
+          height_zone: string | null
           id: string
           is_active: boolean | null
           model_type: string | null
@@ -1992,6 +2637,7 @@ export type Database = {
           thumbnail_url: string | null
           updated_at: string | null
           user_id: string | null
+          vmd_properties: Json | null
           width: number | null
           zone_id: string | null
         }
@@ -1999,10 +2645,12 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           depth?: number | null
+          facing?: string | null
           furniture_code?: string | null
           furniture_name?: string | null
           furniture_type: string
           height?: number | null
+          height_zone?: string | null
           id?: string
           is_active?: boolean | null
           model_type?: string | null
@@ -2024,6 +2672,7 @@ export type Database = {
           thumbnail_url?: string | null
           updated_at?: string | null
           user_id?: string | null
+          vmd_properties?: Json | null
           width?: number | null
           zone_id?: string | null
         }
@@ -2031,10 +2680,12 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           depth?: number | null
+          facing?: string | null
           furniture_code?: string | null
           furniture_name?: string | null
           furniture_type?: string
           height?: number | null
+          height_zone?: string | null
           id?: string
           is_active?: boolean | null
           model_type?: string | null
@@ -2056,6 +2707,7 @@ export type Database = {
           thumbnail_url?: string | null
           updated_at?: string | null
           user_id?: string | null
+          vmd_properties?: Json | null
           width?: number | null
           zone_id?: string | null
         }
@@ -2078,6 +2730,13 @@ export type Database = {
             foreignKeyName: "furniture_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "furniture_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -2090,12 +2749,65 @@ export type Database = {
           },
         ]
       }
+      furniture_facings: {
+        Row: {
+          code: string
+          description: string | null
+          name: string
+          traffic_exposure: number
+        }
+        Insert: {
+          code: string
+          description?: string | null
+          name: string
+          traffic_exposure: number
+        }
+        Update: {
+          code?: string
+          description?: string | null
+          name?: string
+          traffic_exposure?: number
+        }
+        Relationships: []
+      }
+      furniture_height_zones: {
+        Row: {
+          accessibility_multiplier: number
+          code: string
+          description: string | null
+          height_range_cm: string
+          name: string
+          recommended_products: string | null
+          visibility_multiplier: number
+        }
+        Insert: {
+          accessibility_multiplier: number
+          code: string
+          description?: string | null
+          height_range_cm: string
+          name: string
+          recommended_products?: string | null
+          visibility_multiplier: number
+        }
+        Update: {
+          accessibility_multiplier?: number
+          code?: string
+          description?: string | null
+          height_range_cm?: string
+          name?: string
+          recommended_products?: string | null
+          visibility_multiplier?: number
+        }
+        Relationships: []
+      }
       furniture_slots: {
         Row: {
           compatible_display_types: string[] | null
           created_at: string | null
+          facing_count: number | null
           furniture_id: string
           furniture_type: string
+          height_zone: string | null
           id: string
           is_occupied: boolean | null
           max_product_depth: number | null
@@ -2103,6 +2815,7 @@ export type Database = {
           max_product_width: number | null
           org_id: string | null
           properties: Json | null
+          slot_height_cm: number | null
           slot_id: string
           slot_position: Json | null
           slot_rotation: Json | null
@@ -2114,8 +2827,10 @@ export type Database = {
         Insert: {
           compatible_display_types?: string[] | null
           created_at?: string | null
+          facing_count?: number | null
           furniture_id: string
           furniture_type: string
+          height_zone?: string | null
           id?: string
           is_occupied?: boolean | null
           max_product_depth?: number | null
@@ -2123,6 +2838,7 @@ export type Database = {
           max_product_width?: number | null
           org_id?: string | null
           properties?: Json | null
+          slot_height_cm?: number | null
           slot_id: string
           slot_position?: Json | null
           slot_rotation?: Json | null
@@ -2134,8 +2850,10 @@ export type Database = {
         Update: {
           compatible_display_types?: string[] | null
           created_at?: string | null
+          facing_count?: number | null
           furniture_id?: string
           furniture_type?: string
+          height_zone?: string | null
           id?: string
           is_occupied?: boolean | null
           max_product_depth?: number | null
@@ -2143,6 +2861,7 @@ export type Database = {
           max_product_width?: number | null
           org_id?: string | null
           properties?: Json | null
+          slot_height_cm?: number | null
           slot_id?: string
           slot_position?: Json | null
           slot_rotation?: Json | null
@@ -2157,6 +2876,13 @@ export type Database = {
             columns: ["furniture_id"]
             isOneToOne: false
             referencedRelation: "furniture"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_furniture_slots_furniture"
+            columns: ["furniture_id"]
+            isOneToOne: false
+            referencedRelation: "v_furniture_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -2183,7 +2909,7 @@ export type Database = {
           properties: Json | null
           store_id: string | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -2199,7 +2925,7 @@ export type Database = {
           properties?: Json | null
           store_id?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -2215,7 +2941,7 @@ export type Database = {
           properties?: Json | null
           store_id?: string | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2323,7 +3049,7 @@ export type Database = {
           source_provider: string | null
           store_id: string | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           country_code?: string | null
@@ -2342,7 +3068,7 @@ export type Database = {
           source_provider?: string | null
           store_id?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           country_code?: string | null
@@ -2361,7 +3087,7 @@ export type Database = {
           source_provider?: string | null
           store_id?: string | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2635,6 +3361,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      import_type_schemas: {
+        Row: {
+          created_at: string | null
+          id: string
+          import_type: string
+          optional_fields: Json | null
+          required_fields: Json
+          sample_data: Json | null
+          target_table: string
+          updated_at: string | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          import_type: string
+          optional_fields?: Json | null
+          required_fields: Json
+          sample_data?: Json | null
+          target_table: string
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          import_type?: string
+          optional_fields?: Json | null
+          required_fields?: Json
+          sample_data?: Json | null
+          target_table?: string
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Relationships: []
       }
       inventory: {
         Row: {
@@ -3105,19 +3867,25 @@ export type Database = {
       layout_optimization_results: {
         Row: {
           applied_at: string | null
+          applied_changes: Json | null
           created_at: string | null
           expected_conversion_improvement: number | null
           expected_revenue_improvement: number | null
           expected_traffic_improvement: number | null
+          feedback_action: string | null
+          feedback_note: string | null
+          feedback_reason: string | null
           furniture_changes: Json | null
           id: string
           optimization_type: string
           org_id: string | null
+          parameters: Json | null
           product_changes: Json | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string | null
           store_id: string
+          summary: Json | null
           total_furniture_changes: number | null
           total_product_changes: number | null
           updated_at: string | null
@@ -3125,19 +3893,25 @@ export type Database = {
         }
         Insert: {
           applied_at?: string | null
+          applied_changes?: Json | null
           created_at?: string | null
           expected_conversion_improvement?: number | null
           expected_revenue_improvement?: number | null
           expected_traffic_improvement?: number | null
+          feedback_action?: string | null
+          feedback_note?: string | null
+          feedback_reason?: string | null
           furniture_changes?: Json | null
           id?: string
           optimization_type: string
           org_id?: string | null
+          parameters?: Json | null
           product_changes?: Json | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string | null
           store_id: string
+          summary?: Json | null
           total_furniture_changes?: number | null
           total_product_changes?: number | null
           updated_at?: string | null
@@ -3145,19 +3919,25 @@ export type Database = {
         }
         Update: {
           applied_at?: string | null
+          applied_changes?: Json | null
           created_at?: string | null
           expected_conversion_improvement?: number | null
           expected_revenue_improvement?: number | null
           expected_traffic_improvement?: number | null
+          feedback_action?: string | null
+          feedback_note?: string | null
+          feedback_reason?: string | null
           furniture_changes?: Json | null
           id?: string
           optimization_type?: string
           org_id?: string | null
+          parameters?: Json | null
           product_changes?: Json | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string | null
           store_id?: string
+          summary?: Json | null
           total_furniture_changes?: number | null
           total_product_changes?: number | null
           updated_at?: string | null
@@ -3239,6 +4019,53 @@ export type Database = {
           },
           {
             foreignKeyName: "learning_adjustments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_sessions: {
+        Row: {
+          adjustments_applied: number | null
+          adjustments_proposed: number | null
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          improvement_metrics: Json | null
+          predictions_evaluated: number | null
+          started_at: string | null
+          status: string
+          store_id: string
+        }
+        Insert: {
+          adjustments_applied?: number | null
+          adjustments_proposed?: number | null
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          improvement_metrics?: Json | null
+          predictions_evaluated?: number | null
+          started_at?: string | null
+          status?: string
+          store_id: string
+        }
+        Update: {
+          adjustments_applied?: number | null
+          adjustments_proposed?: number | null
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          improvement_metrics?: Json | null
+          predictions_evaluated?: number | null
+          started_at?: string | null
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_sessions_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -3496,6 +4323,75 @@ export type Database = {
           },
           {
             foreignKeyName: "line_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_3d_files: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          metadata: Json | null
+          org_id: string | null
+          status: string | null
+          store_id: string | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          metadata?: Json | null
+          org_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          metadata?: Json | null
+          org_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_3d_files_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_3d_files_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -3826,7 +4722,7 @@ export type Database = {
           processed_at: string | null
           retry_count: number
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -3837,7 +4733,7 @@ export type Database = {
           processed_at?: string | null
           retry_count?: number
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -3848,7 +4744,7 @@ export type Database = {
           processed_at?: string | null
           retry_count?: number
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -4030,6 +4926,65 @@ export type Database = {
           version?: string
         }
         Relationships: []
+      }
+      optimization_feedback: {
+        Row: {
+          action: string
+          ai_confidence: number | null
+          created_at: string | null
+          feedback_by: string | null
+          feedback_target_type: string
+          id: string
+          modified_suggestion: Json | null
+          optimization_id: string | null
+          original_suggestion: Json | null
+          reason_code: string | null
+          reason_text: string | null
+          store_id: string
+          target_id: string | null
+          vmd_rules_applied: string[] | null
+        }
+        Insert: {
+          action: string
+          ai_confidence?: number | null
+          created_at?: string | null
+          feedback_by?: string | null
+          feedback_target_type: string
+          id?: string
+          modified_suggestion?: Json | null
+          optimization_id?: string | null
+          original_suggestion?: Json | null
+          reason_code?: string | null
+          reason_text?: string | null
+          store_id: string
+          target_id?: string | null
+          vmd_rules_applied?: string[] | null
+        }
+        Update: {
+          action?: string
+          ai_confidence?: number | null
+          created_at?: string | null
+          feedback_by?: string | null
+          feedback_target_type?: string
+          id?: string
+          modified_suggestion?: Json | null
+          optimization_id?: string | null
+          original_suggestion?: Json | null
+          reason_code?: string | null
+          reason_text?: string | null
+          store_id?: string
+          target_id?: string | null
+          vmd_rules_applied?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_feedback_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       optimization_tasks: {
         Row: {
@@ -4341,6 +5296,160 @@ export type Database = {
           },
         ]
       }
+      prediction_records: {
+        Row: {
+          actual_value: number | null
+          context: Json | null
+          id: string
+          predicted_value: number
+          prediction_date: string
+          prediction_type: string
+          store_id: string
+        }
+        Insert: {
+          actual_value?: number | null
+          context?: Json | null
+          id?: string
+          predicted_value: number
+          prediction_date: string
+          prediction_type: string
+          store_id: string
+        }
+        Update: {
+          actual_value?: number | null
+          context?: Json | null
+          id?: string
+          predicted_value?: number
+          prediction_date?: string
+          prediction_type?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_records_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_associations: {
+        Row: {
+          analysis_period_end: string | null
+          analysis_period_start: string | null
+          antecedent_category: string | null
+          antecedent_product_id: string
+          avg_basket_value: number | null
+          category_pair: string | null
+          co_occurrence_count: number | null
+          confidence: number
+          consequent_category: string | null
+          consequent_product_id: string
+          conviction: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          lift: number
+          metadata: Json | null
+          org_id: string | null
+          placement_type: string | null
+          rule_strength: string | null
+          rule_type: string | null
+          sample_transaction_count: number | null
+          store_id: string
+          support: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analysis_period_end?: string | null
+          analysis_period_start?: string | null
+          antecedent_category?: string | null
+          antecedent_product_id: string
+          avg_basket_value?: number | null
+          category_pair?: string | null
+          co_occurrence_count?: number | null
+          confidence?: number
+          consequent_category?: string | null
+          consequent_product_id: string
+          conviction?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          lift?: number
+          metadata?: Json | null
+          org_id?: string | null
+          placement_type?: string | null
+          rule_strength?: string | null
+          rule_type?: string | null
+          sample_transaction_count?: number | null
+          store_id: string
+          support?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analysis_period_end?: string | null
+          analysis_period_start?: string | null
+          antecedent_category?: string | null
+          antecedent_product_id?: string
+          avg_basket_value?: number | null
+          category_pair?: string | null
+          co_occurrence_count?: number | null
+          confidence?: number
+          consequent_category?: string | null
+          consequent_product_id?: string
+          conviction?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          lift?: number
+          metadata?: Json | null
+          org_id?: string | null
+          placement_type?: string | null
+          rule_strength?: string | null
+          rule_type?: string | null
+          sample_transaction_count?: number | null
+          store_id?: string
+          support?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_associations_antecedent_product_id_fkey"
+            columns: ["antecedent_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_associations_consequent_product_id_fkey"
+            columns: ["consequent_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_associations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_associations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_models: {
         Row: {
           created_at: string | null
@@ -4550,10 +5659,12 @@ export type Database = {
           compatible_display_types: string[] | null
           cost_price: number | null
           created_at: string
+          cross_sell_product_ids: string[] | null
           description: string | null
           display_type: string | null
           id: string
           initial_furniture_id: string | null
+          margin_rate: number | null
           model_3d_position: Json | null
           model_3d_rotation: Json | null
           model_3d_scale: Json | null
@@ -4567,6 +5678,7 @@ export type Database = {
           stock: number | null
           store_id: string | null
           supplier: string | null
+          turnover_rate: number | null
           updated_at: string
           user_id: string
         }
@@ -4576,10 +5688,12 @@ export type Database = {
           compatible_display_types?: string[] | null
           cost_price?: number | null
           created_at?: string
+          cross_sell_product_ids?: string[] | null
           description?: string | null
           display_type?: string | null
           id?: string
           initial_furniture_id?: string | null
+          margin_rate?: number | null
           model_3d_position?: Json | null
           model_3d_rotation?: Json | null
           model_3d_scale?: Json | null
@@ -4593,6 +5707,7 @@ export type Database = {
           stock?: number | null
           store_id?: string | null
           supplier?: string | null
+          turnover_rate?: number | null
           updated_at?: string
           user_id: string
         }
@@ -4602,10 +5717,12 @@ export type Database = {
           compatible_display_types?: string[] | null
           cost_price?: number | null
           created_at?: string
+          cross_sell_product_ids?: string[] | null
           description?: string | null
           display_type?: string | null
           id?: string
           initial_furniture_id?: string | null
+          margin_rate?: number | null
           model_3d_position?: Json | null
           model_3d_rotation?: Json | null
           model_3d_scale?: Json | null
@@ -4619,6 +5736,7 @@ export type Database = {
           stock?: number | null
           store_id?: string | null
           supplier?: string | null
+          turnover_rate?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -4860,56 +5978,103 @@ export type Database = {
       }
       raw_imports: {
         Row: {
+          api_connection_id: string | null
+          api_response_meta: Json | null
+          completed_at: string | null
           created_at: string | null
+          data_type: string | null
+          error_details: Json | null
           error_message: string | null
+          etl_version: string | null
           file_path: string | null
           id: string
           metadata: Json | null
           org_id: string | null
           processed_at: string | null
+          progress: Json | null
+          raw_data: Json | null
           row_count: number | null
+          session_id: string | null
           source_name: string | null
           source_type: string
+          started_at: string | null
           status: string | null
           store_id: string | null
+          sync_batch_id: string | null
           user_id: string
         }
         Insert: {
+          api_connection_id?: string | null
+          api_response_meta?: Json | null
+          completed_at?: string | null
           created_at?: string | null
+          data_type?: string | null
+          error_details?: Json | null
           error_message?: string | null
+          etl_version?: string | null
           file_path?: string | null
           id?: string
           metadata?: Json | null
           org_id?: string | null
           processed_at?: string | null
+          progress?: Json | null
+          raw_data?: Json | null
           row_count?: number | null
+          session_id?: string | null
           source_name?: string | null
           source_type: string
+          started_at?: string | null
           status?: string | null
           store_id?: string | null
+          sync_batch_id?: string | null
           user_id: string
         }
         Update: {
+          api_connection_id?: string | null
+          api_response_meta?: Json | null
+          completed_at?: string | null
           created_at?: string | null
+          data_type?: string | null
+          error_details?: Json | null
           error_message?: string | null
+          etl_version?: string | null
           file_path?: string | null
           id?: string
           metadata?: Json | null
           org_id?: string | null
           processed_at?: string | null
+          progress?: Json | null
+          raw_data?: Json | null
           row_count?: number | null
+          session_id?: string | null
           source_name?: string | null
           source_type?: string
+          started_at?: string | null
           status?: string | null
           store_id?: string | null
+          sync_batch_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "raw_imports_api_connection_id_fkey"
+            columns: ["api_connection_id"]
+            isOneToOne: false
+            referencedRelation: "api_connections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "raw_imports_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raw_imports_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "upload_sessions"
             referencedColumns: ["id"]
           },
           {
@@ -5931,6 +7096,13 @@ export type Database = {
             foreignKeyName: "staff_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -6030,6 +7202,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_assignments_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -6150,15 +7329,76 @@ export type Database = {
         }
         Relationships: []
       }
+      store_personas: {
+        Row: {
+          confidence_adjustments: Json | null
+          created_at: string | null
+          feedback_stats: Json | null
+          id: string
+          is_active: boolean | null
+          last_learning_at: string | null
+          learned_context: Json | null
+          learning_version: number | null
+          preference_weights: Json | null
+          store_id: string
+          store_style: string | null
+          target_demographic: string | null
+          updated_at: string | null
+          vmd_preferences: Json | null
+        }
+        Insert: {
+          confidence_adjustments?: Json | null
+          created_at?: string | null
+          feedback_stats?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_learning_at?: string | null
+          learned_context?: Json | null
+          learning_version?: number | null
+          preference_weights?: Json | null
+          store_id: string
+          store_style?: string | null
+          target_demographic?: string | null
+          updated_at?: string | null
+          vmd_preferences?: Json | null
+        }
+        Update: {
+          confidence_adjustments?: Json | null
+          created_at?: string | null
+          feedback_stats?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_learning_at?: string | null
+          learned_context?: Json | null
+          learning_version?: number | null
+          preference_weights?: Json | null
+          store_id?: string
+          store_style?: string | null
+          target_demographic?: string | null
+          updated_at?: string | null
+          vmd_preferences?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_personas_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_scenes: {
         Row: {
           created_at: string | null
           id: string
           is_active: boolean | null
+          metadata: Json | null
           org_id: string | null
           recipe_data: Json | null
           scene_name: string
           scene_type: string | null
+          staff_positions: Json | null
           store_id: string | null
           updated_at: string | null
           user_id: string
@@ -6167,10 +7407,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          metadata?: Json | null
           org_id?: string | null
           recipe_data?: Json | null
           scene_name: string
           scene_type?: string | null
+          staff_positions?: Json | null
           store_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -6179,10 +7421,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          metadata?: Json | null
           org_id?: string | null
           recipe_data?: Json | null
           scene_name?: string
           scene_type?: string | null
+          staff_positions?: Json | null
           store_id?: string | null
           updated_at?: string | null
           user_id?: string
@@ -6319,6 +7563,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "store_visits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stored_model_parameters: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          parameter_key: string
+          parameter_value: number
+          prediction_type: string
+          store_id: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          parameter_key: string
+          parameter_value: number
+          prediction_type: string
+          store_id: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          parameter_key?: string
+          parameter_value?: number
+          prediction_type?: string
+          store_id?: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stored_model_parameters_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -6669,6 +7957,99 @@ export type Database = {
           },
         ]
       }
+      sync_endpoints: {
+        Row: {
+          api_connection_id: string
+          created_at: string | null
+          data_path: string | null
+          description: string | null
+          endpoint_path: string
+          http_method: string | null
+          id: string
+          incremental_key: string | null
+          incremental_value: string | null
+          is_active: boolean | null
+          last_sync_at: string | null
+          last_sync_error: string | null
+          last_sync_record_count: number | null
+          last_sync_status: string | null
+          name: string
+          org_id: string | null
+          pagination_config: Json | null
+          query_params: Json | null
+          sync_frequency: string | null
+          sync_mode: string | null
+          target_table: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_connection_id: string
+          created_at?: string | null
+          data_path?: string | null
+          description?: string | null
+          endpoint_path: string
+          http_method?: string | null
+          id?: string
+          incremental_key?: string | null
+          incremental_value?: string | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_record_count?: number | null
+          last_sync_status?: string | null
+          name: string
+          org_id?: string | null
+          pagination_config?: Json | null
+          query_params?: Json | null
+          sync_frequency?: string | null
+          sync_mode?: string | null
+          target_table: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_connection_id?: string
+          created_at?: string | null
+          data_path?: string | null
+          description?: string | null
+          endpoint_path?: string
+          http_method?: string | null
+          id?: string
+          incremental_key?: string | null
+          incremental_value?: string | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_record_count?: number | null
+          last_sync_status?: string | null
+          name?: string
+          org_id?: string | null
+          pagination_config?: Json | null
+          query_params?: Json | null
+          sync_frequency?: string | null
+          sync_mode?: string | null
+          target_table?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_endpoints_api_connection_id_fkey"
+            columns: ["api_connection_id"]
+            isOneToOne: false
+            referencedRelation: "api_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_endpoints_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_logs: {
         Row: {
           created_at: string | null
@@ -6964,40 +8345,82 @@ export type Database = {
       }
       upload_sessions: {
         Row: {
+          column_mapping: Json | null
+          completed_at: string | null
+          completed_files: number | null
           created_at: string
+          failed_files: number | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          file_type: string | null
           id: string
+          import_type: string | null
           org_id: string | null
+          parsed_preview: Json | null
           processed_files: number | null
+          row_count: number | null
           session_name: string | null
+          started_at: string | null
           status: string
           store_id: string | null
+          target_table: string | null
           total_files: number | null
           updated_at: string
           user_id: string
+          validation_errors: Json | null
         }
         Insert: {
+          column_mapping?: Json | null
+          completed_at?: string | null
+          completed_files?: number | null
           created_at?: string
+          failed_files?: number | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
           id?: string
+          import_type?: string | null
           org_id?: string | null
+          parsed_preview?: Json | null
           processed_files?: number | null
+          row_count?: number | null
           session_name?: string | null
+          started_at?: string | null
           status?: string
           store_id?: string | null
+          target_table?: string | null
           total_files?: number | null
           updated_at?: string
           user_id: string
+          validation_errors?: Json | null
         }
         Update: {
+          column_mapping?: Json | null
+          completed_at?: string | null
+          completed_files?: number | null
           created_at?: string
+          failed_files?: number | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
           id?: string
+          import_type?: string | null
           org_id?: string | null
+          parsed_preview?: Json | null
           processed_files?: number | null
+          row_count?: number | null
           session_name?: string | null
+          started_at?: string | null
           status?: string
           store_id?: string | null
+          target_table?: string | null
           total_files?: number | null
           updated_at?: string
           user_id?: string
+          validation_errors?: Json | null
         }
         Relationships: [
           {
@@ -7123,16 +8546,23 @@ export type Database = {
           data_type: string
           error_details: Json | null
           error_message: string | null
+          failed_rows: number | null
           file_name: string
           id: string
+          import_type: string | null
+          imported_rows: number | null
           is_paused: boolean | null
           org_id: string | null
           progress: Json | null
           raw_data: Json | null
+          rolled_back_at: string | null
+          rolled_back_rows: number | null
           row_count: number | null
           started_at: string | null
           status: string
           store_id: string | null
+          target_table: string | null
+          total_rows: number | null
           updated_at: string
           user_id: string
         }
@@ -7144,16 +8574,23 @@ export type Database = {
           data_type: string
           error_details?: Json | null
           error_message?: string | null
+          failed_rows?: number | null
           file_name: string
           id?: string
+          import_type?: string | null
+          imported_rows?: number | null
           is_paused?: boolean | null
           org_id?: string | null
           progress?: Json | null
           raw_data?: Json | null
+          rolled_back_at?: string | null
+          rolled_back_rows?: number | null
           row_count?: number | null
           started_at?: string | null
           status?: string
           store_id?: string | null
+          target_table?: string | null
+          total_rows?: number | null
           updated_at?: string
           user_id: string
         }
@@ -7165,16 +8602,23 @@ export type Database = {
           data_type?: string
           error_details?: Json | null
           error_message?: string | null
+          failed_rows?: number | null
           file_name?: string
           id?: string
+          import_type?: string | null
+          imported_rows?: number | null
           is_paused?: boolean | null
           org_id?: string | null
           progress?: Json | null
           raw_data?: Json | null
+          rolled_back_at?: string | null
+          rolled_back_rows?: number | null
           row_count?: number | null
           started_at?: string | null
           status?: string
           store_id?: string | null
+          target_table?: string | null
+          total_rows?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -7206,6 +8650,18 @@ export type Database = {
           guide_key?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      v_org_id: {
+        Row: {
+          id: string | null
+        }
+        Insert: {
+          id?: string | null
+        }
+        Update: {
+          id?: string | null
         }
         Relationships: []
       }
@@ -7299,6 +8755,13 @@ export type Database = {
             foreignKeyName: "visit_zone_events_zone_fk"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visit_zone_events_zone_fk"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -7307,6 +8770,13 @@ export type Database = {
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "zones_dim"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visit_zone_events_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -7397,6 +8867,164 @@ export type Database = {
           },
         ]
       }
+      vmd_rule_applications: {
+        Row: {
+          actual_impact: Json | null
+          applied_at: string | null
+          applied_by: string | null
+          applied_to_fixture_id: string | null
+          applied_to_product_id: string | null
+          applied_to_zone_id: string | null
+          id: string
+          optimization_id: string | null
+          rule_id: string
+          store_id: string
+          user_feedback: string | null
+          was_accepted: boolean | null
+        }
+        Insert: {
+          actual_impact?: Json | null
+          applied_at?: string | null
+          applied_by?: string | null
+          applied_to_fixture_id?: string | null
+          applied_to_product_id?: string | null
+          applied_to_zone_id?: string | null
+          id?: string
+          optimization_id?: string | null
+          rule_id: string
+          store_id: string
+          user_feedback?: string | null
+          was_accepted?: boolean | null
+        }
+        Update: {
+          actual_impact?: Json | null
+          applied_at?: string | null
+          applied_by?: string | null
+          applied_to_fixture_id?: string | null
+          applied_to_product_id?: string | null
+          applied_to_zone_id?: string | null
+          id?: string
+          optimization_id?: string | null
+          rule_id?: string
+          store_id?: string
+          user_feedback?: string | null
+          was_accepted?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vmd_rule_applications_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "vmd_rulesets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vmd_rulesets: {
+        Row: {
+          action_parameters: Json | null
+          applicable_industries: string[] | null
+          applicable_store_types: string[] | null
+          confidence_level: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          description_ko: string | null
+          evidence_source: string | null
+          evidence_url: string | null
+          expected_impact: Json | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          recommended_action: string
+          recommended_action_ko: string | null
+          rule_category: string
+          rule_code: string
+          rule_name: string
+          rule_name_ko: string | null
+          trigger_conditions: Json
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          action_parameters?: Json | null
+          applicable_industries?: string[] | null
+          applicable_store_types?: string[] | null
+          confidence_level?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          description_ko?: string | null
+          evidence_source?: string | null
+          evidence_url?: string | null
+          expected_impact?: Json | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          recommended_action: string
+          recommended_action_ko?: string | null
+          rule_category: string
+          rule_code: string
+          rule_name: string
+          rule_name_ko?: string | null
+          trigger_conditions?: Json
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          action_parameters?: Json | null
+          applicable_industries?: string[] | null
+          applicable_store_types?: string[] | null
+          confidence_level?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          description_ko?: string | null
+          evidence_source?: string | null
+          evidence_url?: string | null
+          expected_impact?: Json | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          recommended_action?: string
+          recommended_action_ko?: string | null
+          rule_category?: string
+          rule_code?: string
+          rule_name?: string
+          rule_name_ko?: string | null
+          trigger_conditions?: Json
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      vmd_zone_types: {
+        Row: {
+          code: string
+          color_code: string | null
+          description: string | null
+          name: string
+          traffic_weight: number | null
+          typical_dwell_seconds: number | null
+        }
+        Insert: {
+          code: string
+          color_code?: string | null
+          description?: string | null
+          name: string
+          traffic_weight?: number | null
+          typical_dwell_seconds?: number | null
+        }
+        Update: {
+          code?: string
+          color_code?: string | null
+          description?: string | null
+          name?: string
+          traffic_weight?: number | null
+          typical_dwell_seconds?: number | null
+        }
+        Relationships: []
+      }
       weather_data: {
         Row: {
           created_at: string | null
@@ -7410,7 +9038,7 @@ export type Database = {
           store_id: string | null
           temperature: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           weather_condition: string | null
           wind_speed: number | null
         }
@@ -7426,7 +9054,7 @@ export type Database = {
           store_id?: string | null
           temperature?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           weather_condition?: string | null
           wind_speed?: number | null
         }
@@ -7442,7 +9070,7 @@ export type Database = {
           store_id?: string | null
           temperature?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           weather_condition?: string | null
           wind_speed?: number | null
         }
@@ -7626,6 +9254,13 @@ export type Database = {
             foreignKeyName: "wifi_tracking_zone_fk"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wifi_tracking_zone_fk"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -7706,6 +9341,7 @@ export type Database = {
           peak_hour: number | null
           peak_occupancy: number | null
           revenue_attributed: number | null
+          source_trace: Json | null
           store_id: string | null
           total_dwell_seconds: number | null
           total_visitors: number | null
@@ -7728,6 +9364,7 @@ export type Database = {
           peak_hour?: number | null
           peak_occupancy?: number | null
           revenue_attributed?: number | null
+          source_trace?: Json | null
           store_id?: string | null
           total_dwell_seconds?: number | null
           total_visitors?: number | null
@@ -7750,6 +9387,7 @@ export type Database = {
           peak_hour?: number | null
           peak_occupancy?: number | null
           revenue_attributed?: number | null
+          source_trace?: Json | null
           store_id?: string | null
           total_dwell_seconds?: number | null
           total_visitors?: number | null
@@ -7769,6 +9407,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zone_daily_metrics_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -7889,6 +9534,13 @@ export type Database = {
             foreignKeyName: "zone_events_zone_fk"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zone_events_zone_fk"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -7897,6 +9549,13 @@ export type Database = {
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "zones_dim"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zone_events_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -8097,6 +9756,13 @@ export type Database = {
             foreignKeyName: "fk_zone_transitions_from_zone"
             columns: ["from_zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_zone_transitions_from_zone"
+            columns: ["from_zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -8112,6 +9778,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_zone_transitions_to_zone"
+            columns: ["to_zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -8153,6 +9826,7 @@ export type Database = {
           store_id: string
           updated_at: string | null
           user_id: string | null
+          vmd_attributes: Json | null
           zone_code: string
           zone_name: string
           zone_type: string | null
@@ -8179,6 +9853,7 @@ export type Database = {
           store_id: string
           updated_at?: string | null
           user_id?: string | null
+          vmd_attributes?: Json | null
           zone_code: string
           zone_name: string
           zone_type?: string | null
@@ -8205,6 +9880,7 @@ export type Database = {
           store_id?: string
           updated_at?: string | null
           user_id?: string | null
+          vmd_attributes?: Json | null
           zone_code?: string
           zone_name?: string
           zone_type?: string | null
@@ -8228,6 +9904,13 @@ export type Database = {
             foreignKeyName: "zones_dim_parent_fk"
             columns: ["parent_zone_id"]
             isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zones_dim_parent_fk"
+            columns: ["parent_zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["id"]
           },
@@ -8236,6 +9919,13 @@ export type Database = {
             columns: ["parent_zone_id"]
             isOneToOne: false
             referencedRelation: "zones_dim"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zones_dim_parent_zone_id_fkey"
+            columns: ["parent_zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
             referencedColumns: ["id"]
           },
           {
@@ -8270,6 +9960,214 @@ export type Database = {
       }
     }
     Views: {
+      ai_parse_success_stats: {
+        Row: {
+          avg_execution_time_ms: number | null
+          date: string | null
+          fallback_uses: number | null
+          function_name: string | null
+          success_rate_percent: number | null
+          successful_parses: number | null
+          total_calls: number | null
+        }
+        Relationships: []
+      }
+      v_ai_response_stats: {
+        Row: {
+          avg_execution_time_ms: number | null
+          avg_quality_score: number | null
+          error_count: number | null
+          first_log_at: string | null
+          function_name: string | null
+          good_example_count: number | null
+          last_log_at: string | null
+          rated_count: number | null
+          simulation_type: string | null
+          total_count: number | null
+        }
+        Relationships: []
+      }
+      v_batch_test_failures: {
+        Row: {
+          combination_id: string | null
+          combination_variables: Json | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          function_name: string | null
+          test_batch_id: string | null
+          test_type: string | null
+        }
+        Insert: {
+          combination_id?: string | null
+          combination_variables?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          function_name?: string | null
+          test_batch_id?: string | null
+          test_type?: string | null
+        }
+        Update: {
+          combination_id?: string | null
+          combination_variables?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          function_name?: string | null
+          test_batch_id?: string | null
+          test_type?: string | null
+        }
+        Relationships: []
+      }
+      v_batch_test_linked_analysis: {
+        Row: {
+          both_success: boolean | null
+          created_at: string | null
+          issues_passed: string | null
+          optimization_combination: string | null
+          optimization_quality: number | null
+          optimization_success: boolean | null
+          optimization_time_ms: number | null
+          simulation_combination: string | null
+          simulation_quality: number | null
+          simulation_success: boolean | null
+          simulation_time_ms: number | null
+          test_batch_id: string | null
+        }
+        Relationships: []
+      }
+      v_batch_test_scenario_stats: {
+        Row: {
+          avg_quality: number | null
+          optimization_type: string | null
+          preset_scenario: string | null
+          success_count: number | null
+          success_rate: number | null
+          test_batch_id: string | null
+          test_type: string | null
+          total_tests: number | null
+        }
+        Relationships: []
+      }
+      v_batch_test_summary: {
+        Row: {
+          avg_quality_score: number | null
+          avg_time_ms: number | null
+          completed_at: string | null
+          failure_count: number | null
+          max_time_ms: number | null
+          min_time_ms: number | null
+          started_at: string | null
+          success_count: number | null
+          success_rate: number | null
+          test_batch_id: string | null
+          test_type: string | null
+          total_tests: number | null
+        }
+        Relationships: []
+      }
+      v_finetuning_dataset: {
+        Row: {
+          ai_response: Json | null
+          context_metadata: Json | null
+          created_at: string | null
+          execution_time_ms: number | null
+          function_name: string | null
+          id: string | null
+          input_variables: Json | null
+          quality_notes: string | null
+          quality_score: number | null
+          simulation_type: string | null
+          store_id: string | null
+        }
+        Insert: {
+          ai_response?: Json | null
+          context_metadata?: Json | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          function_name?: string | null
+          id?: string | null
+          input_variables?: Json | null
+          quality_notes?: string | null
+          quality_score?: number | null
+          simulation_type?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          ai_response?: Json | null
+          context_metadata?: Json | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          function_name?: string | null
+          id?: string | null
+          input_variables?: Json | null
+          quality_notes?: string | null
+          quality_score?: number | null
+          simulation_type?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_response_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_furniture_vmd_summary: {
+        Row: {
+          accessibility_multiplier: number | null
+          accessibility_score: number | null
+          facing: string | null
+          furniture_name: string | null
+          furniture_type: string | null
+          height_range_cm: string | null
+          height_zone: string | null
+          id: string | null
+          is_endcap: boolean | null
+          is_focal_point: boolean | null
+          lighting_enhanced: boolean | null
+          max_products: number | null
+          store_id: string | null
+          traffic_exposure: number | null
+          visibility_multiplier: number | null
+          visibility_score: number | null
+          zone_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "furniture_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "furniture_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "v_zone_vmd_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "furniture_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "furniture_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones_dim"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_user_orgs: {
         Row: {
           org_id: string | null
@@ -8289,6 +10187,81 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_vmd_rules_summary: {
+        Row: {
+          action: string | null
+          confidence_level: number | null
+          description: string | null
+          expected_impact: Json | null
+          is_active: boolean | null
+          name: string | null
+          priority: number | null
+          rule_category: string | null
+          rule_code: string | null
+          times_accepted: number | null
+          times_applied: number | null
+        }
+        Insert: {
+          action?: string | null
+          confidence_level?: number | null
+          description?: string | null
+          expected_impact?: Json | null
+          is_active?: boolean | null
+          name?: string | null
+          priority?: number | null
+          rule_category?: string | null
+          rule_code?: string | null
+          times_accepted?: never
+          times_applied?: never
+        }
+        Update: {
+          action?: string | null
+          confidence_level?: number | null
+          description?: string | null
+          expected_impact?: Json | null
+          is_active?: boolean | null
+          name?: string | null
+          priority?: number | null
+          rule_category?: string | null
+          rule_code?: string | null
+          times_accepted?: never
+          times_applied?: never
+        }
+        Relationships: []
+      }
+      v_zone_vmd_summary: {
+        Row: {
+          color_code: string | null
+          dwell_target_seconds: number | null
+          fixture_density: number | null
+          id: string | null
+          is_dead_space: boolean | null
+          is_golden_zone: boolean | null
+          sightline_score: number | null
+          store_id: string | null
+          traffic_weight: number | null
+          vmd_type_description: string | null
+          vmd_zone_type: string | null
+          zone_name: string | null
+          zone_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zones_dim_store_fk"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zones_dim_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -8404,6 +10377,27 @@ export type Database = {
         Args: { p_days?: number; p_store_id: string; p_strategy_type: string }
         Returns: Json
       }
+      calculate_data_quality_score: {
+        Args: { p_date?: string; p_store_id: string }
+        Returns: Json
+      }
+      calculate_furniture_visibility: {
+        Args: {
+          p_facing: string
+          p_height_zone: string
+          p_is_focal_point?: boolean
+          p_lighting_enhanced?: boolean
+        }
+        Returns: number
+      }
+      calculate_next_sync_time: {
+        Args: {
+          p_last_sync?: string
+          p_sync_cron?: string
+          p_sync_frequency: string
+        }
+        Returns: string
+      }
       can_access_membership: {
         Args: { membership_org_id: string; membership_user_id: string }
         Returns: boolean
@@ -8415,6 +10409,14 @@ export type Database = {
       check_slot_product_compatibility: {
         Args: { p_product_display_type: string; p_slot_id: string }
         Returns: boolean
+      }
+      cleanup_old_ai_response_logs: {
+        Args: { days_to_keep?: number }
+        Returns: number
+      }
+      cleanup_old_batch_test_results: {
+        Args: { days_to_keep?: number }
+        Returns: number
       }
       compute_all_retail_concepts: {
         Args: { p_days?: number; p_store_id: string }
@@ -8458,6 +10460,50 @@ export type Database = {
           zone_name: string
         }[]
       }
+      create_api_connection: {
+        Args: {
+          p_auth_config?: Json
+          p_auth_type: string
+          p_data_category: string
+          p_field_mappings?: Json
+          p_name: string
+          p_org_id: string
+          p_provider: string
+          p_response_data_path?: string
+          p_store_id: string
+          p_target_table?: string
+          p_url: string
+        }
+        Returns: Json
+      }
+      create_import_session: {
+        Args: {
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_file_type: string
+          p_import_type: string
+          p_org_id: string
+          p_store_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      create_sync_log: {
+        Args: {
+          p_connection_id: string
+          p_request_headers?: Json
+          p_request_url?: string
+          p_sync_type?: string
+        }
+        Returns: Json
+      }
+      ensure_store_persona: { Args: { p_store_id: string }; Returns: string }
+      ensure_system_context_connections: {
+        Args: { p_org_id: string; p_store_id?: string; p_user_id?: string }
+        Returns: Json
+      }
+      execute_api_sync: { Args: { p_connection_id: string }; Returns: Json }
       export_public_schema: { Args: never; Returns: Json }
       generate_sample_sales_data: {
         Args: { p_days?: number; p_org_id: string; p_store_id: string }
@@ -8472,6 +10518,51 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_active_import_sessions: {
+        Args: { p_store_id?: string; p_user_id: string }
+        Returns: {
+          created_at: string
+          file_name: string
+          id: string
+          import_type: string
+          row_count: number
+          status: string
+          target_table: string
+          updated_at: string
+        }[]
+      }
+      get_all_data_sources: {
+        Args: { p_org_id: string; p_store_id?: string }
+        Returns: Json
+      }
+      get_api_connections_dashboard: {
+        Args: { p_org_id?: string; p_store_id?: string }
+        Returns: Json
+      }
+      get_api_mapping_template: {
+        Args: { p_data_category?: string; p_provider: string }
+        Returns: Json
+      }
+      get_applicable_vmd_rules: {
+        Args: {
+          p_category?: string
+          p_limit?: number
+          p_min_confidence?: number
+          p_zone_type?: string
+        }
+        Returns: {
+          confidence_level: number
+          description_ko: string
+          expected_impact: Json
+          priority: number
+          recommended_action_ko: string
+          rule_category: string
+          rule_code: string
+          rule_name: string
+          rule_name_ko: string
+        }[]
+      }
+      get_association_summary: { Args: { p_store_id: string }; Returns: Json }
       get_available_slots_for_display_type: {
         Args: { p_display_type: string; p_store_id: string }
         Returns: {
@@ -8487,6 +10578,10 @@ export type Database = {
         Args: { p_concept_name: string; p_store_id: string }
         Returns: Json
       }
+      get_category_affinities: {
+        Args: { p_limit?: number; p_store_id: string }
+        Returns: Json
+      }
       get_compatible_slots_for_product: {
         Args: { p_product_id: string; p_store_id: string }
         Returns: {
@@ -8498,6 +10593,33 @@ export type Database = {
           slot_type: string
           slot_uuid: string
         }[]
+      }
+      get_connection_settings: {
+        Args: { p_connection_id: string }
+        Returns: Json
+      }
+      get_connections_due_for_sync: {
+        Args: { p_limit?: number }
+        Returns: {
+          auth_config: Json
+          auth_type: string
+          field_mappings: Json
+          id: string
+          last_sync: string
+          max_retries: number
+          name: string
+          next_scheduled_sync: string
+          response_data_path: string
+          retry_count: number
+          sync_cron: string
+          sync_frequency: string
+          target_table: string
+          url: string
+        }[]
+      }
+      get_context_data_sources: {
+        Args: { p_org_id: string; p_store_id?: string }
+        Returns: Json
       }
       get_daily_kpis_summary: {
         Args: { p_days?: number; p_store_id: string }
@@ -8511,6 +10633,10 @@ export type Database = {
           total_visitors: number
         }[]
       }
+      get_data_control_tower_status: {
+        Args: { p_limit?: number; p_store_id: string }
+        Returns: Json
+      }
       get_failure_patterns: {
         Args: { p_limit?: number; p_store_id: string; p_strategy_type: string }
         Returns: Json
@@ -8522,6 +10648,18 @@ export type Database = {
           unique_visitors: number
         }[]
       }
+      get_hourly_entry_counts: {
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_store_id: string
+        }
+        Returns: {
+          count: number
+          hour: number
+        }[]
+      }
       get_hourly_traffic: {
         Args: { p_date?: string; p_store_id: string }
         Returns: {
@@ -8531,6 +10669,40 @@ export type Database = {
           transaction_count: number
           visitor_count: number
         }[]
+      }
+      get_import_schema: {
+        Args: { p_import_type: string }
+        Returns: {
+          import_type: string
+          optional_fields: Json
+          required_fields: Json
+          sample_data: Json
+          target_table: string
+          validation_rules: Json
+        }[]
+      }
+      get_import_target_table: {
+        Args: { p_import_type: string }
+        Returns: string
+      }
+      get_kpi_lineage: {
+        Args: {
+          p_date?: string
+          p_kpi_id?: string
+          p_kpi_table: string
+          p_store_id?: string
+        }
+        Returns: Json
+      }
+      get_product_associations: {
+        Args: {
+          p_limit?: number
+          p_min_confidence?: number
+          p_min_lift?: number
+          p_product_id?: string
+          p_store_id: string
+        }
+        Returns: Json
       }
       get_roi_by_category: {
         Args: { p_org_id: string; p_store_id?: string }
@@ -8557,6 +10729,7 @@ export type Database = {
         }[]
       }
       get_schema_metadata: { Args: never; Returns: Json }
+      get_store_persona_context: { Args: { p_store_id: string }; Returns: Json }
       get_strategy_roi_trend: {
         Args: { p_strategy_id: string }
         Returns: {
@@ -8568,6 +10741,23 @@ export type Database = {
       }
       get_success_patterns: {
         Args: { p_limit?: number; p_store_id: string; p_strategy_type: string }
+        Returns: Json
+      }
+      get_sync_history: {
+        Args: {
+          p_connection_id?: string
+          p_limit?: number
+          p_offset?: number
+          p_org_id?: string
+        }
+        Returns: Json
+      }
+      get_sync_statistics: {
+        Args: { p_connection_id?: string; p_days?: number; p_org_id?: string }
+        Returns: Json
+      }
+      get_sync_status: {
+        Args: { p_org_id?: string; p_store_id?: string }
         Returns: Json
       }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
@@ -8634,6 +10824,21 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      record_sync_result: {
+        Args: {
+          p_batch_id: string
+          p_connection_id: string
+          p_duration_ms?: number
+          p_error_details?: Json
+          p_error_message?: string
+          p_records_created?: number
+          p_records_failed?: number
+          p_records_fetched?: number
+          p_records_updated?: number
+          p_status: string
+        }
+        Returns: Json
+      }
       save_concept_value: {
         Args: {
           p_concept_name: string
@@ -8643,6 +10848,68 @@ export type Database = {
           p_value: Json
         }
         Returns: string
+      }
+      test_api_connection: { Args: { p_connection_id: string }; Returns: Json }
+      update_connection_after_sync: {
+        Args: {
+          p_connection_id: string
+          p_duration_ms?: number
+          p_error_message?: string
+          p_records_synced?: number
+          p_success: boolean
+        }
+        Returns: Json
+      }
+      update_connection_settings: {
+        Args: {
+          p_auth_config?: Json
+          p_auth_type?: string
+          p_connection_id: string
+          p_description?: string
+          p_field_mappings?: Json
+          p_headers?: Json
+          p_is_active?: boolean
+          p_max_retries?: number
+          p_method?: string
+          p_name?: string
+          p_response_data_path?: string
+          p_sync_config?: Json
+          p_sync_cron?: string
+          p_sync_frequency?: string
+          p_target_table?: string
+          p_url?: string
+        }
+        Returns: Json
+      }
+      update_import_session_status: {
+        Args: {
+          p_column_mapping?: Json
+          p_parsed_preview?: Json
+          p_row_count?: number
+          p_session_id: string
+          p_status: string
+          p_validation_errors?: Json
+        }
+        Returns: boolean
+      }
+      update_sync_log: {
+        Args: {
+          p_duration_ms?: number
+          p_error_details?: Json
+          p_error_message?: string
+          p_error_type?: string
+          p_etl_run_id?: string
+          p_log_id: string
+          p_raw_import_id?: string
+          p_records_created?: number
+          p_records_failed?: number
+          p_records_fetched?: number
+          p_records_updated?: number
+          p_response_size_bytes?: number
+          p_response_status?: number
+          p_status: string
+        }
+        Returns: Json
       }
       user_can_access_store: { Args: { p_store_id: string }; Returns: boolean }
     }
