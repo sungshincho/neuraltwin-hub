@@ -20,7 +20,7 @@ const Pricing = () => {
   const licenses = [
     {
       nameKey: "hq.name",
-      price: 500,
+      price: 1000,
       period: t("pricing.perLicenseMonth"),
       descriptionKey: "hq.description",
       featuresKeys: [
@@ -38,7 +38,7 @@ const Pricing = () => {
     },
     {
       nameKey: "store.name",
-      price: 250,
+      price: 500,
       period: t("pricing.perLicenseMonth"),
       descriptionKey: "store.description",
       featuresKeys: [

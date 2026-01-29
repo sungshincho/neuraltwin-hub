@@ -63,7 +63,7 @@ const Subscribe = () => {
   const LICENSE_PRICING = {
     HQ_SEAT: {
       name: 'HQ License',
-      price: 500,
+      price: 1000,
       description: '본사 관리자 • 모든 기능',
       icon: Building2,
       features: [
@@ -79,7 +79,7 @@ const Subscribe = () => {
     },
     STORE: {
       name: 'Store License',
-      price: 250,
+      price: 500,
       description: '매장 관리자 • 매장 관리 + 중급 기능',
       icon: Store,
       features: [
