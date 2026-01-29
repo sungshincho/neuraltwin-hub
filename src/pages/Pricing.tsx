@@ -116,7 +116,7 @@ const Pricing = () => {
                   {license.price > 0 ? (
                     <>
                       <span className="text-5xl font-bold gradient-text">
-                        ${license.price}
+                        ${license.price.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground ml-2">/ {license.period}</span>
                     </>
