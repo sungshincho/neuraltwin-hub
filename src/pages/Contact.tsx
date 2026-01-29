@@ -324,22 +324,37 @@ const Contact = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="features">{t("contact.form.features")}</Label>
-                    <Select
-                      value={formData.features[0] || ""}
-                      onValueChange={(value) => setFormData({ ...formData, features: [value] })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("contact.form.featuresPlaceholder")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="analyze">{t("contact.form.featureOptions.footfall")}</SelectItem>
-                        <SelectItem value="forecast">{t("contact.form.featureOptions.forecast")}</SelectItem>
-                        <SelectItem value="simulate">{t("contact.form.featureOptions.layout")}</SelectItem>
-                        <SelectItem value="optimize">{t("contact.form.featureOptions.ai")}</SelectItem>
-                        <SelectItem value="all">{t("contact.form.featureOptions.all")}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>{t("contact.form.features")}</Label>
+                    <div className="border rounded-lg p-3 space-y-3">
+                      <p className="text-xs text-muted-foreground mb-2">{t("contact.form.featuresPlaceholder")}</p>
+                      {[
+                        { value: "consumerData", label: t("contact.form.featureOptions.consumerData") },
+                        { value: "dataIntegration", label: t("contact.form.featureOptions.dataIntegration") },
+                        { value: "aiSimulation", label: t("contact.form.featureOptions.aiSimulation") },
+                        { value: "hqStoreCommunication", label: t("contact.form.featureOptions.hqStoreCommunication") },
+                        { value: "all", label: t("contact.form.featureOptions.all") },
+                      ].map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`feature-${option.value}`}
+                            checked={formData.features.includes(option.value)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({ ...formData, features: [...formData.features, option.value] });
+                              } else {
+                                setFormData({ ...formData, features: formData.features.filter(f => f !== option.value) });
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`feature-${option.value}`}
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {option.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">

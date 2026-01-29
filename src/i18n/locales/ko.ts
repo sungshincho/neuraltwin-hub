@@ -495,13 +495,13 @@ export default {
         planning: "검토 중",
       },
       features: "관심 있는 기능",
-      featuresPlaceholder: "관심 있는 기능을 선택해주세요",
+      featuresPlaceholder: "관심 있는 기능을 선택해주세요 (복수 선택 가능)",
       featureOptions: {
-        footfall: "유입·체류 분석", // Footfall & Dwell Analysis
-        forecast: "수요 예측", // Demand Forecasting
-        layout: "레이아웃 시뮬레이션", // Layout Simulation
-        ai: "AI 기반 최적화", // AI Optimization
-        all: "전체 기능", // All Features
+        consumerData: "소비자 구매 행동 데이터 수집",
+        dataIntegration: "데이터 통합 분석 자동화",
+        aiSimulation: "AI 시뮬레이션 & 최적화",
+        hqStoreCommunication: "매장 <> 본사 커뮤니케이션 최적화",
+        all: "전체 기능",
       },
       message: "문의 내용",
       messagePlaceholder: "도입 관련 문의사항이나 궁금한 점을 자유롭게 작성해주세요",
