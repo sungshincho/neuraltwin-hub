@@ -325,7 +325,7 @@ const Contact = () => {
 
                   <div className="space-y-2">
                     <Label>{t("contact.form.features")}</Label>
-                    <div className="border rounded-lg p-3 space-y-3">
+                    <div className="border border-input bg-background rounded-md p-3 space-y-3">
                       <p className="text-xs text-muted-foreground mb-2">{t("contact.form.featuresPlaceholder")}</p>
                       {[
                         { value: "consumerData", label: t("contact.form.featureOptions.consumerData") },
