@@ -489,12 +489,6 @@ const Auth = () => {
                   </Button>
                 </form>
 
-                <div className="relative">
-                  <Separator />
-                  
-                </div>
-
-                
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4 mt-4">
