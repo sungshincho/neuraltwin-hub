@@ -505,7 +505,7 @@ export default {
       },
       message: "문의 내용",
       messagePlaceholder: "도입 관련 문의사항이나 궁금한 점을 자유롭게 작성해주세요",
-      submit: "문의 보내기",
+      submit: "서비스 소개서 받기",
       submitting: "전송 중...",
     },
     successTitle: "감사합니다!",
