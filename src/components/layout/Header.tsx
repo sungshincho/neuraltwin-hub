@@ -132,7 +132,7 @@ export const Header = () => {
     </DropdownMenu>
   ) : (
     <>
-      <Button variant="ghost" asChild className="font-bold hover:text-white">
+      <Button variant="default" asChild className="font-bold">
         <Link to="/contact">
           소개서 요청
         </Link>
@@ -191,7 +191,7 @@ export const Header = () => {
                   로그아웃
                 </Button>
               </div> : <div className="pt-4 space-y-2">
-                <Button asChild variant="outline" className="w-full font-bold">
+                <Button asChild variant="default" className="w-full font-bold">
                   <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
                     소개서 요청
                   </Link>
