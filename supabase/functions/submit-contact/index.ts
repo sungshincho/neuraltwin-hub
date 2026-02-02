@@ -15,7 +15,7 @@ const contactFormSchema = z.object({
   stores: z.number().int().min(1, 'Stores must be at least 1').max(10000, 'Stores must be less than 10000').optional(),
   features: z.array(z.string()).optional(),
   timeline: z.string().max(50, 'Timeline must be less than 50 characters').optional(),
-  message: z.string().trim().min(1, 'Message is required').max(2000, 'Message must be less than 2000 characters'),
+  message: z.string().trim().max(2000, 'Message must be less than 2000 characters').optional(),
   privacyConsent: z.boolean().refine(val => val === true, 'Privacy consent is required'),
   marketingConsent: z.boolean().default(false),
 });
@@ -28,7 +28,7 @@ interface ContactFormData {
   stores?: number;
   features?: string[];
   timeline?: string;
-  message: string;
+  message?: string;
   privacyConsent: boolean;
   marketingConsent: boolean;
 }
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         stores: formData.stores,
         features: formData.features || [],
         timeline: formData.timeline,
-        message: formData.message.trim(),
+        message: formData.message?.trim() || null,
         privacy_consent: formData.privacyConsent,
         marketing_consent: formData.marketingConsent,
       })
