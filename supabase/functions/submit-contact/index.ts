@@ -143,6 +143,34 @@ Deno.serve(async (req) => {
 
     console.log('Contact submission saved successfully');
 
+    // Zapier Webhook 호출
+    const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/26235556/ul2ehrb/";
+
+    try {
+      await fetch(ZAPIER_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: data.id,
+          name: data.name,
+          company: data.company,
+          email: data.email,
+          phone: data.phone || "미입력",
+          stores: data.stores,
+          features: data.features,
+          timeline: data.timeline,
+          message: data.message || "",
+          privacy_consent: data.privacy_consent,
+          marketing_consent: data.marketing_consent,
+          created_at: data.created_at,
+        }),
+      });
+      console.log('Zapier webhook sent successfully');
+    } catch (zapierError) {
+      console.error("Zapier webhook error:", zapierError);
+      // Zapier 실패해도 DB 저장은 성공으로 처리
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
