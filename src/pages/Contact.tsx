@@ -299,11 +299,12 @@ const Contact = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t("contact.form.phone")}</Label>
+                      <Label htmlFor="phone">{t("contact.form.phone")} *</Label>
                       <Input
                         id="phone"
                         name="phone"
                         type="tel"
+                        required
                         placeholder={t("contact.form.phonePlaceholder")}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -312,7 +313,7 @@ const Contact = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="stores">{t("contact.form.stores")}</Label>
+                    <Label htmlFor="stores">{t("contact.form.stores")} (선택)</Label>
                     <Input
                       id="stores"
                       name="stores"
@@ -324,7 +325,7 @@ const Contact = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>{t("contact.form.features")}</Label>
+                    <Label>{t("contact.form.features")} (선택)</Label>
                     <div className="border border-input bg-background rounded-md p-3 space-y-3">
                       <p className="text-xs text-muted-foreground mb-2">{t("contact.form.featuresPlaceholder")}</p>
                       {[
@@ -358,7 +359,7 @@ const Contact = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="timeline">{t("contact.form.timeline")}</Label>
+                    <Label htmlFor="timeline">{t("contact.form.timeline")} (선택)</Label>
                     <Select
                       value={formData.timeline}
                       onValueChange={(value) => setFormData({ ...formData, timeline: value })}
@@ -377,12 +378,11 @@ const Contact = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="message">{t("contact.form.message")} *</Label>
+                    <Label htmlFor="message">{t("contact.form.message")} (선택)</Label>
                     <Textarea
                       id="message"
                       name="message"
                       rows={4}
-                      required
                       placeholder={t("contact.form.messagePlaceholder")}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
