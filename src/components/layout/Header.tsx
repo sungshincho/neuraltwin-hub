@@ -132,6 +132,11 @@ export const Header = () => {
     </DropdownMenu>
   ) : (
     <>
+      <Button variant="ghost" asChild className="font-bold">
+        <Link to="/contact">
+          소개서 요청
+        </Link>
+      </Button>
       <Button variant="ghost" asChild>
         <Link to="/auth" state={{ tab: "login" }}>
           로그인
@@ -190,6 +195,11 @@ export const Header = () => {
                   로그아웃
                 </Button>
               </div> : <div className="pt-4 space-y-2">
+                <Button asChild variant="outline" className="w-full font-bold">
+                  <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
+                    소개서 요청
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" className="w-full">
                   <Link to="/auth" state={{ tab: "login" }} onClick={() => setMobileMenuOpen(false)}>
                     로그인

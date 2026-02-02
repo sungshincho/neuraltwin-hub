@@ -19,39 +19,6 @@ const Pricing = () => {
 
   const licenses = [
     {
-      nameKey: "hq.name",
-      price: 1000,
-      period: t("pricing.perLicenseMonth"),
-      descriptionKey: "hq.description",
-      featuresKeys: [
-        "hq.feature1",
-        "hq.feature2", 
-        "hq.feature3",
-        "hq.feature4",
-        "hq.feature5",
-        "hq.feature6",
-        "hq.feature7",
-        "hq.feature8"
-      ],
-      recommended: true,
-      type: "HQ_SEAT"
-    },
-    {
-      nameKey: "store.name",
-      price: 500,
-      period: t("pricing.perLicenseMonth"),
-      descriptionKey: "store.description",
-      featuresKeys: [
-        "store.feature1",
-        "store.feature2",
-        "store.feature3",
-        "store.feature4",
-        "store.feature5",
-        "store.feature6"
-      ],
-      type: "STORE"
-    },
-    {
       nameKey: "viewer.name",
       price: 0,
       period: t("pricing.invitationOnly"),
@@ -64,6 +31,39 @@ const Pricing = () => {
       ],
       inviteOnly: true,
       type: "VIEWER"
+    },
+    {
+      nameKey: "store.name",
+      price: null,
+      period: "",
+      descriptionKey: "store.description",
+      featuresKeys: [
+        "store.feature1",
+        "store.feature2",
+        "store.feature3",
+        "store.feature4",
+        "store.feature5",
+        "store.feature6"
+      ],
+      type: "STORE"
+    },
+    {
+      nameKey: "hq.name",
+      price: null,
+      period: "",
+      descriptionKey: "hq.description",
+      featuresKeys: [
+        "hq.feature1",
+        "hq.feature2",
+        "hq.feature3",
+        "hq.feature4",
+        "hq.feature5",
+        "hq.feature6",
+        "hq.feature7",
+        "hq.feature8"
+      ],
+      recommended: true,
+      type: "HQ_SEAT"
     },
   ];
 
@@ -113,14 +113,7 @@ const Pricing = () => {
                 </div>
 
                 <div className="mb-6">
-                  {license.price > 0 ? (
-                    <>
-                      <span className="text-5xl font-bold gradient-text">
-                        ${license.price.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground ml-2">/ {license.period}</span>
-                    </>
-                  ) : (
+                  {license.price === 0 ? (
                     <>
                       <span className="text-5xl font-bold gradient-text">
                         {t("pricing.free")}
@@ -128,6 +121,17 @@ const Pricing = () => {
                       <span className="text-muted-foreground ml-2 block mt-2 text-sm">
                         {license.period}
                       </span>
+                    </>
+                  ) : license.price === null ? (
+                    <span className="text-3xl font-bold text-muted-foreground">
+                      문의
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-5xl font-bold gradient-text">
+                        ${license.price.toLocaleString()}
+                      </span>
+                      <span className="text-muted-foreground ml-2">/ {license.period}</span>
                     </>
                   )}
                 </div>
@@ -142,20 +146,20 @@ const Pricing = () => {
                 </ul>
 
                 {license.inviteOnly ? (
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     variant="outline"
                     disabled
                   >
                     {t("pricing.inviteOnlyCta")}
                   </Button>
                 ) : (
-                  <Button 
-                    asChild 
-                    className="w-full" 
-                    onClick={() => trackCTAClick('get_started_pricing', `/subscribe?type=${license.type}`, 3)}
+                  <Button
+                    asChild
+                    className="w-full"
+                    onClick={() => trackCTAClick('get_started_pricing', '/contact', 3)}
                   >
-                    <Link to={`/subscribe?type=${license.type}`}>{t("pricing.cta")}</Link>
+                    <Link to="/contact">문의하기</Link>
                   </Button>
                 )}
               </Card>
