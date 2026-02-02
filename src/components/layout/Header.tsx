@@ -132,22 +132,18 @@ export const Header = () => {
     </DropdownMenu>
   ) : (
     <>
-      <Button variant="ghost" asChild className="font-bold">
+      <Button variant="ghost" asChild className="font-bold hover:text-white">
         <Link to="/contact">
           소개서 요청
         </Link>
       </Button>
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="hover:text-white">
         <Link to="/auth" state={{ tab: "login" }}>
           로그인
         </Link>
       </Button>
-      <Button
-        asChild
-        variant="outline"
-        className="border-foreground text-foreground hover:bg-foreground hover:text-background"
-      >
-        <Link to="/auth" state={{ tab: "signup" }} className="border-0">
+      <Button variant="ghost" asChild className="hover:text-white">
+        <Link to="/auth" state={{ tab: "signup" }}>
           회원가입
         </Link>
       </Button>
@@ -205,8 +201,8 @@ export const Header = () => {
                     로그인
                   </Link>
                 </Button>
-                <Button asChild className="w-full">
-                  <Link to="/auth" state={{ tab: "signup"}} onClick={() => setMobileMenuOpen(false)}>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/auth" state={{ tab: "signup" }} onClick={() => setMobileMenuOpen(false)}>
                     회원가입
                   </Link>
                 </Button>
