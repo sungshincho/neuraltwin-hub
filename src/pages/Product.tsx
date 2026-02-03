@@ -131,8 +131,7 @@ const Product = () => {
       <section className="py-20 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            {t("product.pillars.analyze")} · {t("product.pillars.predict")} · {t("product.pillars.forecast")} ·{" "}
-            {t("product.pillars.simulate")} · {t("product.pillars.optimize")}
+            {t("product.pillars.analyze")} · {t("product.pillars.predict")} · {t("product.pillars.forecast")} · {t("product.pillars.optimize")}
           </h2>
           <div className="grid md:grid-cols-5 gap-6">
             {pillars.map((pillar, index) => (
@@ -144,8 +143,7 @@ const Product = () => {
                 <div className="w-14 h-14 mx-auto rounded-xl bg-primary/20 flex items-center justify-center mb-4">
                   <pillar.icon className="w-7 h-7 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{t(`product.pillars.${pillar.titleKey}`)}</h3>
-                <p className="text-sm text-muted-foreground">{t(`product.pillars.${pillar.descKey}`)}</p>
+                <h3 className="font-semibold text-lg">{t(`product.pillars.${pillar.titleKey}`)}</h3>
               </Card>
             ))}
           </div>
