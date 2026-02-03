@@ -202,9 +202,13 @@ const Contact = () => {
                 <span className="gradient-text">{t("contact.title")}</span>
               </h1>
               <p className="text-lg text-foreground">
-                {t("contact.subtitleBefore")}
-                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight")}</span>
-                {t("contact.subtitleAfter")}
+                {t("contact.subtitlePart1")}
+                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight1")}</span>
+                {t("contact.subtitlePart2")}
+                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight2")}</span>
+                {t("contact.subtitlePart3")}
+                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight3")}</span>
+                {t("contact.subtitlePart4")}
               </p>
 
               {/* Benefits List */}
@@ -224,10 +228,10 @@ const Contact = () => {
                 to="/product"
                 className="inline-flex items-center gap-1 mt-6 text-primary hover:text-primary/80 transition-colors cursor-pointer group"
               >
-                <span className="text-sm font-medium underline underline-offset-4 decoration-primary/50 group-hover:decoration-primary">
+                <span className="text-lg font-bold underline underline-offset-4 decoration-primary/50 group-hover:decoration-primary">
                   제품 정보 자세히 보기
                 </span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
 
               {/* Statistics Cards */}

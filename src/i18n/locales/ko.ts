@@ -456,10 +456,14 @@ export default {
   },
   contact: {
     title: "NEURALTWIN 도입 문의",
-    subtitle: "전문가에게 무료로 ROI 분석 리포트를 받아보세요.",
-    subtitleBefore: "전문가에게 무료로 ",
-    subtitleHighlight: "ROI 분석 리포트",
-    subtitleAfter: "를 받아보세요.",
+    subtitle: "지금 바로 전문가에게 서비스 소개서와 우리 매장 맞춤형 리포트를 무료로 받아보세요.",
+    subtitlePart1: "지금 바로 전문가에게 ",
+    subtitleHighlight1: "서비스 소개서",
+    subtitlePart2: "와 우리 매장 ",
+    subtitleHighlight2: "맞춤형 리포트",
+    subtitlePart3: "를 ",
+    subtitleHighlight3: "무료",
+    subtitlePart4: "로 받아보세요.",
     benefit1: "3개월 무료 사용 혜택 제공해 드려요.",
     benefit2: "전문가가 현장 실사 진단을 해 드려요.",
     stats: {
