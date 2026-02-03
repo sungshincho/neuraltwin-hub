@@ -138,11 +138,11 @@ const Contact = () => {
     try {
       const { data, error } = await supabase.functions.invoke("submit-contact", {
         body: {
-          // TEMPORARILY HIDDEN fields - using default values
-          name: formData.name || "미제공",
-          company: formData.company || "미제공",
+          name: formData.name,
+          company: formData.company,
           email: formData.email,
-          phone: formData.phone || undefined,
+          phone: formData.phone,
+          // TEMPORARILY HIDDEN fields - not sent
           stores: formData.stores ? parseInt(formData.stores) : undefined,
           features: formData.features.length > 0 ? formData.features : undefined,
           timeline: formData.timeline || undefined,
@@ -261,8 +261,6 @@ const Contact = () => {
               {/* Contact Form */}
               <Card className="glass p-8 md:col-span-2">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* TEMPORARILY HIDDEN - START: name, company fields */}
-                  {/*
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">{t("contact.form.name")} *</Label>
@@ -287,8 +285,6 @@ const Contact = () => {
                       />
                     </div>
                   </div>
-                  */}
-                  {/* TEMPORARILY HIDDEN - END: name, company fields */}
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
