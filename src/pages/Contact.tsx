@@ -138,14 +138,15 @@ const Contact = () => {
     try {
       const { data, error } = await supabase.functions.invoke("submit-contact", {
         body: {
-          name: formData.name,
-          company: formData.company,
+          // TEMPORARILY HIDDEN fields - using default values
+          name: formData.name || "미제공",
+          company: formData.company || "미제공",
           email: formData.email,
           phone: formData.phone || undefined,
           stores: formData.stores ? parseInt(formData.stores) : undefined,
           features: formData.features.length > 0 ? formData.features : undefined,
           timeline: formData.timeline || undefined,
-          message: formData.message,
+          message: formData.message || undefined,
           privacyConsent: formData.privacyConsent,
           marketingConsent: formData.marketingConsent,
         },
@@ -260,6 +261,8 @@ const Contact = () => {
               {/* Contact Form */}
               <Card className="glass p-8 md:col-span-2">
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* TEMPORARILY HIDDEN - START: name, company fields */}
+                  {/*
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">{t("contact.form.name")} *</Label>
@@ -284,6 +287,8 @@ const Contact = () => {
                       />
                     </div>
                   </div>
+                  */}
+                  {/* TEMPORARILY HIDDEN - END: name, company fields */}
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -312,6 +317,8 @@ const Contact = () => {
                     </div>
                   </div>
 
+                  {/* TEMPORARILY HIDDEN - START: stores, features, timeline, message fields */}
+                  {/*
                   <div className="space-y-2">
                     <Label htmlFor="stores">{t("contact.form.stores")} (선택)</Label>
                     <Input
@@ -388,6 +395,8 @@ const Contact = () => {
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     />
                   </div>
+                  */}
+                  {/* TEMPORARILY HIDDEN - END: stores, features, timeline, message fields */}
 
                   {/* Consent Checkboxes */}
                   <div className="space-y-3">

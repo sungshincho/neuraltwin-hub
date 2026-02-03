@@ -1363,9 +1363,9 @@ export type Database = {
           features: string[] | null
           id: string
           marketing_consent: boolean | null
-          message: string
+          message: string | null
           name: string
-          phone: string | null
+          phone: string
           privacy_consent: boolean
           stores: number | null
           timeline: string | null
@@ -1377,9 +1377,9 @@ export type Database = {
           features?: string[] | null
           id?: string
           marketing_consent?: boolean | null
-          message: string
+          message?: string | null
           name: string
-          phone?: string | null
+          phone: string
           privacy_consent?: boolean
           stores?: number | null
           timeline?: string | null
