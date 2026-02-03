@@ -215,9 +215,9 @@ export default {
       },
     },
     pillars: {
-      analyze: "수집",
-      predict: "통합",
-      forecast: "분석",
+      analyze: "데이터 수집",
+      predict: "데이터 통합 & 분석",
+      forecast: "인사이트",
       simulate: "시뮬레이션",
       optimize: "최적화",
     },
