@@ -574,11 +574,15 @@ serve(async (request: Request) => {
       conversationId
     );
 
-    // 6. 토픽 분류 & 시스템 프롬프트 빌드
+    // 6. 토픽 분류 & 시스템 프롬프트 빌드 (+ VizDirective)
     const historyTexts = history?.map(h => h.content) || [];
-    const { systemPrompt, classification } = buildEnrichedPrompt(message, historyTexts);
+    const turnCount = conversation?.message_count || historyTexts.length;
+    const { systemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
 
     console.log(`[Topic] ${formatClassification(classification)}`);
+    if (vizDirective) {
+      console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
+    }
 
     // 7. 메시지 히스토리 구성
     const chatMessages: ChatMessage[] = history || [];
@@ -643,7 +647,7 @@ serve(async (request: Request) => {
       });
     }
 
-    // 15. JSON 응답 반환 (TASK 7 필드 추가)
+    // 15. JSON 응답 반환 (TASK 7 필드 + VizDirective)
     return new Response(
       JSON.stringify({
         content: assistantContent,
@@ -664,7 +668,9 @@ serve(async (request: Request) => {
           detected: painPointResult.painPoints.length > 0,
           primary: painPointResult.primaryPain,
           summary: painPointResult.summary
-        }
+        },
+        // 3D 비주얼라이저 지시 데이터
+        vizDirective: vizDirective
       }),
       {
         status: 200,
