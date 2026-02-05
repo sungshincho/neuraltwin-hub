@@ -20,10 +20,20 @@ import { generateSuggestions, type SuggestionResult } from './suggestionGenerato
 // ═══════════════════════════════════════════
 
 interface WebChatRequest {
-  message: string;
+  message?: string;
   sessionId?: string;         // 비회원용 세션 ID
   conversationId?: string;    // 기존 대화 이어가기
   history?: ChatMessage[];    // 클라이언트 측 히스토리 (선택적)
+  // TASK 9: Action 분기
+  action?: 'chat' | 'capture_lead' | 'handover_session';
+  lead?: LeadFormData;
+}
+
+// TASK 9: 리드 폼 데이터
+interface LeadFormData {
+  email: string;
+  company?: string;
+  role?: string;
 }
 
 interface ChatMessage {
@@ -339,6 +349,145 @@ function createSSEStream(
 }
 
 // ═══════════════════════════════════════════
+//  TASK 9: Lead Capture 핸들러
+// ═══════════════════════════════════════════
+
+async function handleCaptureLead(
+  supabase: ReturnType<typeof createClient>,
+  body: WebChatRequest,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const { sessionId, conversationId, lead } = body;
+
+  if (!lead?.email) {
+    return new Response(
+      JSON.stringify({ error: 'Email is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    // 1. conversationId로 Pain Point 정보 조회
+    let painPoints: string[] = [];
+    if (conversationId) {
+      const { data: messages } = await supabase
+        .from('chat_messages')
+        .select('channel_data')
+        .eq('conversation_id', conversationId)
+        .not('channel_data->painPointSummary', 'is', null);
+
+      if (messages && messages.length > 0) {
+        painPoints = messages
+          .map((m: { channel_data?: { painPointSummary?: string } }) => m.channel_data?.painPointSummary)
+          .filter((p): p is string => !!p);
+      }
+    }
+
+    // 2. chat_leads 테이블에 저장
+    const { data, error } = await supabase
+      .from('chat_leads')
+      .insert({
+        conversation_id: conversationId || null,
+        email: lead.email,
+        company: lead.company || null,
+        role: lead.role || null,
+        pain_points: painPoints,
+        source_page: '/chat'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Lead] Insert error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to capture lead' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. chat_events에 이벤트 기록
+    if (conversationId) {
+      await supabase.from('chat_events').insert({
+        conversation_id: conversationId,
+        channel: 'website',
+        event_type: 'lead_captured',
+        event_data: { lead_id: data.id, email: lead.email, company: lead.company }
+      });
+    }
+
+    console.log(`[Lead] Captured: ${lead.email} (${lead.company || 'no company'})`);
+
+    return new Response(
+      JSON.stringify({ success: true, leadId: data.id }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (err) {
+    console.error('[Lead] Error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// ═══════════════════════════════════════════
+//  TASK 9: Session Handover 핸들러
+// ═══════════════════════════════════════════
+
+async function handleSessionHandover(
+  supabase: ReturnType<typeof createClient>,
+  body: WebChatRequest,
+  auth: AuthResult,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const { sessionId } = body;
+
+  if (!auth.isAuthenticated || !auth.userId) {
+    return new Response(
+      JSON.stringify({ error: 'Authentication required for session handover' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!sessionId) {
+    return new Response(
+      JSON.stringify({ error: 'Session ID required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    // DB 함수 호출 (handover_chat_session)
+    const { data, error } = await supabase
+      .rpc('handover_chat_session', {
+        p_session_id: sessionId,
+        p_user_id: auth.userId
+      });
+
+    if (error) {
+      console.error('[Handover] RPC error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Session handover failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[Handover] Session ${sessionId} → User ${auth.userId} (${data} conversations updated)`);
+
+    return new Response(
+      JSON.stringify({ success: true, updatedCount: data }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (err) {
+    console.error('[Handover] Error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// ═══════════════════════════════════════════
 //  메인 핸들러
 // ═══════════════════════════════════════════
 
@@ -361,7 +510,31 @@ serve(async (request: Request) => {
   try {
     // 1. 요청 파싱
     const body: WebChatRequest = await request.json();
-    const { message, sessionId, conversationId, history } = body;
+    const { message, sessionId, conversationId, history, action } = body;
+
+    // 2. 인증 확인 (v2.1)
+    const auth = await extractUserFromJWT(request);
+
+    // 3. Supabase 클라이언트 생성 (action 분기에서도 필요)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ═══════════════════════════════════════════
+    // TASK 9: Action 분기 처리
+    // ═══════════════════════════════════════════
+
+    if (action === 'capture_lead') {
+      return handleCaptureLead(supabase, body, corsHeaders);
+    }
+
+    if (action === 'handover_session') {
+      return handleSessionHandover(supabase, body, auth, corsHeaders);
+    }
+
+    // ═══════════════════════════════════════════
+    // 기본 Chat 로직 (action이 없거나 'chat'인 경우)
+    // ═══════════════════════════════════════════
 
     if (!message || message.trim().length === 0) {
       return new Response(
@@ -369,9 +542,6 @@ serve(async (request: Request) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // 2. 인증 확인 (v2.1)
-    const auth = await extractUserFromJWT(request);
 
     // 세션/사용자 식별자 결정
     const effectiveSessionId = auth.isAuthenticated ? null : (sessionId || crypto.randomUUID());
@@ -396,12 +566,7 @@ serve(async (request: Request) => {
       );
     }
 
-    // 4. Supabase 클라이언트 생성
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 5. 대화 생성/조회
+    // 4. 대화 생성/조회
     const conversation = await getOrCreateConversation(
       supabase,
       effectiveSessionId,
