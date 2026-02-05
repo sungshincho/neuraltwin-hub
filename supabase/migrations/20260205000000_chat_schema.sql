@@ -238,6 +238,21 @@ CREATE POLICY "assistant_command_cache_service_role" ON assistant_command_cache
   USING (auth.jwt() ->> 'role' = 'service_role');
 
 -- =============================================
+-- 유틸리티 함수
+-- =============================================
+
+-- 메시지 카운트 증가 함수
+CREATE OR REPLACE FUNCTION increment_message_count(
+  p_conversation_id UUID
+) RETURNS VOID AS $$
+BEGIN
+  UPDATE chat_conversations
+  SET message_count = message_count + 1, updated_at = now()
+  WHERE id = p_conversation_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
 -- v2.1: 세션 인계 함수
 -- =============================================
 
