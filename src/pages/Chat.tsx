@@ -1,5 +1,5 @@
-// 채팅 페이지 - NEURALTWIN 다크 테마 + 채팅 UI
-import { useEffect, useState, useRef } from "react";
+// 채팅 페이지 - NEURALTWIN 다크 테마 + retail-chatbot EF SSE 스트리밍
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/chat.css";
 
@@ -17,6 +17,17 @@ const CHAT_MODES = [
   { id: "precise", label: "정확한" },
 ];
 
+// 세션 ID 관리
+const getOrCreateSessionId = (): string => {
+  const key = "neuraltwin_chat_session_id";
+  let sessionId = localStorage.getItem(key);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(key, sessionId);
+  }
+  return sessionId;
+};
+
 const Chat = () => {
   const [introComplete, setIntroComplete] = useState(false);
   const [curtainsOpen, setCurtainsOpen] = useState(false);
@@ -29,9 +40,12 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState("thinking");
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // 페이지 진입 시 body 스타일 조정
@@ -54,15 +68,28 @@ const Chat = () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      // 컴포넌트 언마운트 시 진행 중인 스트리밍 중단
+      abortControllerRef.current?.abort();
     };
   }, []);
 
   // 메시지 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingContent]);
 
-  // 메시지 전송
+  // SSE 스트리밍 파싱 함수
+  const parseSSELine = useCallback((line: string): { event?: string; data?: string } => {
+    if (line.startsWith("event: ")) {
+      return { event: line.slice(7) };
+    }
+    if (line.startsWith("data: ")) {
+      return { data: line.slice(6) };
+    }
+    return {};
+  }, []);
+
+  // 메시지 전송 (SSE 스트리밍)
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -75,18 +102,136 @@ const Chat = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
+    setStreamingContent("");
 
-    // TODO: 실제 AI API 연동
-    // 임시 응답 (데모용)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `안녕하세요! "${userMessage.content}"에 대한 답변입니다. 이것은 데모 응답입니다. 실제 AI 연동 시 이 부분이 교체됩니다.`,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+    // AbortController 생성
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const sessionId = getOrCreateSessionId();
+
+      // 히스토리 구성 (최근 10턴)
+      const history = messages.slice(-20).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          sessionId,
+          conversationId,
+          history,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      // conversationId 추출
+      const newConversationId = response.headers.get("X-Conversation-Id");
+      if (newConversationId) {
+        setConversationId(newConversationId);
+      }
+
+      // SSE 스트리밍 파싱
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Response body is not readable");
+      }
+
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+
+        // 마지막 불완전한 라인은 버퍼에 유지
+        buffer = lines.pop() || "";
+
+        let currentEvent = "";
+
+        for (const line of lines) {
+          if (line.trim() === "") {
+            currentEvent = "";
+            continue;
+          }
+
+          const parsed = parseSSELine(line);
+
+          if (parsed.event) {
+            currentEvent = parsed.event;
+          }
+
+          if (parsed.data) {
+            if (currentEvent === "chunk") {
+              try {
+                const chunkData = JSON.parse(parsed.data);
+                if (chunkData.content) {
+                  assistantContent += chunkData.content;
+                  setStreamingContent(assistantContent);
+                }
+              } catch {
+                // JSON 파싱 실패 무시
+              }
+            } else if (currentEvent === "done") {
+              // 스트리밍 완료
+              break;
+            } else if (currentEvent === "error") {
+              try {
+                const errorData = JSON.parse(parsed.data);
+                throw new Error(errorData.error || "Stream error");
+              } catch {
+                throw new Error("Stream error");
+              }
+            }
+          }
+        }
+      }
+
+      // 스트리밍 완료 후 메시지 추가
+      if (assistantContent) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: assistantContent,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        // 사용자가 중단한 경우
+        console.log("Streaming aborted");
+      } else {
+        console.error("Chat error:", error);
+        // 에러 메시지 표시
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } finally {
       setIsLoading(false);
-    }, 1500);
+      setStreamingContent("");
+      abortControllerRef.current = null;
+    }
   };
 
   // Enter 키 처리
@@ -162,18 +307,26 @@ const Chat = () => {
 
               {/* 채팅 기록 */}
               <div className="chat-messages">
-                {messages.length === 0 ? (
+                {messages.length === 0 && !streamingContent ? (
                   <div className="chat-message-empty">
                     대화를 시작해보세요
                   </div>
                 ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className={`chat-message ${msg.role}`}>
-                      {msg.content}
-                    </div>
-                  ))
+                  <>
+                    {messages.map((msg) => (
+                      <div key={msg.id} className={`chat-message ${msg.role}`}>
+                        {msg.content}
+                      </div>
+                    ))}
+                    {/* 스트리밍 중인 응답 */}
+                    {streamingContent && (
+                      <div className="chat-message assistant">
+                        {streamingContent}
+                      </div>
+                    )}
+                  </>
                 )}
-                {isLoading && (
+                {isLoading && !streamingContent && (
                   <div className="chat-message assistant">
                     <div className="chat-loading">
                       <div className="chat-loading-dot"></div>
