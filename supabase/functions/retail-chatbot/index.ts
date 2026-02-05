@@ -11,6 +11,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { buildEnrichedPrompt, formatClassification } from './topicRouter.ts';
+import { extractPainPoints, type PainPointResult } from './painPointExtractor.ts';
+import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } from './salesBridge.ts';
+import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
 
 // ═══════════════════════════════════════════
 //  타입 정의
@@ -437,14 +440,45 @@ serve(async (request: Request) => {
       throw new Error('AI가 응답을 생성하지 못했습니다.');
     }
 
-    // 11. 어시스턴트 응답 로깅
+    // 11. TASK 7: Pain Point 추출
+    const painPointResult: PainPointResult = extractPainPoints(message, historyTexts);
+
+    // 12. TASK 7: Sales Bridge 평가
+    const salesBridgeResult: SalesBridgeResult = evaluateSalesBridge({
+      turnCount: conversation?.message_count || historyTexts.length,
+      painPointDetected: painPointResult.painPoints.length > 0,
+      primaryPainCategory: painPointResult.primaryPain,
+      topicCategory: classification.primaryTopic,
+      hasExplicitInterest: checkExplicitInterest(message),
+      repeatTopics: false
+    });
+
+    // 13. TASK 7: 후속 질문 생성
+    const suggestionResult: SuggestionResult = generateSuggestions({
+      topicCategory: classification.primaryTopic,
+      painPointCategory: painPointResult.primaryPain,
+      conversationStage: salesBridgeResult.stage,
+      detectedKeywords: classification.detectedKeywords,
+      turnCount: conversation?.message_count || 0
+    });
+
+    console.log(`[SalesBridge] score=${salesBridgeResult.leadScore}, stage=${salesBridgeResult.stage}, showForm=${salesBridgeResult.showLeadForm}`);
+    if (painPointResult.primaryPain) {
+      console.log(`[PainPoint] ${painPointResult.summary}`);
+    }
+
+    // 14. 어시스턴트 응답 로깅 (Pain Point 데이터 포함)
     if (conversation) {
       await logMessage(supabase, conversation.id, 'assistant', assistantContent, {
-        topic: classification.primaryTopic
+        topic: classification.primaryTopic,
+        painPointSummary: painPointResult.summary,
+        containsPainPoint: painPointResult.painPoints.length > 0,
+        confidence: classification.confidence,
+        solutionMentioned: assistantContent.toLowerCase().includes('neuraltwin')
       });
     }
 
-    // 12. JSON 응답 반환
+    // 15. JSON 응답 반환 (TASK 7 필드 추가)
     return new Response(
       JSON.stringify({
         content: assistantContent,
@@ -453,6 +487,18 @@ serve(async (request: Request) => {
         classification: {
           topic: classification.primaryTopic,
           confidence: classification.confidence
+        },
+        // TASK 7: 세일즈 브릿지 + Pain Point 필드
+        suggestions: suggestionResult.suggestions,
+        showLeadForm: salesBridgeResult.showLeadForm,
+        salesBridge: {
+          leadScore: salesBridgeResult.leadScore,
+          stage: salesBridgeResult.stage
+        },
+        painPoints: {
+          detected: painPointResult.painPoints.length > 0,
+          primary: painPointResult.primaryPain,
+          summary: painPointResult.summary
         }
       }),
       {
