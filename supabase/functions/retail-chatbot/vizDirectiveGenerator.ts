@@ -53,8 +53,9 @@ export function generateVizDirective(
 ): VizDirective | null {
   const { primaryTopic, confidence } = classification;
 
-  // 신뢰도가 낮으면 비주얼라이저 미표시
-  if (confidence < 0.4) {
+  // 신뢰도가 매우 낮으면 비주얼라이저 미표시 (임계값 0.05)
+  // 참고: topicRouter의 confidence = score/20 이므로 키워드 1개 매칭 시 0.1
+  if (confidence < 0.05) {
     return null;
   }
 
