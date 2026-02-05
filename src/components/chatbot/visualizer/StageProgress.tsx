@@ -9,6 +9,7 @@ import type { CustomerStage } from './vizDirectiveTypes';
 
 interface StageProgressProps {
   currentStage?: CustomerStage;
+  stage?: CustomerStage;
 }
 
 interface StageConfig {
@@ -30,12 +31,13 @@ const STAGE_ORDER: Record<CustomerStage, number> = {
   purchase: 2
 };
 
-export default function StageProgress({ currentStage }: StageProgressProps) {
-  if (!currentStage) {
+export default function StageProgress({ currentStage, stage }: StageProgressProps) {
+  const activeStage = currentStage || stage;
+  if (!activeStage) {
     return null;
   }
 
-  const currentIndex = STAGE_ORDER[currentStage];
+  const currentIndex = STAGE_ORDER[activeStage];
 
   return (
     <div className="flex items-center justify-center gap-0 px-4 py-3 bg-[#030712cc]">

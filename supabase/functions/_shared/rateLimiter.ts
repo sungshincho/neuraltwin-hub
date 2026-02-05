@@ -52,42 +52,36 @@ export async function checkRateLimit(
   const windowStart = new Date(Date.now() - config.windowMs).toISOString();
 
   try {
-    // 최근 시간 윈도우 내 메시지 수 카운트
-    let countQuery;
+    // 먼저 대화 ID 목록을 조회
+    let conversationIds: string[] = [];
 
     if (channel === 'website') {
-      // 웹사이트: session_id로 체크
-      countQuery = supabase
-        .from('chat_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'user')
-        .gte('created_at', windowStart)
-        .in(
-          'conversation_id',
-          supabase
-            .from('chat_conversations')
-            .select('id')
-            .eq('session_id', identifier)
-            .eq('channel', 'website')
-        );
+      const { data: convs } = await supabase
+        .from('chat_conversations')
+        .select('id')
+        .eq('session_id', identifier)
+        .eq('channel', 'website');
+      conversationIds = (convs || []).map((c: { id: string }) => c.id);
     } else {
-      // OS: user_id로 체크
-      countQuery = supabase
-        .from('chat_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'user')
-        .gte('created_at', windowStart)
-        .in(
-          'conversation_id',
-          supabase
-            .from('chat_conversations')
-            .select('id')
-            .eq('user_id', identifier)
-            .eq('channel', 'os_app')
-        );
+      const { data: convs } = await supabase
+        .from('chat_conversations')
+        .select('id')
+        .eq('user_id', identifier)
+        .eq('channel', 'os_app');
+      conversationIds = (convs || []).map((c: { id: string }) => c.id);
     }
 
-    const { count, error } = await countQuery;
+    if (conversationIds.length === 0) {
+      return { allowed: true, remaining: config.maxRequests };
+    }
+
+    // 최근 시간 윈도우 내 메시지 수 카운트
+    const { count, error } = await supabase
+      .from('chat_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'user')
+      .gte('created_at', windowStart)
+      .in('conversation_id', conversationIds);
 
     if (error) {
       console.error('[rateLimiter] checkRateLimit error:', error);

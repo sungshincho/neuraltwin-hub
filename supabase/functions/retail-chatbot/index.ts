@@ -155,8 +155,11 @@ function checkRateLimit(identifier: string, limit: number = 10): boolean {
 //  대화 로깅 (DB)
 // ═══════════════════════════════════════════
 
+// deno-lint-ignore no-explicit-any
+type SupabaseClientAny = any;
+
 async function getOrCreateConversation(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClientAny,
   sessionId: string | null,
   userId: string | null,
   conversationId?: string
@@ -199,7 +202,7 @@ async function getOrCreateConversation(
 }
 
 async function logMessage(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClientAny,
   conversationId: string,
   role: 'user' | 'assistant',
   content: string,
@@ -213,10 +216,14 @@ async function logMessage(
       channel_data: metadata || {}
     });
 
-    // 메시지 카운트 증가
-    await supabase.rpc('increment_message_count', {
-      p_conversation_id: conversationId
-    });
+    // 메시지 카운트 증가 (에러 무시)
+    try {
+      await supabase.rpc('increment_message_count', {
+        p_conversation_id: conversationId
+      });
+    } catch {
+      // RPC가 없을 수 있음 - 무시
+    }
   } catch (err) {
     console.error('[DB] Failed to log message:', err);
     // 실패해도 계속 진행 (fail-open)
@@ -353,7 +360,7 @@ function createSSEStream(
 // ═══════════════════════════════════════════
 
 async function handleCaptureLead(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClientAny,
   body: WebChatRequest,
   corsHeaders: Record<string, string>
 ): Promise<Response> {
@@ -379,7 +386,7 @@ async function handleCaptureLead(
       if (messages && messages.length > 0) {
         painPoints = messages
           .map((m: { channel_data?: { painPointSummary?: string } }) => m.channel_data?.painPointSummary)
-          .filter((p): p is string => !!p);
+          .filter((p: string | undefined): p is string => !!p);
       }
     }
 
@@ -435,7 +442,7 @@ async function handleCaptureLead(
 // ═══════════════════════════════════════════
 
 async function handleSessionHandover(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClientAny,
   body: WebChatRequest,
   auth: AuthResult,
   corsHeaders: Record<string, string>
