@@ -886,3 +886,309 @@
     .footer-bottom { flex-direction: column; gap: 8px; }
     .cta-buttons { flex-direction: column; align-items: center; }
 }
+
+/* ===================== CHAT UI ===================== */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    opacity: 0;
+    animation: heroContentIn 0.8s ease 3.2s forwards;
+}
+
+.chat-title {
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+/* 채팅 기록 영역 */
+.chat-messages {
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 24px;
+    padding: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-700) transparent;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--gray-700);
+    border-radius: 3px;
+}
+
+.chat-message {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.chat-message.user {
+    background: var(--gray-700);
+    color: var(--white);
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message.assistant {
+    background: var(--gray-800);
+    color: var(--gray-100);
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.chat-message-empty {
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 14px;
+    padding: 40px 0;
+}
+
+/* 채팅 입력 박스 */
+.chat-input-box {
+    width: 100%;
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--white);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    resize: none;
+    min-height: 24px;
+    max-height: 120px;
+}
+
+.chat-input::placeholder {
+    color: var(--gray-500);
+}
+
+.chat-input-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-input-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 모드 드롭다운 */
+.chat-mode-dropdown {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    color: var(--gray-300);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s;
+    position: relative;
+}
+
+.chat-mode-dropdown:hover {
+    color: var(--white);
+}
+
+.chat-mode-icon {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-mode-icon::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    border-radius: 50%;
+}
+
+.chat-mode-arrow {
+    font-size: 10px;
+    margin-left: 2px;
+}
+
+/* 모드 드롭다운 메뉴 */
+.chat-mode-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+    border-radius: 8px;
+    padding: 8px 0;
+    min-width: 150px;
+    margin-bottom: 8px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+}
+
+.chat-mode-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.chat-mode-option {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--gray-300);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chat-mode-option:hover {
+    background: var(--gray-700);
+    color: var(--white);
+}
+
+.chat-mode-option.active {
+    color: var(--white);
+}
+
+/* 전송 버튼 */
+.chat-send-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--white);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chat-send-btn:hover {
+    background: var(--gray-100);
+    transform: scale(1.05);
+}
+
+.chat-send-btn:disabled {
+    background: var(--gray-700);
+    cursor: not-allowed;
+}
+
+.chat-send-btn:disabled:hover {
+    transform: none;
+}
+
+.chat-send-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--bg);
+}
+
+.chat-send-btn:disabled .chat-send-icon {
+    color: var(--gray-500);
+}
+
+/* 로딩 상태 */
+.chat-loading {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+}
+
+.chat-loading-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--gray-500);
+    border-radius: 50%;
+    animation: chatLoadingPulse 1.4s infinite ease-in-out both;
+}
+
+.chat-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.chat-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.chat-loading-dot:nth-child(3) { animation-delay: 0; }
+
+@keyframes chatLoadingPulse {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .chat-container {
+        padding: 0 16px;
+    }
+
+    .chat-messages {
+        max-height: 250px;
+    }
+
+    .chat-message {
+        max-width: 90%;
+    }
+
+    .chat-input-box {
+        padding: 10px 12px;
+    }
+}
