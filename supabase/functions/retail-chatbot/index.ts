@@ -425,37 +425,47 @@ serve(async (request: Request) => {
       });
     }
 
-    // 9. Lovable Gateway 호출 (스트리밍)
-    const upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
+    // 9. Lovable Gateway 호출 (비스트리밍 모드)
+    const upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
 
-    // 10. SSE 스트림 생성
-    const sseStream = createSSEStream(
-      upstreamResponse,
-      conversation?.id || '',
-      classification,
-      async (fullContent) => {
-        // 완료 후 어시스턴트 응답 로깅
-        if (conversation) {
-          await logMessage(supabase, conversation.id, 'assistant', fullContent, {
-            topic: classification.primaryTopic
-          });
+    // 10. JSON 응답 파싱
+    const data = await upstreamResponse.json();
+    const assistantContent = data.choices?.[0]?.message?.content || '';
+
+    if (!assistantContent) {
+      console.error('[AI] No content in response:', JSON.stringify(data));
+      throw new Error('AI가 응답을 생성하지 못했습니다.');
+    }
+
+    // 11. 어시스턴트 응답 로깅
+    if (conversation) {
+      await logMessage(supabase, conversation.id, 'assistant', assistantContent, {
+        topic: classification.primaryTopic
+      });
+    }
+
+    // 12. JSON 응답 반환
+    return new Response(
+      JSON.stringify({
+        content: assistantContent,
+        conversationId: conversation?.id || '',
+        sessionId: effectiveSessionId || '',
+        classification: {
+          topic: classification.primaryTopic,
+          confidence: classification.confidence
+        }
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'X-Conversation-Id': conversation?.id || '',
+          'X-Session-Id': effectiveSessionId || '',
+          'X-Is-Authenticated': String(auth.isAuthenticated),
         }
       }
     );
-
-    // 11. SSE 응답 반환
-    return new Response(sseStream, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'X-Conversation-Id': conversation?.id || '',
-        'X-Session-Id': effectiveSessionId || '',
-        'X-Is-Authenticated': String(auth.isAuthenticated),
-      }
-    });
 
   } catch (err) {
     console.error('[Handler] Error:', err);
