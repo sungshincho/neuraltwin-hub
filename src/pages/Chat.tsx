@@ -155,6 +155,10 @@ const Chat = () => {
       // JSON 응답 파싱
       const data = await response.json();
 
+      // DEBUG: API 응답 전체 로그
+      console.log('[Chat] API Response:', JSON.stringify(data, null, 2));
+      console.log('[Chat] vizDirective:', data.vizDirective);
+
       // conversationId 저장
       if (data.conversationId) {
         setConversationId(data.conversationId);
@@ -515,8 +519,8 @@ const Chat = () => {
                 <div style={{ flex: 1, position: "relative" }}>
                   <StoreVisualizer
                     vizState={vizDirective.vizState}
-                    highlights={vizDirective.highlights}
-                    annotations={vizDirective.annotations}
+                    highlights={vizDirective.highlights || []}
+                    annotations={vizDirective.annotations || []}
                     showFlow={vizDirective.flowPath || false}
                   />
                 </div>
