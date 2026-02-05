@@ -1,0 +1,297 @@
+/* 채팅 페이지 전용 스타일 - NEURALTWIN 다크 테마 */
+
+/* ===================== CSS VARIABLES ===================== */
+.chat-page {
+    --bg: #0a0a0a;
+    --bg-alt: #0f0f0f;
+    --white: #ffffff;
+    --gray-100: #e8e8e8;
+    --gray-300: #999999;
+    --gray-500: #555555;
+    --gray-700: #2a2a2a;
+    --gray-800: #1a1a1a;
+    --border: #1e1e1e;
+}
+
+/* ===================== BASE STYLES ===================== */
+.chat-page {
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    font-weight: 600;
+    overflow-x: hidden;
+}
+
+/* ===================== GRID BACKGROUND ===================== */
+.chat-grid-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.chat-grid-bg .grid-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+}
+
+.chat-grid-bg .grid-lines-fine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.chat-grid-bg .grid-glow {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 60%);
+    filter: blur(80px);
+}
+
+.chat-grid-bg .grid-dots {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+    background-size: 80px 80px;
+    background-position: -0.5px -0.5px;
+}
+
+/* ===================== NAVIGATION ===================== */
+.chat-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 48px;
+    position: relative;
+    z-index: 10;
+}
+
+.chat-nav .logo-img {
+    height: 18px;
+    width: auto;
+    opacity: 0.9;
+}
+
+.chat-nav-links {
+    display: flex;
+    gap: 36px;
+}
+
+.chat-nav-links a {
+    color: var(--gray-300);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: color 0.3s;
+}
+
+.chat-nav-links a:hover {
+    color: var(--white);
+}
+
+/* ===================== PAGE HEADER ===================== */
+.chat-header {
+    padding: 60px 48px 40px;
+    position: relative;
+    z-index: 2;
+}
+
+.chat-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    margin-bottom: 24px;
+}
+
+.chat-title {
+    font-size: clamp(32px, 4vw, 56px);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    color: var(--white);
+}
+
+/* ===================== CONTENT AREA ===================== */
+.chat-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 48px 80px;
+    min-height: calc(100vh - 300px);
+}
+
+/* ===================== BUTTONS ===================== */
+.btn-white {
+    padding: 16px 40px;
+    background: var(--white);
+    color: var(--bg);
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-white:hover {
+    background: var(--gray-100);
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    padding: 16px 40px;
+    background: transparent;
+    color: var(--white);
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--gray-700);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-outline:hover {
+    border-color: var(--gray-300);
+    transform: translateY(-2px);
+}
+
+/* ===================== FOOTER ===================== */
+.chat-footer {
+    border-top: 1px solid var(--border);
+    padding: 60px 48px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 80px;
+    align-items: start;
+    position: relative;
+    z-index: 2;
+}
+
+.chat-footer-left .logo-img {
+    height: 18px;
+    margin-bottom: 20px;
+}
+
+.chat-footer-left p {
+    font-size: 13px;
+    color: var(--gray-500);
+    line-height: 1.7;
+    max-width: 300px;
+    font-weight: 500;
+}
+
+.chat-footer-cols {
+    display: flex;
+    gap: 80px;
+}
+
+.chat-footer-col h4 {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-300);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.chat-footer-col a {
+    display: block;
+    font-size: 13px;
+    color: var(--gray-500);
+    text-decoration: none;
+    margin-bottom: 12px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.chat-footer-col a:hover {
+    color: var(--white);
+}
+
+.chat-footer-bottom {
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--gray-500);
+    font-weight: 400;
+    position: relative;
+    z-index: 2;
+}
+
+/* ===================== ANIMATIONS ===================== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-animate-in {
+    animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.chat-animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.chat-animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.chat-animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1024px) {
+    .chat-nav { padding: 24px 32px; }
+    .chat-header { padding: 40px 32px 32px; }
+    .chat-content { padding: 0 32px 60px; }
+    .chat-footer {
+        padding: 40px 32px;
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    .chat-footer-bottom { padding: 24px 32px; }
+}
+
+@media (max-width: 768px) {
+    .chat-nav-links { display: none; }
+    .chat-footer-cols { flex-direction: column; gap: 32px; }
+    .chat-footer-bottom { flex-direction: column; gap: 8px; }
+}
