@@ -142,7 +142,12 @@ export const CHAT_STYLES = {
 // 웰컴 메시지 설정
 // =============================================
 
-export const WELCOME_MESSAGES = {
+export const WELCOME_MESSAGES: Record<ChatVariant, {
+  title: string;
+  subtitle: string;
+  greeting: string;
+  defaultSuggestions: string[];
+}> = {
   website: {
     title: 'NEURAL',
     subtitle: '리테일 인텔리전스 어드바이저',
@@ -163,4 +168,4 @@ export const WELCOME_MESSAGES = {
       '최적화 제안',
     ],
   },
-} as const;
+};
