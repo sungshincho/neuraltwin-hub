@@ -50,7 +50,12 @@ const ALLOWED_ORIGINS = [
 
 function getCorsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get('Origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+  // Lovable 프리뷰/배포 URL 패턴 허용 (*.lovable.app)
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) ||
+                    origin.endsWith('.lovable.app');
+
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
