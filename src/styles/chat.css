@@ -1003,6 +1003,8 @@
 /* ===================== TASK C: 3D VISUALIZER ===================== */
 .visualizer-container {
     animation: fadeIn 0.5s ease;
+    min-height: 500px;
+    height: 100%;
 }
 
 .visualizer-container canvas {
