@@ -16,6 +16,93 @@ import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } fr
 import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
 
 // ═══════════════════════════════════════════
+//  VizDirective 타입 및 파싱 유틸리티
+// ═══════════════════════════════════════════
+
+interface VizAnnotation {
+  zone: string;
+  text: string;
+  color: string;
+}
+
+interface VizKPI {
+  label: string;
+  value: string;
+  sub: string;
+  alert?: boolean;
+  highlight?: boolean;
+}
+
+interface VizDirective {
+  vizState: 'overview' | 'entry' | 'exploration' | 'purchase' | 'topdown';
+  highlights: string[];
+  annotations?: VizAnnotation[];
+  flowPath?: boolean;
+  kpis?: VizKPI[];
+  stage?: 'entry' | 'exploration' | 'purchase';
+}
+
+const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
+const VALID_ZONES = ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'];
+
+/**
+ * AI 응답에서 ```viz 블록을 추출하고 VizDirective로 파싱
+ */
+function extractVizDirectiveFromResponse(response: string): VizDirective | null {
+  // ```viz ... ``` 블록 찾기
+  const match = response.match(/```viz\s*\n?([\s\S]*?)\n?```/);
+  if (!match) return null;
+
+  try {
+    const parsed = JSON.parse(match[1].trim());
+
+    // vizState 유효성 검증
+    if (!parsed.vizState || !VALID_VIZ_STATES.includes(parsed.vizState)) {
+      console.warn('[VizDirective] Invalid vizState:', parsed.vizState);
+      return null;
+    }
+
+    // highlights 유효성 검증
+    if (!Array.isArray(parsed.highlights)) {
+      parsed.highlights = [];
+    }
+    parsed.highlights = parsed.highlights.filter((z: string) => VALID_ZONES.includes(z));
+
+    // annotations 유효성 검증
+    if (parsed.annotations && Array.isArray(parsed.annotations)) {
+      parsed.annotations = parsed.annotations
+        .filter((a: VizAnnotation) => a.zone && a.text && VALID_ZONES.includes(a.zone))
+        .slice(0, 3); // 최대 3개
+    }
+
+    // flowPath 기본값
+    if (typeof parsed.flowPath !== 'boolean') {
+      parsed.flowPath = false;
+    }
+
+    return {
+      vizState: parsed.vizState,
+      highlights: parsed.highlights,
+      annotations: parsed.annotations?.length ? parsed.annotations : undefined,
+      flowPath: parsed.flowPath
+    };
+  } catch (err) {
+    console.warn('[VizDirective] JSON parse error:', err);
+    return null;
+  }
+}
+
+/**
+ * 응답 텍스트에서 ```viz 블록 제거 (클라이언트에 표시할 텍스트)
+ */
+function cleanResponseText(response: string): string {
+  return response
+    .replace(/```viz[\s\S]*?```/g, '')
+    .replace(/\n{3,}/g, '\n\n')  // 연속 빈 줄 정리
+    .trim();
+}
+
+// ═══════════════════════════════════════════
 //  타입 정의
 // ═══════════════════════════════════════════
 
@@ -602,17 +689,44 @@ serve(async (request: Request) => {
 
     // 10. JSON 응답 파싱
     const data = await upstreamResponse.json();
-    const assistantContent = data.choices?.[0]?.message?.content || '';
+    const rawAssistantContent = data.choices?.[0]?.message?.content || '';
 
-    if (!assistantContent) {
+    if (!rawAssistantContent) {
       console.error('[AI] No content in response:', JSON.stringify(data));
       throw new Error('AI가 응답을 생성하지 못했습니다.');
     }
 
-    // 11. TASK 7: Pain Point 추출
+    // 11. AI 응답에서 VizDirective 추출 (B 방식: AI가 직접 생성)
+    const aiGeneratedVizDirective = extractVizDirectiveFromResponse(rawAssistantContent);
+
+    // 클라이언트에 보낼 텍스트에서 ```viz 블록 제거
+    const assistantContent = cleanResponseText(rawAssistantContent);
+
+    // VizDirective 병합: AI 생성 (시각화) + 토픽 기반 (KPI/Stage)
+    let finalVizDirective: VizDirective | null = null;
+
+    if (aiGeneratedVizDirective) {
+      // AI가 생성한 vizState, highlights, annotations, flowPath 사용
+      // 토픽 기반의 kpis, stage 병합 (있으면)
+      finalVizDirective = {
+        ...aiGeneratedVizDirective,
+        kpis: vizDirective?.kpis,
+        stage: vizDirective?.stage
+      };
+
+      console.log(`[VizDirective] AI Generated: state=${aiGeneratedVizDirective.vizState}, highlights=[${aiGeneratedVizDirective.highlights.join(',')}]`);
+    } else if (vizDirective) {
+      // AI가 생성하지 않은 경우 토픽 기반 fallback
+      finalVizDirective = vizDirective;
+      console.log(`[VizDirective] Fallback to topic-based: state=${vizDirective.vizState}`);
+    } else {
+      console.log(`[VizDirective] None generated`);
+    }
+
+    // 12. TASK 7: Pain Point 추출
     const painPointResult: PainPointResult = extractPainPoints(message, historyTexts);
 
-    // 12. TASK 7: Sales Bridge 평가
+    // 13. TASK 7: Sales Bridge 평가
     const salesBridgeResult: SalesBridgeResult = evaluateSalesBridge({
       turnCount: conversation?.message_count || historyTexts.length,
       painPointDetected: painPointResult.painPoints.length > 0,
@@ -622,7 +736,7 @@ serve(async (request: Request) => {
       repeatTopics: false
     });
 
-    // 13. TASK 7: 후속 질문 생성
+    // 14. TASK 7: 후속 질문 생성
     const suggestionResult: SuggestionResult = generateSuggestions({
       topicCategory: classification.primaryTopic,
       painPointCategory: painPointResult.primaryPain,
@@ -636,7 +750,7 @@ serve(async (request: Request) => {
       console.log(`[PainPoint] ${painPointResult.summary}`);
     }
 
-    // 14. 어시스턴트 응답 로깅 (Pain Point 데이터 포함)
+    // 15. 어시스턴트 응답 로깅 (Pain Point 데이터 포함)
     if (conversation) {
       await logMessage(supabase, conversation.id, 'assistant', assistantContent, {
         topic: classification.primaryTopic,
@@ -647,7 +761,7 @@ serve(async (request: Request) => {
       });
     }
 
-    // 15. JSON 응답 반환 (TASK 7 필드 + VizDirective)
+    // 16. JSON 응답 반환 (TASK 7 필드 + AI 생성 VizDirective)
     return new Response(
       JSON.stringify({
         content: assistantContent,
@@ -669,8 +783,8 @@ serve(async (request: Request) => {
           primary: painPointResult.primaryPain,
           summary: painPointResult.summary
         },
-        // 3D 비주얼라이저 지시 데이터
-        vizDirective: vizDirective
+        // 3D 비주얼라이저 지시 데이터 (AI 생성 또는 토픽 기반 fallback)
+        vizDirective: finalVizDirective
       }),
       {
         status: 200,
