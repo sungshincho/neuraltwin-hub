@@ -42,8 +42,8 @@ interface AnnotationPosition {
 
 export default function StoreVisualizer({
   vizState,
-  highlights,
-  annotations,
+  highlights = [],
+  annotations = [],
   showFlow,
   className = ''
 }: StoreVisualizerProps) {
