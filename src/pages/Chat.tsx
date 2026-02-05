@@ -1,4 +1,5 @@
 // 채팅 페이지 - NEURALTWIN 다크 테마 + retail-chatbot EF 연동
+// TASK 9: Suggestions + Lead Capture Form 추가
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/chat.css";
@@ -8,6 +9,15 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  suggestions?: string[];
+  showLeadForm?: boolean;
+}
+
+// 리드 폼 데이터 타입
+interface LeadFormData {
+  email: string;
+  company: string;
+  role: string;
 }
 
 // 모드 옵션
@@ -41,6 +51,17 @@ const Chat = () => {
   const [selectedMode, setSelectedMode] = useState("thinking");
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+
+  // TASK 9: Suggestions + Lead Form 상태
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadFormData, setLeadFormData] = useState<LeadFormData>({
+    email: "",
+    company: "",
+    role: "",
+  });
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -131,12 +152,26 @@ const Chat = () => {
         setConversationId(data.conversationId);
       }
 
+      // TASK 9: Suggestions 저장
+      if (data.suggestions && data.suggestions.length > 0) {
+        setSuggestions(data.suggestions);
+      } else {
+        setSuggestions([]);
+      }
+
+      // TASK 9: Lead Form 표시 여부
+      if (data.showLeadForm && !leadSubmitted) {
+        setShowLeadForm(true);
+      }
+
       // 어시스턴트 응답 추가
       if (data.content) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content: data.content,
+          suggestions: data.suggestions,
+          showLeadForm: data.showLeadForm,
         };
         setMessages((prev) => [...prev, assistantMessage]);
       }
@@ -174,6 +209,60 @@ const Chat = () => {
 
   // 현재 모드 라벨
   const currentModeLabel = CHAT_MODES.find((m) => m.id === selectedMode)?.label || "생각 중";
+
+  // TASK 9: Suggestion 클릭 핸들러
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    setSuggestions([]);
+    // 자동 전송 (선택사항)
+    // setTimeout(() => handleSendMessage(), 100);
+  };
+
+  // TASK 9: Lead Form 제출 핸들러
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadFormData.email.trim()) return;
+
+    setIsSubmittingLead(true);
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const sessionId = getOrCreateSessionId();
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "capture_lead",
+          sessionId,
+          conversationId,
+          lead: leadFormData,
+        }),
+      });
+
+      if (response.ok) {
+        setLeadSubmitted(true);
+        setShowLeadForm(false);
+        // 성공 메시지 추가
+        const thankYouMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: `감사합니다, ${leadFormData.company || "고객"}님! 입력하신 이메일(${leadFormData.email})로 연락드리겠습니다.`,
+        };
+        setMessages((prev) => [...prev, thankYouMessage]);
+      }
+    } catch (error) {
+      console.error("Lead submission error:", error);
+    } finally {
+      setIsSubmittingLead(false);
+    }
+  };
+
+  // TASK 9: Lead Form 닫기
+  const handleLeadFormClose = () => {
+    setShowLeadForm(false);
+  };
 
   return (
     <div className="chat-page">
@@ -251,6 +340,79 @@ const Chat = () => {
                     </div>
                   </div>
                 )}
+
+                {/* TASK 9: Suggestions 칩 */}
+                {!isLoading && suggestions.length > 0 && (
+                  <div className="chat-suggestions">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        className="chat-suggestion-chip"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* TASK 9: Lead Capture Form */}
+                {showLeadForm && !leadSubmitted && (
+                  <div className="chat-lead-form-container">
+                    <div className="chat-lead-form">
+                      <div className="chat-lead-form-header">
+                        <h4>더 자세한 상담을 원하시나요?</h4>
+                        <button
+                          className="chat-lead-form-close"
+                          onClick={handleLeadFormClose}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <p className="chat-lead-form-desc">
+                        연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.
+                      </p>
+                      <form onSubmit={handleLeadSubmit}>
+                        <input
+                          type="email"
+                          className="chat-lead-input"
+                          placeholder="이메일 *"
+                          value={leadFormData.email}
+                          onChange={(e) =>
+                            setLeadFormData({ ...leadFormData, email: e.target.value })
+                          }
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="chat-lead-input"
+                          placeholder="회사명"
+                          value={leadFormData.company}
+                          onChange={(e) =>
+                            setLeadFormData({ ...leadFormData, company: e.target.value })
+                          }
+                        />
+                        <input
+                          type="text"
+                          className="chat-lead-input"
+                          placeholder="직책/역할"
+                          value={leadFormData.role}
+                          onChange={(e) =>
+                            setLeadFormData({ ...leadFormData, role: e.target.value })
+                          }
+                        />
+                        <button
+                          type="submit"
+                          className="chat-lead-submit"
+                          disabled={isSubmittingLead || !leadFormData.email.trim()}
+                        >
+                          {isSubmittingLead ? "제출 중..." : "상담 요청"}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
 
