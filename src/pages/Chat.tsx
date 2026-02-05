@@ -1,8 +1,13 @@
 // 채팅 페이지 - NEURALTWIN 다크 테마 + retail-chatbot EF 연동
 // TASK 9: Suggestions + Lead Capture Form 추가
+// TASK C: 3D Wireframe Visualizer 통합
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/chat.css";
+
+// 3D Visualizer 컴포넌트
+import { StoreVisualizer, KPIBar, StageProgress } from "@/components/chatbot/visualizer";
+import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation } from "@/components/chatbot/visualizer";
 
 // 메시지 타입 정의
 interface Message {
@@ -55,6 +60,9 @@ const Chat = () => {
   // TASK 9: Suggestions + Lead Form 상태
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showLeadForm, setShowLeadForm] = useState(false);
+
+  // TASK C: VizDirective 상태 (3D Visualizer)
+  const [vizDirective, setVizDirective] = useState<VizDirective | null>(null);
   const [leadFormData, setLeadFormData] = useState<LeadFormData>({
     email: "",
     company: "",
@@ -162,6 +170,11 @@ const Chat = () => {
       // TASK 9: Lead Form 표시 여부
       if (data.showLeadForm && !leadSubmitted) {
         setShowLeadForm(true);
+      }
+
+      // TASK C: VizDirective 저장 (3D Visualizer)
+      if (data.vizDirective) {
+        setVizDirective(data.vizDirective);
       }
 
       // 어시스턴트 응답 추가
@@ -313,9 +326,10 @@ const Chat = () => {
             </div>
           </nav>
 
-          {/* Chat UI */}
-          <div className="hero-content" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <div className="chat-container">
+          {/* Chat UI + Visualizer Split Layout */}
+          <div className="hero-content" style={{ display: "flex", gap: "16px", padding: "0 24px", height: "calc(100vh - 160px)" }}>
+            {/* 좌측: 채팅 영역 (45%) */}
+            <div className="chat-container" style={{ width: vizDirective ? "45%" : "100%", transition: "width 0.5s ease" }}>
               <h2 className="chat-title">무엇을 도와드릴까요?</h2>
 
               {/* 채팅 기록 */}
@@ -476,6 +490,43 @@ const Chat = () => {
                 </div>
               </div>
             </div>
+
+            {/* 우측: 3D Visualizer (55%) - vizDirective가 있을 때만 표시 */}
+            {vizDirective && (
+              <div
+                className="visualizer-container"
+                style={{
+                  width: "55%",
+                  display: "flex",
+                  flexDirection: "column",
+                  backgroundColor: "rgba(3, 7, 18, 0.9)",
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  animation: "fadeIn 0.5s ease"
+                }}
+              >
+                {/* KPI Bar */}
+                {vizDirective.kpis && vizDirective.kpis.length > 0 && (
+                  <KPIBar kpis={vizDirective.kpis} />
+                )}
+
+                {/* 3D Store Visualizer */}
+                <div style={{ flex: 1, position: "relative" }}>
+                  <StoreVisualizer
+                    vizState={vizDirective.vizState}
+                    highlights={vizDirective.highlights}
+                    annotations={vizDirective.annotations}
+                    showFlow={vizDirective.flowPath || false}
+                  />
+                </div>
+
+                {/* Stage Progress */}
+                {vizDirective.stage && (
+                  <StageProgress stage={vizDirective.stage} />
+                )}
+              </div>
+            )}
           </div>
 
           {/* Semicircle Decoration */}

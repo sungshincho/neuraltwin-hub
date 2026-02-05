@@ -1000,7 +1000,32 @@
     cursor: not-allowed;
 }
 
+/* ===================== TASK C: 3D VISUALIZER ===================== */
+.visualizer-container {
+    animation: fadeIn 0.5s ease;
+}
+
+.visualizer-container canvas {
+    border-radius: 8px;
+}
+
 /* 반응형 */
+@media (max-width: 1200px) {
+    .hero-content {
+        flex-direction: column !important;
+    }
+
+    .chat-container {
+        width: 100% !important;
+        max-width: none;
+    }
+
+    .visualizer-container {
+        width: 100% !important;
+        height: 400px;
+    }
+}
+
 @media (max-width: 768px) {
     .chat-container {
         padding: 0 16px;
@@ -1029,5 +1054,9 @@
 
     .chat-lead-form {
         max-width: 100%;
+    }
+
+    .visualizer-container {
+        height: 300px;
     }
 }

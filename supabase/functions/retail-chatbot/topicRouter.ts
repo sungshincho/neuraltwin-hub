@@ -18,6 +18,7 @@
 
 import { RETAIL_KNOWLEDGE, getKnowledgeById, combineKnowledgeContexts, type DomainKnowledge } from './retailKnowledge.ts';
 import { SYSTEM_PROMPT, TOPIC_INJECTION_PREFIX } from './systemPrompt.ts';
+import { generateVizDirective, type VizDirective } from './vizDirectiveGenerator.ts';
 
 // ═══════════════════════════════════════════
 //  타입 정의
@@ -33,6 +34,7 @@ export interface TopicClassification {
 export interface EnrichedPrompt {
   systemPrompt: string;       // 도메인 지식이 주입된 최종 시스템 프롬프트
   classification: TopicClassification;
+  vizDirective: VizDirective | null;  // 3D 비주얼라이저 지시 데이터
 }
 
 // ═══════════════════════════════════════════
@@ -195,11 +197,13 @@ export function classifyTopic(
  *
  * @param message - 사용자 입력 메시지
  * @param conversationHistory - 이전 대화 내역
- * @returns EnrichedPrompt (최종 시스템 프롬프트 + 분류 결과)
+ * @param turnCount - 대화 턴 수 (비주얼라이저 단계 결정용)
+ * @returns EnrichedPrompt (최종 시스템 프롬프트 + 분류 결과 + 비주얼라이저 지시)
  */
 export function buildEnrichedPrompt(
   message: string,
-  conversationHistory?: string[]
+  conversationHistory?: string[],
+  turnCount?: number
 ): EnrichedPrompt {
   // 1. 토픽 분류
   const classification = classifyTopic(message, conversationHistory);
@@ -220,9 +224,13 @@ export function buildEnrichedPrompt(
     finalPrompt += '\n' + TOPIC_INJECTION_PREFIX + '\n' + topicContext;
   }
 
+  // 5. VizDirective 생성 (3D 비주얼라이저용)
+  const vizDirective = generateVizDirective(classification, turnCount || 0);
+
   return {
     systemPrompt: finalPrompt,
-    classification
+    classification,
+    vizDirective
   };
 }
 
