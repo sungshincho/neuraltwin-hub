@@ -501,6 +501,8 @@ const Chat = () => {
                 className="visualizer-container"
                 style={{
                   width: "55%",
+                  height: "600px",
+                  minHeight: "500px",
                   display: "flex",
                   flexDirection: "column",
                   backgroundColor: "rgba(3, 7, 18, 0.9)",
