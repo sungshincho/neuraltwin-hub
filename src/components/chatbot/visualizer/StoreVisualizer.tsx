@@ -157,7 +157,7 @@ export default function StoreVisualizer({
   // 어노테이션 3D→2D 좌표 변환
   // ─────────────────────────────────────────
   const updateAnnotationPositions = useCallback(() => {
-    if (!sceneRef.current || !canvasRef.current || !annotations || annotations.length === 0) {
+    if (!sceneRef.current || !canvasRef.current || !annotations?.length) {
       setAnnotationPositions([]);
       return;
     }
