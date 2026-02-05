@@ -63,24 +63,22 @@ export function generateVizDirective(
     return null;
   }
 
-  // 토픽별 매핑
+  // 토픽별 매핑 (retailKnowledge.ts의 ID와 일치해야 함)
   switch (primaryTopic) {
     // ─────────────────────────────────────────
     // 전환율 최적화 (대화 진행에 따라 단계 변화)
     // ─────────────────────────────────────────
     case 'sales_conversion':
-    case 'conversion_optimization':
       return getConversionVizDirective(turnCount);
 
     // ─────────────────────────────────────────
-    // 매장 레이아웃
+    // 매장 레이아웃 & 고객 동선
     // ─────────────────────────────────────────
     case 'layout_flow':
-    case 'store_layout':
       return {
         vizState: 'topdown',
         highlights: ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'],
-        flowPath: false,
+        flowPath: true,
         kpis: [
           { label: '매장 면적', value: '400㎡', sub: '표준' },
           { label: '존 구성', value: '6개', sub: '권장' },
@@ -89,26 +87,9 @@ export function generateVizDirective(
       };
 
     // ─────────────────────────────────────────
-    // 고객 동선
+    // VMD & 디스플레이
     // ─────────────────────────────────────────
-    case 'customer_flow':
-      return {
-        vizState: 'overview',
-        highlights: ['decompression', 'clothingMain'],
-        flowPath: true,
-        kpis: [
-          { label: '평균 체류', value: '12분', sub: '목표 15분' },
-          { label: '동선 커버리지', value: '68%', sub: '목표 80%' },
-          { label: '우회전율', value: '87%', sub: '정상' }
-        ],
-        stage: 'entry'
-      };
-
-    // ─────────────────────────────────────────
-    // VMD (비주얼 머천다이징)
-    // ─────────────────────────────────────────
-    case 'vmd':
-    case 'visual_merchandising':
+    case 'vmd_display':
       return {
         vizState: 'entry',
         highlights: ['powerWall', 'decompression'],
@@ -124,29 +105,15 @@ export function generateVizDirective(
       };
 
     // ─────────────────────────────────────────
-    // 피팅룸
+    // 고객 분석 & CX
     // ─────────────────────────────────────────
-    case 'fitting_room':
-      return {
-        vizState: 'exploration',
-        highlights: ['fittingRoom'],
-        flowPath: false,
-        annotations: [
-          { zone: 'fittingRoom', text: '전환율 67%\n핵심 전환 포인트', color: '#8b5cf6' }
-        ],
-        kpis: [
-          { label: '피팅룸 전환율', value: '67%', sub: '핵심', highlight: true },
-          { label: '평균 이용시간', value: '4.5분', sub: '적정' },
-          { label: '대기 고객', value: '<3명', sub: '목표' }
-        ],
-        stage: 'exploration'
-      };
+    case 'customer_analytics':
+      return getCustomerExperienceVizDirective(turnCount);
 
     // ─────────────────────────────────────────
-    // 인력 최적화
+    // 인력 생산성
     // ─────────────────────────────────────────
-    case 'staffing':
-    case 'staffing_optimization':
+    case 'staff_productivity':
       return {
         vizState: 'overview',
         highlights: ['checkout', 'fittingRoom', 'clothingMain'],
@@ -164,10 +131,9 @@ export function generateVizDirective(
       };
 
     // ─────────────────────────────────────────
-    // 가격 전략
+    // 가격 & 프로모션
     // ─────────────────────────────────────────
-    case 'pricing':
-    case 'pricing_strategy':
+    case 'pricing_promotion':
       return {
         vizState: 'purchase',
         highlights: ['checkout', 'clothingMain'],
@@ -181,10 +147,9 @@ export function generateVizDirective(
       };
 
     // ─────────────────────────────────────────
-    // 재고 관리
+    // 재고 & 공급망
     // ─────────────────────────────────────────
-    case 'inventory':
-    case 'inventory_management':
+    case 'inventory_supply':
       return {
         vizState: 'exploration',
         highlights: ['clothingMain', 'accessory', 'powerWall'],
@@ -193,46 +158,6 @@ export function generateVizDirective(
           { label: '재고회전율', value: '8회/년', sub: '패션 평균' },
           { label: '품절률', value: '5%', sub: '목표 3%', alert: true },
           { label: 'Sell-Through', value: '72%', sub: '적정' }
-        ]
-      };
-
-    // ─────────────────────────────────────────
-    // 고객 경험 (CX)
-    // ─────────────────────────────────────────
-    case 'customer_experience':
-    case 'cx':
-      return getCustomerExperienceVizDirective(turnCount);
-
-    // ─────────────────────────────────────────
-    // 시즌 전략
-    // ─────────────────────────────────────────
-    case 'seasonal':
-    case 'seasonal_strategy':
-      return {
-        vizState: 'entry',
-        highlights: ['powerWall', 'decompression'],
-        flowPath: false,
-        annotations: [
-          { zone: 'powerWall', text: '시즌 신상\n즉각 노출', color: '#22c55e' }
-        ],
-        kpis: [
-          { label: '시즌 매출', value: 'Q4 40%', sub: '연매출 중' },
-          { label: '마크다운 시점', value: '50%+', sub: '시즌 경과' }
-        ]
-      };
-
-    // ─────────────────────────────────────────
-    // 경쟁 분석
-    // ─────────────────────────────────────────
-    case 'competitor':
-    case 'competitor_analysis':
-      return {
-        vizState: 'topdown',
-        highlights: [],
-        flowPath: false,
-        kpis: [
-          { label: '업계 평균', value: '18%', sub: '전환율' },
-          { label: '시장점유율', value: '-', sub: '분석 필요' }
         ]
       };
 
