@@ -214,7 +214,7 @@ async function logMessage(
 //  Lovable Gateway API 호출
 // ═══════════════════════════════════════════
 
-const LOVABLE_GATEWAY_URL = 'https://lovable-api.anthropic.com/v1/chat/completions';
+const LOVABLE_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 async function callLovableGateway(
   systemPrompt: string,
@@ -234,7 +234,7 @@ async function callLovableGateway(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gemini-2.5-pro',
+      model: 'google/gemini-2.5-pro',
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages
