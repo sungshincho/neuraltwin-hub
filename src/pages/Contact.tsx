@@ -1,66 +1,14 @@
+// Contact 페이지 - NEURALTWIN 다크 테마 (하이브리드: HTML 스타일 + 기존 기능 100% 보존)
 import { Link } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MapPin, CheckCircle, Check, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPageView, trackContactForm, trackFunnelStep } from "@/lib/analytics";
-
-// Animated Counter Component
-interface AnimatedCounterProps {
-  targetValue: number;
-  prefix?: string;
-  suffix?: string;
-  duration?: number;
-  isVisible: boolean;
-  colorClass: string;
-}
-
-const AnimatedCounter = ({ targetValue, prefix = "", suffix = "", duration = 2000, isVisible, colorClass }: AnimatedCounterProps) => {
-  const [currentValue, setCurrentValue] = useState(0);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    if (!isVisible || hasAnimated.current) return;
-
-    hasAnimated.current = true;
-    const startTime = performance.now();
-    const startValue = 0;
-
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Ease out cubic for smooth deceleration
-      const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-
-      const value = Math.round(startValue + (targetValue - startValue) * easeOutCubic);
-      setCurrentValue(value);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  }, [isVisible, targetValue, duration]);
-
-  return (
-    <div className={`text-3xl md:text-4xl font-bold ${colorClass} mb-2`}>
-      {prefix}{currentValue}{suffix}
-    </div>
-  );
-};
+import "@/styles/contact.css";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -82,49 +30,34 @@ const Contact = () => {
     marketingConsent: false,
   });
 
-  // Stats cards animation
-  const statsCardsRef = useRef<HTMLDivElement>(null);
-  const [isStatsVisible, setIsStatsVisible] = useState(false);
+  // === Intro animation state (about/chat 동일 패턴) ===
+  const [introDone, setIntroDone] = useState(false);
+  const [curtainOpen, setCurtainOpen] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [introHidden, setIntroHidden] = useState(false);
 
-  // Statistics data with colors: green for positive (+), blue for negative (-)
-  const statsData = [
-    { value: 12, prefix: "+", suffix: "%", labelKey: "contact.stats.salesIncrease", colorClass: "text-emerald-500" },
-    { value: 85, prefix: "+", suffix: "%", labelKey: "contact.stats.aiAccuracy", colorClass: "text-emerald-500" },
-    { value: 80, prefix: "-", suffix: "%", labelKey: "contact.stats.decisionSpeed", colorClass: "text-blue-500" },
-    { value: 20, prefix: "+", suffix: "%", labelKey: "contact.stats.dwellTime", colorClass: "text-emerald-500" },
-    { value: 15, prefix: "-", suffix: "%", labelKey: "contact.stats.resourceSaving", colorClass: "text-blue-500" },
-  ];
-
+  // === Analytics (기존 100% 보존) ===
   useEffect(() => {
-    // Track page view with funnel step 3 (contact)
     trackPageView("Contact", 3);
     trackFunnelStep(3, "view_contact");
     trackContactForm("start");
   }, []);
 
-  // Intersection Observer for stats cards animation
+  // === Intro animation timers (about/chat 동일 패턴) ===
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsStatsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    if (statsCardsRef.current) {
-      observer.observe(statsCardsRef.current);
-    }
-
-    return () => observer.disconnect();
+    const t1 = setTimeout(() => setIntroDone(true), 1100);
+    const t2 = setTimeout(() => {
+      setCurtainOpen(true);
+      setContentVisible(true);
+    }, 1400);
+    const t3 = setTimeout(() => setIntroHidden(true), 2200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
+  // === Form submission (기존 100% 보존) ===
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validate privacy consent
     if (!formData.privacyConsent) {
       toast({
         title: t("contact.consent.privacyRequired"),
@@ -142,7 +75,6 @@ const Contact = () => {
           company: formData.company,
           email: formData.email,
           phone: formData.phone,
-          // TEMPORARILY HIDDEN fields - not sent
           stores: formData.stores ? parseInt(formData.stores) : undefined,
           features: formData.features.length > 0 ? formData.features : undefined,
           timeline: formData.timeline || undefined,
@@ -154,13 +86,9 @@ const Contact = () => {
 
       if (error) throw error;
 
-      // Track successful submission
       trackContactForm("submit");
-
-      // Show success dialog
       setSuccessDialogOpen(true);
 
-      // Reset form
       setFormData({
         name: "",
         company: "",
@@ -175,8 +103,6 @@ const Contact = () => {
       });
     } catch (error) {
       console.error("Form submission error:", error);
-
-      // Track error
       trackContactForm("error", error instanceof Error ? error.message : "Unknown error");
 
       toast({
@@ -190,315 +116,313 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
+    <div className="contact-page">
+      {/* ==================== INTRO ANIMATION ==================== */}
+      {!introHidden && (
+        <div className={`intro-overlay${introDone ? " done" : ""}`}>
+          <div className="intro-logo-wrapper">
+            <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" />
+          </div>
+          <div className="intro-tagline">Intelligence Redefined</div>
+          <div className="intro-line"></div>
+        </div>
+      )}
+      {!introHidden && <div className={`intro-curtain-top${curtainOpen ? " open" : ""}`} />}
+      {!introHidden && <div className={`intro-curtain-bottom${curtainOpen ? " open" : ""}`} />}
 
-      <section className="pt-32 pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-12 space-y-4">
-              <h1 className="text-5xl md:text-6xl font-bold">
-                <span className="gradient-text">{t("contact.title")}</span>
-              </h1>
-              <p className="text-lg text-foreground">
-                {t("contact.subtitlePart1")}
-                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight1")}</span>
-                {t("contact.subtitlePart2")}
-                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight2")}</span>
-                {t("contact.subtitlePart3")}
-                <span className="text-2xl font-bold text-primary">{t("contact.subtitleHighlight3")}</span>
-                {t("contact.subtitlePart4")}
-              </p>
+      {/* ==================== GRID BACKGROUND ==================== */}
+      <div className="page-grid-bg">
+        <div className="grid-lines"></div>
+        <div className="grid-lines-fine"></div>
+        <div className="grid-dots"></div>
+        <div className="grid-glow"></div>
+      </div>
 
-              {/* Benefits List */}
-              <div className="flex flex-col items-center gap-2 mt-4">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-muted-foreground">{t("contact.benefit1")}</span>
+      {/* ==================== PAGE CONTENT ==================== */}
+      <div className={`page-content${contentVisible ? " visible" : ""}`}>
+
+        {/* Nav */}
+        <nav className="page-nav">
+          <Link to="/">
+            <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
+          </Link>
+          <div className="page-nav-links">
+            <Link to="/about">제품 &amp; 회사소개</Link>
+            <Link to="/contact" className="active">문의하기</Link>
+          </div>
+        </nav>
+
+        {/* ==================== CONTACT SECTION ==================== */}
+        <section className="contact-section">
+
+          {/* Left: Info */}
+          <div className="contact-info">
+            <div className="contact-label">Contact Us</div>
+            <h1 className="contact-title">
+              {t("contact.title", "무엇이든")}<br />{t("contact.titleLine2", "물어보세요")}
+            </h1>
+            <p className="contact-desc">
+              {t("contact.desc", "NEURALTWIN에 대해 궁금한 점이 있으시면 편하게 문의해주세요. 담당자가 영업일 기준 24시간 이내에 답변드립니다.")}
+            </p>
+            <div className="contact-details">
+              <div className="contact-detail">
+                <div className="contact-detail-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-muted-foreground">{t("contact.benefit2")}</span>
+                <div className="contact-detail-text">
+                  <span className="contact-detail-label">{t("contact.info.email", "Email")}</span>
+                  <a href="mailto:neuraltwin.hq@neuraltwin.io" className="contact-detail-value">neuraltwin.hq@neuraltwin.io</a>
                 </div>
               </div>
-
-              {/* Product Info Link */}
-              <Link
-                to="/product"
-                className="inline-flex items-center gap-1 mt-6 text-primary hover:text-primary/80 transition-colors cursor-pointer group"
-              >
-                <span className="text-2xl font-bold underline underline-offset-4 decoration-primary/50 group-hover:decoration-primary">
-                  제품 정보 자세히 보기
-                </span>
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </Link>
-
-              {/* Statistics Cards */}
-              <div ref={statsCardsRef} className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
-                {statsData.map((stat, index) => (
-                  <div
-                    key={index}
-                    className={`relative bg-white rounded-lg p-6 text-center shadow-md border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow duration-300 ${
-                      index === 4 ? "col-span-2 md:col-span-1" : ""
-                    }`}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }} />
-                    <div className="relative z-10">
-                      <AnimatedCounter
-                        targetValue={stat.value}
-                        prefix={stat.prefix}
-                        suffix={stat.suffix}
-                        isVisible={isStatsVisible}
-                        colorClass={stat.colorClass}
-                        duration={1800}
-                      />
-                      <div className="text-sm font-medium text-gray-900">{t(stat.labelKey)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Contact Form */}
-              <Card className="glass p-8 md:col-span-2">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">{t("contact.form.name")} *</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        required
-                        placeholder={t("contact.form.namePlaceholder")}
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company">{t("contact.form.company")} *</Label>
-                      <Input
-                        id="company"
-                        name="company"
-                        required
-                        placeholder={t("contact.form.companyPlaceholder")}
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">{t("contact.form.email")} *</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        placeholder={t("contact.form.emailPlaceholder")}
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">{t("contact.form.phone")} *</Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        required
-                        placeholder={t("contact.form.phonePlaceholder")}
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* TEMPORARILY HIDDEN - START: stores, features, timeline, message fields */}
-                  {/*
-                  <div className="space-y-2">
-                    <Label htmlFor="stores">{t("contact.form.stores")} (선택)</Label>
-                    <Input
-                      id="stores"
-                      name="stores"
-                      type="number"
-                      placeholder={t("contact.form.storesPlaceholder")}
-                      value={formData.stores}
-                      onChange={(e) => setFormData({ ...formData, stores: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>{t("contact.form.features")} (선택)</Label>
-                    <div className="border border-input bg-background rounded-md p-3 space-y-3">
-                      <p className="text-xs text-muted-foreground mb-2">{t("contact.form.featuresPlaceholder")}</p>
-                      {[
-                        { value: "consumerData", label: t("contact.form.featureOptions.consumerData") },
-                        { value: "dataIntegration", label: t("contact.form.featureOptions.dataIntegration") },
-                        { value: "aiSimulation", label: t("contact.form.featureOptions.aiSimulation") },
-                        { value: "hqStoreCommunication", label: t("contact.form.featureOptions.hqStoreCommunication") },
-                        { value: "all", label: t("contact.form.featureOptions.all") },
-                      ].map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`feature-${option.value}`}
-                            checked={formData.features.includes(option.value)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({ ...formData, features: [...formData.features, option.value] });
-                              } else {
-                                setFormData({ ...formData, features: formData.features.filter(f => f !== option.value) });
-                              }
-                            }}
-                          />
-                          <label
-                            htmlFor={`feature-${option.value}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            {option.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="timeline">{t("contact.form.timeline")} (선택)</Label>
-                    <Select
-                      value={formData.timeline}
-                      onValueChange={(value) => setFormData({ ...formData, timeline: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("contact.form.timelinePlaceholder")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="immediate">{t("contact.form.timelineOptions.immediate")}</SelectItem>
-                        <SelectItem value="month1">{t("contact.form.timelineOptions.month1")}</SelectItem>
-                        <SelectItem value="month3">{t("contact.form.timelineOptions.month3")}</SelectItem>
-                        <SelectItem value="month6">{t("contact.form.timelineOptions.month6")}</SelectItem>
-                        <SelectItem value="planning">{t("contact.form.timelineOptions.planning")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message">{t("contact.form.message")} (선택)</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      rows={4}
-                      placeholder={t("contact.form.messagePlaceholder")}
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    />
-                  </div>
-                  */}
-                  {/* TEMPORARILY HIDDEN - END: stores, features, timeline, message fields */}
-
-                  {/* Consent Checkboxes */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="privacyConsent"
-                          checked={formData.privacyConsent}
-                          onCheckedChange={(checked) =>
-                            setFormData({ ...formData, privacyConsent: checked as boolean })
-                          }
-                        />
-                        <label
-                          htmlFor="privacyConsent"
-                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          <span className="text-primary font-medium">{t("contact.consent.required")}</span>{" "}
-                          {t("contact.consent.privacy")}
-                        </label>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setPrivacyDialogOpen(true)}
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {t("contact.consent.view")}
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="marketingConsent"
-                          checked={formData.marketingConsent}
-                          onCheckedChange={(checked) =>
-                            setFormData({ ...formData, marketingConsent: checked as boolean })
-                          }
-                        />
-                        <label
-                          htmlFor="marketingConsent"
-                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          <span className="text-muted-foreground">{t("contact.consent.optional")}</span>{" "}
-                          {t("contact.consent.marketing")}
-                        </label>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setMarketingDialogOpen(true)}
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {t("contact.consent.view")}
-                      </button>
-                    </div>
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? t("contact.form.submitting") : t("contact.form.submit")}
-                  </Button>
-                </form>
-              </Card>
-
-              {/* Contact Info */}
-              <div className="space-y-6">
-                <Card className="glass p-6 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="font-semibold mb-1">{t("contact.info.email")}</div>
-                      <a
-                        href="mailto:neuraltwin.hq@neuraltwin.io"
-                        className="text-sm text-muted-foreground hover:text-primary transition-smooth"
-                      >
-                        neuraltwin.hq@neuraltwin.io
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="font-semibold mb-1">{t("contact.info.address")}</div>
-                      <p className="text-sm text-muted-foreground">Seoul, South Korea</p>
-                    </div>
-                  </div>
-                </Card>
-
+              <div className="contact-detail">
+                <div className="contact-detail-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </div>
+                <div className="contact-detail-text">
+                  <span className="contact-detail-label">{t("contact.info.address", "Address")}</span>
+                  <span className="contact-detail-value">Seoul, South Korea</span>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Right: Form */}
+          <div className="contact-form-wrapper">
+            <form onSubmit={handleSubmit}>
+              {/* Row 1: 이름 + 회사명 */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="name">{t("contact.form.name")} *</label>
+                  <input
+                    type="text"
+                    id="name"
+                    className="form-input"
+                    placeholder={t("contact.form.namePlaceholder")}
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="company">{t("contact.form.company")} *</label>
+                  <input
+                    type="text"
+                    id="company"
+                    className="form-input"
+                    placeholder={t("contact.form.companyPlaceholder")}
+                    required
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: 이메일 + 전화번호 */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="email">{t("contact.form.email")} *</label>
+                  <input
+                    type="email"
+                    id="email"
+                    className="form-input"
+                    placeholder={t("contact.form.emailPlaceholder")}
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="phone">{t("contact.form.phone")} *</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    className="form-input"
+                    placeholder={t("contact.form.phonePlaceholder")}
+                    required
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* TEMPORARILY HIDDEN - START: stores, features, timeline, message fields */}
+              {/*
+              <div className="form-group">
+                <label className="form-label" htmlFor="stores">{t("contact.form.stores")} (선택)</label>
+                <input
+                  type="number"
+                  id="stores"
+                  className="form-input"
+                  placeholder={t("contact.form.storesPlaceholder")}
+                  value={formData.stores}
+                  onChange={(e) => setFormData({ ...formData, stores: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t("contact.form.features")} (선택)</label>
+                <div style={{ border: '1px solid var(--gray-700)', borderRadius: '10px', padding: '12px 18px' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--gray-500)', marginBottom: '12px' }}>{t("contact.form.featuresPlaceholder")}</p>
+                  {[
+                    { value: "consumerData", label: t("contact.form.featureOptions.consumerData") },
+                    { value: "dataIntegration", label: t("contact.form.featureOptions.dataIntegration") },
+                    { value: "aiSimulation", label: t("contact.form.featureOptions.aiSimulation") },
+                    { value: "hqStoreCommunication", label: t("contact.form.featureOptions.hqStoreCommunication") },
+                    { value: "all", label: t("contact.form.featureOptions.all") },
+                  ].map((option) => (
+                    <div key={option.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <Checkbox
+                        id={`feature-${option.value}`}
+                        checked={formData.features.includes(option.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData({ ...formData, features: [...formData.features, option.value] });
+                          } else {
+                            setFormData({ ...formData, features: formData.features.filter(f => f !== option.value) });
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`feature-${option.value}`}
+                        style={{ fontSize: '13px', color: 'var(--gray-300)', cursor: 'pointer' }}
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="timeline">{t("contact.form.timeline")} (선택)</label>
+                <select
+                  id="timeline"
+                  className="form-input"
+                  value={formData.timeline}
+                  onChange={(e) => setFormData({ ...formData, timeline: e.target.value })}
+                >
+                  <option value="">{t("contact.form.timelinePlaceholder")}</option>
+                  <option value="immediate">{t("contact.form.timelineOptions.immediate")}</option>
+                  <option value="month1">{t("contact.form.timelineOptions.month1")}</option>
+                  <option value="month3">{t("contact.form.timelineOptions.month3")}</option>
+                  <option value="month6">{t("contact.form.timelineOptions.month6")}</option>
+                  <option value="planning">{t("contact.form.timelineOptions.planning")}</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="message">{t("contact.form.message")} (선택)</label>
+                <textarea
+                  id="message"
+                  className="form-input"
+                  rows={4}
+                  placeholder={t("contact.form.messagePlaceholder")}
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  style={{ resize: 'none', minHeight: '120px' }}
+                />
+              </div>
+              */}
+              {/* TEMPORARILY HIDDEN - END: stores, features, timeline, message fields */}
+
+              {/* Consent Checkboxes (기존 기능 100% 보존) */}
+              <div className="consent-section">
+                <div className="consent-row">
+                  <div className="consent-left">
+                    <Checkbox
+                      id="privacyConsent"
+                      checked={formData.privacyConsent}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, privacyConsent: checked as boolean })
+                      }
+                    />
+                    <label htmlFor="privacyConsent">
+                      <span className="consent-required">{t("contact.consent.required")}</span>{" "}
+                      {t("contact.consent.privacy")}
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className="consent-view-btn"
+                    onClick={() => setPrivacyDialogOpen(true)}
+                  >
+                    {t("contact.consent.view")}
+                  </button>
+                </div>
+
+                <div className="consent-row">
+                  <div className="consent-left">
+                    <Checkbox
+                      id="marketingConsent"
+                      checked={formData.marketingConsent}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, marketingConsent: checked as boolean })
+                      }
+                    />
+                    <label htmlFor="marketingConsent">
+                      <span className="consent-optional">{t("contact.consent.optional")}</span>{" "}
+                      {t("contact.consent.marketing")}
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className="consent-view-btn"
+                    onClick={() => setMarketingDialogOpen(true)}
+                  >
+                    {t("contact.consent.view")}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" className="form-submit" disabled={loading}>
+                {loading ? t("contact.form.submitting") : t("contact.form.submit")}
+              </button>
+            </form>
+          </div>
+
+        </section>
+
+        {/* ==================== FOOTER ==================== */}
+        <footer className="contact-footer">
+          <div className="footer-left">
+            <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
+            <p>복잡한 세계를 위한 AI 플랫폼.<br />데이터를 의사결정으로 전환합니다.</p>
+          </div>
+          <div className="footer-cols">
+            <div className="footer-col">
+              <h4>Company &amp; Product</h4>
+              <Link to="/about">About</Link>
+            </div>
+            <div className="footer-col">
+              <h4>Contact</h4>
+              <Link to="/contact">문의하기</Link>
+            </div>
+          </div>
+        </footer>
+        <div className="footer-bottom">
+          <span>&copy; 2026 NEURALTWIN. All rights reserved.</span>
+          <span><Link to="/privacy">Privacy Policy</Link> · <Link to="/terms">Terms of Service</Link></span>
         </div>
-      </section>
+
+      </div>{/* /page-content */}
+
+      {/* ==================== DIALOGS (기존 기능 100% 보존) ==================== */}
 
       {/* Success Dialog */}
       <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
         <DialogContent className="sm:max-w-md text-center">
           <DialogHeader className="items-center">
-            <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+            <div style={{ width: 64, height: 64, border: '2px solid white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
             <DialogTitle className="text-2xl">{t("contact.successTitle")}</DialogTitle>
             <DialogDescription className="text-base mt-2">
               {t("contact.successMessage")}
@@ -510,7 +434,7 @@ const Contact = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Privacy Consent Dialog */}
+      {/* Privacy Consent Dialog (기존 법적 문서 100% 보존) */}
       <Dialog open={privacyDialogOpen} onOpenChange={setPrivacyDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -519,7 +443,6 @@ const Contact = () => {
           <div className="space-y-5 text-sm text-muted-foreground">
             <p>{t("contact.consent.privacyDoc.intro")}</p>
 
-            {/* 개인정보의 처리 목적 및 수집 항목 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section1Title")}</h4>
               <p className="mb-3">{t("contact.consent.privacyDoc.section1Desc")}</p>
@@ -537,7 +460,6 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* 개인정보의 처리 및 보유 기간 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section2Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section2Desc")}</p>
@@ -549,7 +471,6 @@ const Contact = () => {
               </ul>
             </div>
 
-            {/* 개인정보의 제3자 제공 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section3Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section3Desc")}</p>
@@ -559,13 +480,11 @@ const Contact = () => {
               </ul>
             </div>
 
-            {/* 개인정보처리의 위탁 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section4Title")}</h4>
               <p>{t("contact.consent.privacyDoc.section4Desc")}</p>
             </div>
 
-            {/* 정보주체의 권리·의무 및 행사방법 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section5Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section5Desc")}</p>
@@ -578,7 +497,6 @@ const Contact = () => {
               <p className="mt-2">{t("contact.consent.privacyDoc.rightsNote")}</p>
             </div>
 
-            {/* 개인정보의 파기 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section6Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section6Desc")}</p>
@@ -588,7 +506,6 @@ const Contact = () => {
               </ul>
             </div>
 
-            {/* 개인정보의 안전성 확보조치 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section7Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section7Desc")}</p>
@@ -599,7 +516,6 @@ const Contact = () => {
               </ul>
             </div>
 
-            {/* 개인정보 보호책임자 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section8Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section8Desc")}</p>
@@ -609,7 +525,6 @@ const Contact = () => {
               </ul>
             </div>
 
-            {/* 권익침해 구제방법 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section9Title")}</h4>
               <p className="mb-2">{t("contact.consent.privacyDoc.section9Desc")}</p>
@@ -621,13 +536,11 @@ const Contact = () => {
               </ul>
             </div>
 
-            {/* 개인정보처리방침의 변경 */}
             <div>
               <h4 className="font-semibold text-foreground mb-2">{t("contact.consent.privacyDoc.section10Title")}</h4>
               <p>{t("contact.consent.privacyDoc.section10Desc")}</p>
             </div>
 
-            {/* 시행일 */}
             <div className="pt-2 border-t">
               <p>{t("contact.consent.privacyDoc.effectiveDate")}</p>
               <p>{t("contact.consent.privacyDoc.implementDate")}</p>
@@ -639,7 +552,7 @@ const Contact = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Marketing Consent Dialog */}
+      {/* Marketing Consent Dialog (기존 법적 문서 100% 보존) */}
       <Dialog open={marketingDialogOpen} onOpenChange={setMarketingDialogOpen}>
         <DialogContent className="sm:max-w-xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -672,8 +585,6 @@ const Contact = () => {
           </Button>
         </DialogContent>
       </Dialog>
-
-      <Footer />
     </div>
   );
 };
