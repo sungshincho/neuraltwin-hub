@@ -71,6 +71,11 @@ const Chat = () => {
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
   const [leadSubmitted, setLeadSubmitted] = useState(false);
 
+  // 전체화면 상태
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fsInputValue, setFsInputValue] = useState("");
+  const [fsModeMenuOpen, setFsModeMenuOpen] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -104,6 +109,7 @@ const Chat = () => {
   // 메시지 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    fsMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // 메시지 전송 (비스트리밍 모드)
@@ -222,6 +228,7 @@ const Chat = () => {
   const handleModeSelect = (modeId: string) => {
     setSelectedMode(modeId);
     setModeMenuOpen(false);
+    setFsModeMenuOpen(false);
   };
 
   // 현재 모드 라벨
@@ -283,6 +290,101 @@ const Chat = () => {
 
   return (
     <div className="chat-page">
+      {/* ==================== FULLSCREEN CHAT OVERLAY ==================== */}
+      <div className={`chat-fullscreen${isFullscreen ? " open" : ""}`}>
+        <div className="chat-fs-header">
+          <span className="chat-fs-brand">NEURALTWIN CHAT</span>
+          <button className="chat-fs-minimize" onClick={closeFullscreen}>
+            축소
+          </button>
+        </div>
+        <div className="chat-fs-body">
+          <div className="chat-fs-inner">
+            {messages.length === 0 ? (
+              <div className="chat-fs-empty">대화를 시작해보세요</div>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className={`chat-fs-message ${msg.role}`}>
+                  {msg.content}
+                </div>
+              ))
+            )}
+            {isLoading && (
+              <div className="chat-fs-message assistant">
+                <div className="chat-fs-loading">
+                  <div className="chat-fs-loading-dot"></div>
+                  <div className="chat-fs-loading-dot"></div>
+                  <div className="chat-fs-loading-dot"></div>
+                </div>
+              </div>
+            )}
+            <div ref={fsMessagesEndRef} />
+          </div>
+        </div>
+        <div className="chat-fs-footer">
+          <div className="chat-fs-input-wrapper">
+            <div className="chat-fs-input-box">
+              <div className="chat-fs-input-row">
+                <textarea
+                  ref={fsInputRef}
+                  className="chat-fs-input"
+                  placeholder="무엇이든 물어보세요"
+                  value={fsInputValue}
+                  onChange={(e) => setFsInputValue(e.target.value)}
+                  onKeyDown={handleFsKeyDown}
+                  rows={1}
+                />
+              </div>
+              <div className="chat-fs-input-actions">
+                <div className="chat-fs-input-left">
+                  {/* 모드 드롭다운 */}
+                  <div style={{ position: "relative" }}>
+                    <button
+                      className="chat-mode-dropdown"
+                      onClick={() => setFsModeMenuOpen(!fsModeMenuOpen)}
+                    >
+                      <span className="chat-mode-icon"></span>
+                      <span>{currentModeLabel}</span>
+                      <span className="chat-mode-arrow">▾</span>
+                    </button>
+                    <div className={`chat-mode-menu${fsModeMenuOpen ? " open" : ""}`}>
+                      {CHAT_MODES.map((mode) => (
+                        <button
+                          key={mode.id}
+                          className={`chat-mode-option${selectedMode === mode.id ? " active" : ""}`}
+                          onClick={() => handleModeSelect(mode.id)}
+                        >
+                          {mode.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 전송 버튼 */}
+                <button
+                  className="chat-send-btn"
+                  onClick={handleFsSendMessage}
+                  disabled={!fsInputValue.trim() || isLoading}
+                >
+                  <svg
+                    className="chat-send-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 19V5M5 12l7-7 7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ==================== INTRO ANIMATION ==================== */}
       {!introHidden && (
         <>
@@ -324,9 +426,8 @@ const Chat = () => {
               <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
             </Link>
             <div className="hero-nav-links">
-              <Link to="/contact">소개서요청</Link>
-              <Link to="/auth">로그인</Link>
-              <Link to="/auth">회원가입</Link>
+              <Link to="/product">제품 &amp; 회사소개</Link>
+              <Link to="/contact">문의하기</Link>
             </div>
           </nav>
 
@@ -546,6 +647,27 @@ const Chat = () => {
             <p>NEURALTWIN은 데이터를 의사결정으로 전환하는 AI 플랫폼입니다. 복잡성을 명확함으로.</p>
           </div>
 
+          {/* Timeline Ruler */}
+          <div className="hero-ruler">
+            <div className="ruler-track">
+              {TIMELINE_YEARS.map((year, index) => {
+                const isActive = year === 2026;
+                const leftPercent = (index / (TIMELINE_YEARS.length - 1)) * 100;
+                return (
+                  <div
+                    key={year}
+                    className={`ruler-mark${isActive ? " active" : ""}`}
+                    style={{ left: `${leftPercent}%` }}
+                  >
+                    {isActive && <div className="ruler-dot"></div>}
+                    <div className="line"></div>
+                    <div className="label">{year}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Giant Brand */}
           <div className="hero-brand">
             <h1>NEURALTWIN</h1>
@@ -560,31 +682,23 @@ const Chat = () => {
           </div>
           <div className="footer-cols">
             <div className="footer-col">
-              <h4>Product</h4>
+              <h4>Company &amp; Product</h4>
+              <a href="#">About Us</a>
               <Link to="/product">Platform</Link>
-              <a href="#">Ontology</a>
               <a href="#">AI Engine</a>
-              <a href="#">Security</a>
-            </div>
-            <div className="footer-col">
-              <h4>Company</h4>
-              <a href="#">About</a>
               <a href="#">Careers</a>
-              <a href="#">Blog</a>
-              <a href="#">Press</a>
             </div>
             <div className="footer-col">
-              <h4>Resources</h4>
+              <h4>Contact</h4>
+              <Link to="/contact">문의하기</Link>
               <a href="#">Documentation</a>
-              <a href="#">Case Studies</a>
               <a href="#">Support</a>
-              <Link to="/contact">Contact</Link>
             </div>
           </div>
         </footer>
         <div className="footer-bottom">
           <span>© 2026 NEURALTWIN. All rights reserved.</span>
-          <span>Privacy Policy · Terms of Service</span>
+          <span><Link to="/privacy">Privacy Policy</Link> · <Link to="/terms">Terms of Service</Link></span>
         </div>
       </div>
     </div>
