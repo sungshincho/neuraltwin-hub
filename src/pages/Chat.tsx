@@ -32,6 +32,9 @@ const CHAT_MODES = [
   { id: "precise", label: "정확한" },
 ];
 
+// 타임라인 연도
+const TIMELINE_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
 // 세션 ID 관리
 const getOrCreateSessionId = (): string => {
   const key = "neuraltwin_chat_session_id";
@@ -77,7 +80,9 @@ const Chat = () => {
   const [fsModeMenuOpen, setFsModeMenuOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fsMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fsInputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -286,6 +291,91 @@ const Chat = () => {
   // TASK 9: Lead Form 닫기
   const handleLeadFormClose = () => {
     setShowLeadForm(false);
+  };
+
+  // 전체화면 닫기
+  const closeFullscreen = () => {
+    setIsFullscreen(false);
+  };
+
+  // 전체화면 전용 메시지 전송
+  const handleFsSendMessage = async () => {
+    if (!fsInputValue.trim() || isLoading) return;
+    setInputValue(fsInputValue);
+    setFsInputValue("");
+    // 메인 handleSendMessage 호출을 위해 inputValue 설정 후 트리거
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: fsInputValue.trim(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    abortControllerRef.current = new AbortController();
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const sessionId = getOrCreateSessionId();
+      const history = messages.slice(-20).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.content,
+          sessionId,
+          conversationId,
+          history,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.conversationId) setConversationId(data.conversationId);
+      if (data.suggestions?.length > 0) setSuggestions(data.suggestions);
+      else setSuggestions([]);
+      if (data.showLeadForm && !leadSubmitted) setShowLeadForm(true);
+      if (data.vizDirective) setVizDirective(data.vizDirective);
+
+      if (data.content) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.content,
+          suggestions: data.suggestions,
+          showLeadForm: data.showLeadForm,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다.",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  // 전체화면 전용 키 핸들러
+  const handleFsKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleFsSendMessage();
+    }
   };
 
   return (
