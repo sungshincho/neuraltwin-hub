@@ -84,6 +84,8 @@ const Chat = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fsInputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fsMessagesEndRef = useRef<HTMLDivElement>(null);
+  const fsInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     // 페이지 진입 시 body 스타일 조정
