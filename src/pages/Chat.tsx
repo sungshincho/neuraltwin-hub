@@ -86,6 +86,15 @@ const Chat = () => {
   // 이전 대화 접기/펼치기 상태
   const [expandedOldMessages, setExpandedOldMessages] = useState(false);
 
+  // 플레이스홀더 로테이션
+  const PLACEHOLDERS = [
+    "예: 이번 시즌 VMD 트렌드 알려줘",
+    "예: 주말 프로모션 기획안 작성해줘",
+    "예: 리테일 전환율 업계 평균은?",
+    "예: 매장 일일 보고서 양식 만들어줘",
+  ];
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fsMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -123,6 +132,14 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     fsMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 플레이스홀더 로테이션 (2.5초 간격)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   // 메시지 전송 (비스트리밍 모드)
   const handleSendMessage = async () => {
@@ -532,6 +549,7 @@ const Chat = () => {
               {isLoading && (
                 <div className="chat-fs-message assistant">
                   <div className="chat-fs-loading">
+                    <span className="chat-fs-loading-text">NEURALTWIN 생각 중</span>
                     <div className="chat-fs-loading-dot"></div>
                     <div className="chat-fs-loading-dot"></div>
                     <div className="chat-fs-loading-dot"></div>
@@ -572,7 +590,7 @@ const Chat = () => {
                 <textarea
                   ref={fsInputRef}
                   className="chat-fs-input"
-                  placeholder="무엇이든 물어보세요"
+                  placeholder={PLACEHOLDERS[placeholderIndex]}
                   value={fsInputValue}
                   onChange={(e) => setFsInputValue(e.target.value)}
                   onKeyDown={handleFsKeyDown}
@@ -685,7 +703,7 @@ const Chat = () => {
             >
               {/* 타이틀 + 전체화면 버튼 */}
               <div className="chat-title-row">
-                <h2 className="chat-title">무엇을 도와드릴까요?</h2>
+                <h2 className="chat-title">오늘은 어떤 업무를 도와드릴까요?</h2>
                 <button
                   className="chat-expand-fullscreen-btn"
                   onClick={openFullscreen}
@@ -704,6 +722,7 @@ const Chat = () => {
                 {isLoading && (
                   <div className="chat-message assistant">
                     <div className="chat-loading">
+                      <span className="chat-loading-text">NEURALTWIN 생각 중</span>
                       <div className="chat-loading-dot"></div>
                       <div className="chat-loading-dot"></div>
                       <div className="chat-loading-dot"></div>
@@ -792,7 +811,7 @@ const Chat = () => {
                   <textarea
                     ref={inputRef}
                     className="chat-input"
-                    placeholder="무엇이든 물어보세요"
+                    placeholder={PLACEHOLDERS[placeholderIndex]}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -892,7 +911,7 @@ const Chat = () => {
           {/* Caption */}
           <div className="hero-caption">
             <div className="dot"></div>
-            <p>NEURALTWIN은 데이터를 의사결정으로 전환하는 AI 플랫폼입니다. 복잡성을 명확함으로.</p>
+            <p>리테일 전문 지식으로 학습된 AI 어시스턴트, NEURALTWIN.</p>
           </div>
 
           {/* Timeline Ruler (minor ticks 포함) */}
