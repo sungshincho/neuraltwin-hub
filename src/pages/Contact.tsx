@@ -397,7 +397,7 @@ const Contact = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <Link to="/about">About</Link>
+              <Link to="/about">제품 & 회사소개</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>
