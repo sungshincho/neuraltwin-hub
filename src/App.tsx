@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Product from "./pages/Product";
 import Chat from "./pages/Chat";
+import About from "./pages/About";
 import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
@@ -25,9 +26,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Chat />} />
+          <Route path="/index" element={<Index />} />
           <Route path="/product" element={<Product />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/about" element={<About />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />
