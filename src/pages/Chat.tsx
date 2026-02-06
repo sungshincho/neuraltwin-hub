@@ -146,10 +146,16 @@ const Chat = () => {
     };
   }, []);
 
-  // 메시지 스크롤
+  // 메시지 스크롤 — scrollIntoView 대신 부모 컨테이너의 scrollTop 직접 제어 (페이지 스크롤 전파 방지)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    fsMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollContainer = (ref: React.RefObject<HTMLDivElement | null>) => {
+      const el = ref.current?.parentElement;
+      if (el) {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      }
+    };
+    scrollContainer(messagesEndRef);
+    scrollContainer(fsMessagesEndRef);
   }, [messages]);
 
   // 플레이스홀더 로테이션 (2.5초 간격)
@@ -841,6 +847,79 @@ const Chat = () => {
                   </div>
                 </div>
               )}
+
+              {/* 전체화면: Suggestions 칩 */}
+              {!isLoading && suggestions.length > 0 && (
+                <div className="chat-fs-suggestions">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      className="chat-fs-suggestion-chip"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 전체화면: Lead Capture Form */}
+              {showLeadForm && !leadSubmitted && (
+                <div className="chat-fs-lead-form-container">
+                  <div className="chat-fs-lead-form">
+                    <div className="chat-fs-lead-form-header">
+                      <h4>더 자세한 상담을 원하시나요?</h4>
+                      <button
+                        className="chat-fs-lead-form-close"
+                        onClick={handleLeadFormClose}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="chat-fs-lead-form-desc">
+                      연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.
+                    </p>
+                    <form onSubmit={handleLeadSubmit}>
+                      <input
+                        type="email"
+                        className="chat-fs-lead-input"
+                        placeholder="이메일 *"
+                        value={leadFormData.email}
+                        onChange={(e) =>
+                          setLeadFormData({ ...leadFormData, email: e.target.value })
+                        }
+                        required
+                      />
+                      <input
+                        type="text"
+                        className="chat-fs-lead-input"
+                        placeholder="회사명"
+                        value={leadFormData.company}
+                        onChange={(e) =>
+                          setLeadFormData({ ...leadFormData, company: e.target.value })
+                        }
+                      />
+                      <input
+                        type="text"
+                        className="chat-fs-lead-input"
+                        placeholder="직책/역할"
+                        value={leadFormData.role}
+                        onChange={(e) =>
+                          setLeadFormData({ ...leadFormData, role: e.target.value })
+                        }
+                      />
+                      <button
+                        type="submit"
+                        className="chat-fs-lead-submit"
+                        disabled={isSubmittingLead || !leadFormData.email.trim()}
+                      >
+                        {isSubmittingLead ? "제출 중..." : "상담 요청"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
               <div ref={fsMessagesEndRef} />
             </div>
           </div>

@@ -597,11 +597,12 @@
     text-align: center;
 }
 
-/* 채팅 기록 영역 */
+/* 채팅 기록 영역 — overscroll-behavior로 페이지 스크롤 전파 차단 */
 .chat-messages {
     width: 100%;
     max-height: 300px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     margin-bottom: 24px;
     padding: 16px;
     scrollbar-width: thin;
@@ -1243,6 +1244,7 @@
 .chat-fs-body {
     flex: 1;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 28px 24px;
     scrollbar-width: thin;
     scrollbar-color: var(--gray-700) transparent;
@@ -1292,14 +1294,15 @@
     max-width: 100%;
 }
 
-/* 전체화면 메시지 스타일 */
+/* 전체화면 메시지 스타일 — 축소모드(.chat-message)와 동일하게 통일 */
 .chat-fs-message {
-    padding: 16px 20px;
+    padding: 12px 16px;
     border-radius: 12px;
     max-width: 80%;
-    font-size: 15px;
-    line-height: 1.7;
+    font-size: 14px;
+    line-height: 1.6;
     font-weight: 500;
+    white-space: pre-wrap;
 }
 
 .chat-fs-message.user {
