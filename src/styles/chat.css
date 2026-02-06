@@ -1261,22 +1261,18 @@
     background: rgba(255,255,255,0.1);
 }
 
-/* 전체화면 채팅 오버레이 */
+/* 전체화면 채팅 오버레이 — display:none으로 완전 숨김 */
 .chat-fullscreen {
     position: fixed;
     inset: 0;
     z-index: 9000;
     background: var(--bg);
-    display: flex;
+    display: none;
     flex-direction: column;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 .chat-fullscreen.open {
-    opacity: 1;
-    visibility: visible;
+    display: flex;
 }
 
 /* 전체화면 헤더 */
