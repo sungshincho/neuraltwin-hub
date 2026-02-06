@@ -286,9 +286,13 @@ const Chat = () => {
     }
   };
 
-  // TASK 9: Suggestion 클릭 핸들러
+  // TASK 9: Suggestion 클릭 핸들러 — 현재 모드에 맞는 input state 업데이트
   const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
+    if (isFullscreen) {
+      setFsInputValue(suggestion);
+    } else {
+      setInputValue(suggestion);
+    }
     setSuggestions([]);
   };
 
@@ -554,13 +558,15 @@ const Chat = () => {
     );
   };
 
-  // 전체화면 열기/닫기
+  // 전체화면 열기/닫기 — 모드 전환 시 입력값 동기화
   const openFullscreen = () => {
+    setFsInputValue(inputValue);
     setIsFullscreen(true);
     document.body.style.overflow = "hidden";
   };
 
   const closeFullscreen = () => {
+    setInputValue(fsInputValue);
     setIsFullscreen(false);
     document.body.style.overflow = "";
   };
@@ -634,7 +640,7 @@ const Chat = () => {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다.",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
         };
         setMessages((prev) => [...prev, errorMessage]);
       }
@@ -856,15 +862,15 @@ const Chat = () => {
                 <div className="export-menu-dropdown">
                   <button className="export-menu-item" onClick={() => handleExport('md')}>
                     <span className="export-icon">MD</span>
-                    Markdown (.md)
+                    Markdown
                   </button>
                   <button className="export-menu-item" onClick={() => handleExport('pdf')}>
                     <span className="export-icon">PDF</span>
-                    PDF (.pdf)
+                    PDF
                   </button>
                   <button className="export-menu-item" onClick={() => handleExport('docx')}>
                     <span className="export-icon">DOC</span>
-                    Word (.docx)
+                    Word
                   </button>
                 </div>
               )}
