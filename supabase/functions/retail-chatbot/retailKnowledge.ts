@@ -474,48 +474,198 @@ ATV = UPT × AUR
   },
 
   // ═══════════════════════════════════════════
-  //  11. NEURALTWIN SOLUTION
+  //  11. NEURALTWIN SOLUTION (제품 & 기능)
   // ═══════════════════════════════════════════
   {
     id: "neuraltwin_solution",
-    name: "NEURALTWIN Solution",
-    nameKo: "NEURALTWIN 솔루션",
-    keywords: ["NEURALTWIN", "neural", "solution", "product", "demo", "pricing", "plan", "feature", "service"],
-    keywordsKo: ["뉴럴트윈", "솔루션", "제품", "서비스", "데모", "가격", "요금", "기능", "플랜"],
-    context: `[NEURALTWIN 솔루션 정보]
+    name: "NEURALTWIN Solution & Product",
+    nameKo: "NEURALTWIN 솔루션 & 제품",
+    keywords: ["NEURALTWIN", "neural", "solution", "product", "feature", "service", "LOOP", "CONNECTION", "INTEGRATION", "SIMULATION", "VALIDATION", "MANAGEMENT", "NEURALSENSE", "sensor", "hardware", "digital twin studio", "3D", "roadmap", "auto-ordering", "assistant"],
+    keywordsKo: ["뉴럴트윈", "솔루션", "제품", "기능", "서비스", "루프", "연결", "통합", "시뮬레이션", "검증", "관리", "뉴럴센스", "센서", "하드웨어", "디지털 트윈 스튜디오", "로드맵", "자동 발주"],
+    context: `[NEURALTWIN 제품 상세 — 5-BUSINESS LOOP SYSTEM]
 
-■ 핵심 가치 제안
-"왜 안 팔리는지, 어떻게 더 팔 수 있는지" — 데이터로 답하는 리테일 인텔리전스
+데이터 수집부터 ROI 증명까지, 완벽하게 연결된 5단계 비즈니스 인텔리전스 루프.
 
-■ 제품 구성
-1. NEURALSENSE: IoT 센서 기반 매장 데이터 수집 시스템
-   - WiFi/BLE 센서로 고객 동선·체류시간 실시간 추적
-   - 비식별 데이터 처리 (개인정보 안전)
+■ LOOP 01. CONNECTION — 데이터 컨트롤 타워
+- NEURALSENSE 하드웨어로 방문객 데이터 직접 수집 (BLE, WiFi, Computer Vision AI, LiDAR)
+- 실시간 데이터 연동: 초당 37,000건 이상 수집·처리
+- 50+ 레거시 시스템 완벽 연동: POS, CRM, ERP, WMS, 센서 등 기존 모든 시스템
+- Data Quality 100/100 자동 헬스체크, 자동 ETL 처리
+- Single Source of Truth: 전사 데이터 실시간 통일성 보장
 
-2. 디지털 트윈 스튜디오: 3D 매장 시각화 & 시뮬레이션
-   - 매장의 가상 복제본에서 레이아웃 최적화
-   - AI 기반 "What-if" 시나리오 검증
+■ LOOP 02. INTEGRATION & VISUALIZATION — 인사이트 허브
+- 매출·상품·고객·공간 현황 한눈에 파악, 개요→매장→상품→고객 드릴다운 분석
+- 매출 트렌드(일별/주별/월별), 고객 트래픽(시간대별), 히트맵(밀집도·체류시간)
+- 퍼널 분석(방문→관심→고려→구매), 상품 실적, 고객 세그먼트 분석
+- AI가 감지한 Critical Alert 알림으로 즉시 실행 플랜 제공
 
-3. AI 인사이트: 데이터 기반 의사결정 지원
-   - 존별 히트맵, KPI 대시보드, AI 추천
-   - 매출 예측, 프로모션 효과 분석
+■ LOOP 03. SIMULATION & OPTIMIZATION — 디지털 트윈 스튜디오
+- 실제 매장 3D 정밀 구현, 실제 데이터 기반 시뮬레이션
+- AI 레이아웃 최적화: 가구/상품 배치 AI 제안 (예: "우산 매대 1.5m 전진 → 유입·체류↑, 매출 +15.3%")
+- A/B 테스트, 고객 동선 예측, 트래픽·혼잡도 시뮬레이션
+- 인력 배치 최적화, 동적 프로모션 전략 제안
+- 매출 예측: AI 기반 94% 정확도
 
-■ PoC 실증 결과
-- 480+ 방문객 추적
-- 735,000+ 데이터 포인트 수집
-- 3,000,000+ 시뮬레이션 수행
+■ LOOP 04. VALIDATION — ROI 측정·증명
+- Pre-Implementation: 디지털트윈에서 예상 효과 사전 검증
+- Implementation: 시뮬레이션 결과를 실제 매장에 적용
+- Post-Implementation: 예측치(Forecast) vs 실측치(Actual) 실시간 비교
+- ROI·전환율·매출 변화 라이브 트래킹, Before/After 시각화
+- 검증 실적: ROI 1,700%, 전환율 +8.3%, 매출 +4.7% (실제 고객사)
 
-■ 기대 효과
-- 매출 8~12% 증가 (레이아웃 최적화 + 데이터 기반 의사결정)
-- 인건비 5~10% 최적화 (트래픽 연동 스케줄링)
-- 리모델링 실패 비용 70~80% 절감 (사전 시뮬레이션)
+■ LOOP 05. MANAGEMENT — 설정 & 보안
+- Access Control: 본사(HQ), 매니저, 매장 담당자 등 역할 기반 권한 분리
+- Scalability: 클릭 한 번으로 전 세계 매장 추가·관리
+- Security: 고객사 개별 데이터 스토리지, ISO 27001 & GDPR Ready
 
-(참고: 구체적 요금이나 기술 세부사항 질문 시 데모 신청을 안내할 것)`,
-    relatedTopics: ["digital_twin", "retail_tech", "data_kpi"]
+■ NEURALSENSE 하드웨어
+- 수집 방식: WiFi / BLE / LiDAR / Computer Vision AI + 카메라
+- 수집 데이터: 입장 카운팅, 고객 동선 트래킹, 체류 시간, 상품 상호작용
+- 간편 설치 (별도 인프라 불필요), 가격은 별도 문의
+
+■ 비즈니스 임팩트 (검증 수치)
+| 항목 | Before → After |
+|------|--------------|
+| 반복 업무 시간 | 주 10시간 → 주 1시간 |
+| 의사결정 소요 | 2주 → 3일 |
+| 전략 변경 실패율 | 35% → 12% |
+| 고객 유입 | +15~25% |
+| 구매 전환율 | +10~20% |
+| 객단가 | +8~15% |
+
+■ 기술 스택
+- Frontend: React 18, TypeScript, Tailwind CSS
+- 3D: Three.js, React Three Fiber
+- Backend: Supabase Edge Functions (Deno)
+- DB: PostgreSQL + PostGIS (121개 테이블)
+- AI: 자체 AI 추론 모델 + Gemini 2.5 Flash
+- 하드웨어: NEURALSENSE (WiFi/BLE/LiDAR)
+- 보안: ISO 27001 & GDPR Ready
+
+■ 로드맵
+- NOW: 데이터 통합 & AI 시뮬레이션 (현재)
+- 2026 Q3: Auto-Ordering System (AI 수요 예측 기반 자동 발주)
+- 2026 Q4: Generative AI Assistant (자연어 명령 업무 수행)`,
+    relatedTopics: ["neuraltwin_company", "neuraltwin_engage", "digital_twin", "retail_tech"]
   },
 
   // ═══════════════════════════════════════════
-  //  12. GENERAL / OTHERS
+  //  12. NEURALTWIN COMPANY (회사 소개)
+  // ═══════════════════════════════════════════
+  {
+    id: "neuraltwin_company",
+    name: "NEURALTWIN Company",
+    nameKo: "NEURALTWIN 회사 소개",
+    keywords: ["NEURALTWIN", "company", "about", "team", "vision", "mission", "founded", "who", "office", "introduce", "background"],
+    keywordsKo: ["뉴럴트윈", "회사", "소개", "팀", "비전", "미션", "설립", "본사", "누구", "어떤 회사", "배경", "창립"],
+    context: `[NEURALTWIN 회사 정보]
+
+■ 회사 개요
+- 회사명: NEURALTWIN (뉴럴트윈)
+- 설립: 2025년
+- 본사: 서울특별시 강남구 신사동
+- 팀: 4명 (엔지니어 2명, 리테일 전문가 1명, AI/데이터 1명)
+- 슬로건: "See the unseen. Digitize the invisible."
+
+■ 비전 & 미션
+- 비전: "모든 오프라인 매장에 데이터 기반 의사결정을 가능케함으로 고객사의 매출을 향상시키고, 비용을 감소시킨다" — 궁극의 AI 리테일 인텔리전스
+- 미션: 파편화된 리테일 데이터를 하나로 통합, AI 기반 시뮬레이션과 최적화로 고객사 매출 향상·비용 감소
+- 핵심 가치: 고객사의 의사결정이 더 쉽고, 더 빠르며, 더 정확해지도록
+
+■ NEURALTWIN이 해결하는 문제
+오프라인 리테일은 POS, 센서, CRM, ERP, WMS 등 파편화된 데이터 시스템(Data Silos)으로:
+- 데이터 단절 → 비효율적 의사결정 → 매출 기회 손실
+- 5인 관리팀 기준, 반복·비효율 데이터 분석 → 운영 비용 낭비
+- 정작 매출 향상·비용 감소의 "중요한" 일을 제대로 못하는 상황
+→ NEURALTWIN은 이 모든 파편 데이터를 하나의 운영체제(OS)로 통합하는 "단 하나의 솔루션"
+
+■ 타겟 고객 — 업종별
+| 업종 | 적용 예시 |
+|------|----------|
+| 패션 리테일 | 레이아웃 최적화, 시즌별 배치, VMD 효과 측정 |
+| 스포츠/아웃도어 | 고객 동선 기반 체험존 최적화, 신상품 론칭 효과 |
+| 럭셔리/프리미엄 | VIP 동선 분석, 개인화 서비스 |
+| 라이프스타일 | 대형 매장 존별 효율, 인력 배치 최적화 |
+| 편의점/마트 | 상품 회전율 기반 배치, 피크타임 혼잡도 |
+| F&B | 좌석 배치, 주문 동선, 피크타임 인력 운영 |
+
+■ 타겟 고객 — 규모별
+- 싱글 매장: 1개 매장 데이터 기반 운영 전환
+- 멀티 매장: 3~20개 매장 통합 관리·비교 분석
+- 엔터프라이즈: 50+ 매장, 본사-매장 간 데이터 거버넌스, 글로벌 확장
+
+■ 타겟 고객 — 직무별
+| 역할 | 주요 활용 |
+|------|---------|
+| C-Level | 전사 KPI 대시보드, ROI 리포트, 전략 의사결정 |
+| 매장 관리자/점장 | 일일 모니터링, 레이아웃 변경, AI 제안 실행 |
+| VMD/MD | 상품 배치 최적화, 디스플레이 효과 분석, A/B 테스트 |
+| 데이터 분석가 | 심층 인사이트, 트렌드 리포트, 세그먼트 분석 |
+| 운영/기획팀 | 인력 스케줄링, 프로모션 기획, 비용 최적화 |`,
+    relatedTopics: ["neuraltwin_solution", "neuraltwin_engage", "general_retail"]
+  },
+
+  // ═══════════════════════════════════════════
+  //  13. NEURALTWIN ENGAGEMENT (도입 & 문의)
+  // ═══════════════════════════════════════════
+  {
+    id: "neuraltwin_engage",
+    name: "NEURALTWIN Engagement & Onboarding",
+    nameKo: "NEURALTWIN 도입 & 문의",
+    keywords: ["pricing", "plan", "cost", "demo", "trial", "pilot", "onboarding", "start", "implement", "case study", "success", "ROI", "contact", "email", "subscribe", "starter", "professional", "enterprise", "free"],
+    keywordsKo: ["가격", "요금", "비용", "플랜", "데모", "체험", "무료", "파일럿", "도입", "온보딩", "시작", "구현", "사례", "성공", "고객사", "문의", "연락", "이메일", "구독", "스타터", "프로페셔널", "엔터프라이즈"],
+    context: `[NEURALTWIN 도입 & 문의 정보]
+
+■ 요금제 (별도 문의 안내)
+| 플랜 | 포함 내용 |
+|------|----------|
+| Starter | 매장 1개, 인사이트 허브, 기본 분석 |
+| Professional | 매장 3~5개, 디지털 트윈 스튜디오, AI 시뮬레이션, ROI 트래킹 |
+| Enterprise | 무제한 매장, 전용 데이터 스토리지, 커스텀 대시보드, 전담 CSM, SLA 보장 |
+- 모든 플랜에 NEURALSENSE 하드웨어 포함
+- 연간 계약 시 할인, 무료 체험/파일럿 프로그램 제공
+- 정확한 견적은 매장 규모와 요구사항에 따라 상이 → 무료 상담을 통해 맞춤 견적 안내
+
+■ 온보딩 프로세스 — "단 12시간" 적응
+| 단계 | 기간 | 내용 |
+|------|------|------|
+| Zero-Friction Training | Day 1(오전) | NEURALSENSE 설치, 30분 온라인 세션, 고객사별 커뮤니케이션 채널 개설 |
+| AI Calibration & Data Capturing | Day 1~7 | 동선 데이터 수집·정확도 교정, API 연동 데이터 학습 |
+| Routine & Application | Week 2~ | 업무 루틴 자동화, 실시간 데이터 수집·분석, 비즈니스 운영 |
+- 복잡한 매뉴얼 교육 없이 직관적 UI/UX와 AI 가이드로 즉시 투입
+
+■ 도입 프로세스 (PARTNERSHIP)
+| 단계 | 기간 | 내용 |
+|------|------|------|
+| STEP 01. DISCOVERY | Week 1 | 매장 실사, 데이터 인프라 진단·분석 |
+| STEP 02. PILOT | 1~3 Weeks | SW & HW 도입·설치, 매장 ROI 설정·검증 |
+| STEP 03. SCALE | 이후 | 확대 적용, 커스텀 대시보드, AI 최적화 |
+
+■ 고객 사례 (SUCCESS STORIES)
+| 고객사 | 업종 | 성과 |
+|--------|------|------|
+| 글로벌 골프웨어 'A' | 스포츠/골프 | 3M+ 데이터 포인트 수집, 데이터 기반 매장 운영 전환 |
+| 글로벌 패션 'B' | 패션 | 480x 오프라인 동선 데이터 수집, 이전 불가능했던 행동 분석 실현 |
+| 글로벌 영캐주얼 'C' | 영캐주얼 | 데이터 정확성 +17% 향상, 신뢰 가능한 의사결정 기반 확보 |
+| 글로벌 아웃도어 'D' | 아웃도어 | 본사↔매장 커뮤니케이션 24시간 → 1분으로 단축 |
+
+■ 자주 묻는 질문 (주요 FAQ)
+- "기존 POS/ERP 연동 가능?" → 50+ 레거시 시스템 완벽 연동
+- "설치 기간?" → NEURALSENSE 설치 + 30분 튜토리얼, 적응 약 12시간
+- "데이터 보안?" → ISO 27001 & GDPR, 개별 스토리지, 역할 기반 권한
+- "해외 매장?" → 글로벌 확장 설계, 다국어·다통화 지원
+- "ROI 측정?" → 예측치 vs 실측치 실시간 비교, 실제 ROI 1,700% 달성
+- "하드웨어 필수?" → NEURALSENSE 기본 제공, 기존 센서/카메라 연동도 가능
+
+■ 연락처
+- 일반 문의/서비스 소개서/데모 신청: neuraltwin.hq@neuraltwin.io 또는 웹사이트 폼
+- 홈페이지: https://neuraltwin.website
+- 응답 시간: 24시간 내 실행 플랜 전달`,
+    relatedTopics: ["neuraltwin_solution", "neuraltwin_company", "digital_twin"]
+  },
+
+  // ═══════════════════════════════════════════
+  //  14. GENERAL / OTHERS
   // ═══════════════════════════════════════════
   {
     id: "general_retail",
