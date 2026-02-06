@@ -8,9 +8,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { buildScene, disposeScene, lerpVector3, type SceneObjects } from './sceneBuilder';
+import { buildScene, disposeScene, lerpVector3, applyParamsToConfig, type SceneObjects } from './sceneBuilder';
 import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeData';
-import type { VizState, VizAnnotation } from './vizDirectiveTypes';
+import type { VizState, VizAnnotation, StoreParams, ZoneScale } from './vizDirectiveTypes';
 
 // ═══════════════════════════════════════════
 //  Props 인터페이스
@@ -22,6 +22,12 @@ interface StoreVisualizerProps {
   annotations: VizAnnotation[];
   showFlow: boolean;
   className?: string;
+
+  /** 파라메트릭 매장 설정 (PHASE H) */
+  storeParams?: StoreParams;
+
+  /** 존별 크기 조정 (PHASE H) */
+  zoneScale?: ZoneScale;
 }
 
 // ═══════════════════════════════════════════
@@ -46,7 +52,9 @@ export default function StoreVisualizer({
   highlights = [],
   annotations = [],
   showFlow,
-  className = ''
+  className = '',
+  storeParams,
+  zoneScale
 }: StoreVisualizerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -222,11 +230,17 @@ export default function StoreVisualizer({
     const container = containerRef.current;
     const canvas = canvasRef.current;
 
-    // 씬 빌드
+    // 파라메트릭 설정 적용 (PHASE H)
+    const sceneConfig = (storeParams || zoneScale)
+      ? applyParamsToConfig(storeParams, zoneScale)
+      : undefined;
+
+    // 씬 빌드 (파라메트릭 config 전달)
     const sceneObjects = buildScene(
       canvas,
       container.clientWidth,
-      container.clientHeight
+      container.clientHeight,
+      sceneConfig
     );
     sceneRef.current = sceneObjects;
 
@@ -288,7 +302,7 @@ export default function StoreVisualizer({
         sceneRef.current = null;
       }
     };
-  }, [animate]);
+  }, [animate, storeParams, zoneScale]);
 
   // ─────────────────────────────────────────
   // vizState 변경 시 카메라 업데이트

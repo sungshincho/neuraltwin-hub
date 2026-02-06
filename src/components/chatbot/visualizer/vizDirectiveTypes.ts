@@ -39,6 +39,41 @@ export interface VizKPI {
 export type CustomerStage = 'entry' | 'exploration' | 'purchase';
 
 // ═══════════════════════════════════════════
+//  파라메트릭 스토어 설정 (PHASE H)
+// ═══════════════════════════════════════════
+
+/**
+ * 매장 크기 파라미터
+ * AI가 사용자 언급 (예: "200평 매장")에 따라 동적 생성
+ */
+export interface StoreParams {
+  /** 매장 가로 크기 (m) - 기본값 20 */
+  storeWidth?: number;
+
+  /** 매장 세로 크기 (m) - 기본값 20 */
+  storeDepth?: number;
+
+  /** 매장 높이 (m) - 기본값 4 */
+  storeHeight?: number;
+
+  /** 피팅룸 개수 - 기본값 4 */
+  fittingRoomCount?: number;
+}
+
+/**
+ * 존별 크기 조정 배율
+ * 특정 존이 크거나 작다고 언급 시 적용
+ */
+export interface ZoneScale {
+  [zoneId: string]: {
+    /** 가로 배율 (0.5 ~ 2.0) */
+    scaleX?: number;
+    /** 세로 배율 (0.5 ~ 2.0) */
+    scaleZ?: number;
+  };
+}
+
+// ═══════════════════════════════════════════
 //  메인 VizDirective 타입
 // ═══════════════════════════════════════════
 
@@ -60,6 +95,12 @@ export interface VizDirective {
 
   /** 단계 프로그레스 (선택) */
   stage?: CustomerStage;
+
+  /** 파라메트릭 매장 설정 (PHASE H) */
+  storeParams?: StoreParams;
+
+  /** 존별 크기 조정 (PHASE H) */
+  zoneScale?: ZoneScale;
 }
 
 // ═══════════════════════════════════════════

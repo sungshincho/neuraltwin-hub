@@ -15,7 +15,9 @@ export type {
   VizAnnotation,
   VizKPI,
   VizDirective,
-  CustomerStage
+  CustomerStage,
+  StoreParams,   // PHASE H
+  ZoneScale      // PHASE H
 } from './vizDirectiveTypes';
 
 // 유틸리티 함수
@@ -45,3 +47,11 @@ export type {
   CameraPreset,
   StoreConfig
 } from './storeData';
+
+// 씬 빌더 유틸리티 (PHASE H)
+export {
+  createDefaultSceneConfig,
+  applyParamsToConfig
+} from './sceneBuilder';
+
+export type { SceneConfig } from './sceneBuilder';

@@ -11,8 +11,116 @@ import {
   CAMERA_PRESETS,
   FURNITURE_DATA,
   FLOW_CURVE_POINTS,
-  COLORS
+  COLORS,
+  type ZoneConfig,
+  type FurnitureConfig,
+  type CameraPreset
 } from './storeData';
+import type { StoreParams, ZoneScale } from './vizDirectiveTypes';
+
+// ═══════════════════════════════════════════
+//  파라메트릭 씬 설정 (PHASE H)
+// ═══════════════════════════════════════════
+
+/**
+ * 씬 빌드에 필요한 모든 설정
+ * storeParams/zoneScale이 전달되면 기본값 대신 사용
+ */
+export interface SceneConfig {
+  // 매장 기본 치수
+  storeWidth: number;
+  storeDepth: number;
+  storeHeight: number;
+
+  // 존 설정 (스케일 적용 후)
+  zones: Record<string, ZoneConfig>;
+
+  // 가구 설정
+  furniture: FurnitureConfig[];
+
+  // 동선 포인트
+  flowCurvePoints: [number, number, number][];
+
+  // 카메라 프리셋
+  cameraPresets: Record<string, CameraPreset>;
+
+  // 시각 파라미터
+  gridSize: number;
+  gridDivisions: number;
+  particleCount: number;
+  particleBounds: number;
+  fogDensity: number;
+}
+
+/**
+ * 기본 씬 설정 생성 (STORE 데이터 기반)
+ */
+export function createDefaultSceneConfig(): SceneConfig {
+  return {
+    storeWidth: STORE.width,
+    storeDepth: STORE.depth,
+    storeHeight: STORE.height,
+    zones: STORE.zones,
+    furniture: FURNITURE_DATA,
+    flowCurvePoints: FLOW_CURVE_POINTS,
+    cameraPresets: CAMERA_PRESETS,
+    gridSize: 30,
+    gridDivisions: 30,
+    particleCount: 200,
+    particleBounds: 40,
+    fogDensity: 0.012
+  };
+}
+
+/**
+ * storeParams + zoneScale을 적용하여 SceneConfig 생성
+ */
+export function applyParamsToConfig(
+  storeParams?: StoreParams,
+  zoneScale?: ZoneScale
+): SceneConfig {
+  const baseConfig = createDefaultSceneConfig();
+
+  // storeParams 적용
+  if (storeParams) {
+    if (storeParams.storeWidth) {
+      const widthRatio = storeParams.storeWidth / STORE.width;
+      baseConfig.storeWidth = storeParams.storeWidth;
+      baseConfig.gridSize = Math.max(30, storeParams.storeWidth * 1.5);
+      baseConfig.particleBounds = Math.max(40, storeParams.storeWidth * 2);
+    }
+    if (storeParams.storeDepth) {
+      const depthRatio = storeParams.storeDepth / STORE.depth;
+      baseConfig.storeDepth = storeParams.storeDepth;
+      baseConfig.gridSize = Math.max(baseConfig.gridSize, storeParams.storeDepth * 1.5);
+      baseConfig.particleBounds = Math.max(baseConfig.particleBounds, storeParams.storeDepth * 2);
+    }
+    if (storeParams.storeHeight) {
+      baseConfig.storeHeight = storeParams.storeHeight;
+    }
+    baseConfig.gridDivisions = Math.floor(baseConfig.gridSize);
+  }
+
+  // zoneScale 적용
+  if (zoneScale) {
+    const scaledZones: Record<string, ZoneConfig> = {};
+    for (const [zoneId, zone] of Object.entries(baseConfig.zones)) {
+      const scale = zoneScale[zoneId];
+      if (scale) {
+        scaledZones[zoneId] = {
+          ...zone,
+          w: zone.w * (scale.scaleX ?? 1),
+          d: zone.d * (scale.scaleZ ?? 1)
+        };
+      } else {
+        scaledZones[zoneId] = zone;
+      }
+    }
+    baseConfig.zones = scaledZones;
+  }
+
+  return baseConfig;
+}
 
 // ═══════════════════════════════════════════
 //  반환 타입 정의
@@ -111,26 +219,31 @@ function createZoneBorder(
 export function buildScene(
   canvas: HTMLCanvasElement,
   width: number,
-  height: number
+  height: number,
+  config?: SceneConfig
 ): SceneObjects {
+  // 설정 적용 (기본값 또는 전달된 config)
+  const cfg = config ?? createDefaultSceneConfig();
+
   // ─────────────────────────────────────────
   // 1. Scene 설정
   // ─────────────────────────────────────────
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(COLORS.background);
-  scene.fog = new THREE.FogExp2(COLORS.fog, 0.012);  // 더 넓은 시야
+  scene.fog = new THREE.FogExp2(COLORS.fog, cfg.fogDensity);
 
   // ─────────────────────────────────────────
-  // 2. Camera 설정
+  // 2. Camera 설정 (매장 크기에 맞게 거리 조정)
   // ─────────────────────────────────────────
+  const cameraDistance = Math.max(cfg.storeWidth, cfg.storeDepth) * 1.1;
   const camera = new THREE.PerspectiveCamera(
-    CAMERA_PRESETS.overview.fov,
+    cfg.cameraPresets.overview.fov,
     width / height,
     0.1,
-    100
+    cameraDistance * 5
   );
-  camera.position.set(...CAMERA_PRESETS.overview.pos);
-  camera.lookAt(new THREE.Vector3(...CAMERA_PRESETS.overview.target));
+  camera.position.set(...cfg.cameraPresets.overview.pos);
+  camera.lookAt(new THREE.Vector3(...cfg.cameraPresets.overview.target));
 
   // ─────────────────────────────────────────
   // 3. Renderer 설정
@@ -144,13 +257,18 @@ export function buildScene(
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   // ─────────────────────────────────────────
-  // 4. Grid Helper
+  // 4. Grid Helper (파라메트릭)
   // ─────────────────────────────────────────
-  const gridHelper = new THREE.GridHelper(30, 30, COLORS.grid.primary, COLORS.grid.secondary);
+  const gridHelper = new THREE.GridHelper(
+    cfg.gridSize,
+    cfg.gridDivisions,
+    COLORS.grid.primary,
+    COLORS.grid.secondary
+  );
   scene.add(gridHelper);
 
   // ─────────────────────────────────────────
-  // 5. 매장 외벽
+  // 5. 매장 외벽 (파라메트릭)
   // ─────────────────────────────────────────
   const wallMaterial = new THREE.LineBasicMaterial({
     color: COLORS.walls,
@@ -159,16 +277,16 @@ export function buildScene(
   });
 
   const storeWalls = createWireBox(
-    STORE.width,
-    STORE.height,
-    STORE.depth,
+    cfg.storeWidth,
+    cfg.storeHeight,
+    cfg.storeDepth,
     wallMaterial,
-    new THREE.Vector3(0, STORE.height / 2, 0)
+    new THREE.Vector3(0, cfg.storeHeight / 2, 0)
   );
   scene.add(storeWalls);
 
   // ─────────────────────────────────────────
-  // 6. 입구 표시
+  // 6. 입구 표시 (파라메트릭)
   // ─────────────────────────────────────────
   const entranceMaterial = new THREE.LineBasicMaterial({
     color: COLORS.entrance,
@@ -176,16 +294,17 @@ export function buildScene(
     opacity: 0.8
   });
 
-  // 입구 게이트 (바닥)
-  const entranceGateGeometry = new THREE.PlaneGeometry(4, 1);
+  // 입구 게이트 (바닥) - 매장 크기에 비례
+  const entranceWidth = Math.min(4, cfg.storeWidth * 0.2);
+  const entranceGateGeometry = new THREE.PlaneGeometry(entranceWidth, 1);
   const entranceGateEdges = new THREE.EdgesGeometry(entranceGateGeometry);
   const entranceGate = new THREE.LineSegments(entranceGateEdges, entranceMaterial.clone());
   entranceGate.rotation.x = -Math.PI / 2;
-  entranceGate.position.set(0, 0.02, STORE.depth / 2 - 0.5);
+  entranceGate.position.set(0, 0.02, cfg.storeDepth / 2 - 0.5);
   scene.add(entranceGate);
 
   // ─────────────────────────────────────────
-  // 7. 가구 (와이어프레임)
+  // 7. 가구 (와이어프레임, 파라메트릭)
   // ─────────────────────────────────────────
   const furnitureMaterial = new THREE.LineBasicMaterial({
     color: COLORS.furniture,
@@ -195,13 +314,21 @@ export function buildScene(
 
   const furnitureObjects: THREE.LineSegments[] = [];
 
-  FURNITURE_DATA.forEach((furniture) => {
+  // 매장 크기 비율 계산 (가구 위치 조정용)
+  const widthRatio = cfg.storeWidth / STORE.width;
+  const depthRatio = cfg.storeDepth / STORE.depth;
+
+  cfg.furniture.forEach((furniture) => {
+    // 가구 위치를 매장 크기 비율에 맞게 조정
+    const adjustedX = furniture.x * widthRatio;
+    const adjustedZ = furniture.z * depthRatio;
+
     const obj = createWireBox(
       furniture.w,
       furniture.h,
       furniture.d,
       furnitureMaterial,
-      new THREE.Vector3(furniture.x, furniture.h / 2, furniture.z)
+      new THREE.Vector3(adjustedX, furniture.h / 2, adjustedZ)
     );
     obj.userData.label = furniture.label;
     scene.add(obj);
@@ -209,12 +336,15 @@ export function buildScene(
   });
 
   // ─────────────────────────────────────────
-  // 8. 존 하이라이트 플레인 + 테두리
+  // 8. 존 하이라이트 플레인 + 테두리 (파라메트릭)
   // ─────────────────────────────────────────
   const zonePlanes: Record<string, ZonePlaneObjects> = {};
 
-  Object.entries(STORE.zones).forEach(([zoneId, zone]) => {
-    const position = new THREE.Vector3(zone.x, 0, zone.z);
+  Object.entries(cfg.zones).forEach(([zoneId, zone]) => {
+    // 존 위치를 매장 크기 비율에 맞게 조정
+    const adjustedX = zone.x * widthRatio;
+    const adjustedZ = zone.z * depthRatio;
+    const position = new THREE.Vector3(adjustedX, 0, adjustedZ);
 
     const plane = createZonePlane(zone.w, zone.d, zone.color, position);
     plane.userData.zoneId = zoneId;
@@ -229,10 +359,11 @@ export function buildScene(
   });
 
   // ─────────────────────────────────────────
-  // 9. 고객 동선 (CatmullRomCurve3)
+  // 9. 고객 동선 (CatmullRomCurve3, 파라메트릭)
   // ─────────────────────────────────────────
-  const flowCurvePoints = FLOW_CURVE_POINTS.map(
-    (p) => new THREE.Vector3(p[0], p[1], p[2])
+  // 동선 포인트를 매장 크기에 맞게 조정
+  const flowCurvePoints = cfg.flowCurvePoints.map(
+    (p) => new THREE.Vector3(p[0] * widthRatio, p[1], p[2] * depthRatio)
   );
   const flowCurve = new THREE.CatmullRomCurve3(flowCurvePoints);
 
@@ -264,15 +395,15 @@ export function buildScene(
   }
 
   // ─────────────────────────────────────────
-  // 10. 배경 파티클
+  // 10. 배경 파티클 (파라메트릭)
   // ─────────────────────────────────────────
-  const particleCount = 200;
+  const particleCount = cfg.particleCount;
   const particlePositions = new Float32Array(particleCount * 3);
 
   for (let i = 0; i < particleCount; i++) {
-    particlePositions[i * 3] = (Math.random() - 0.5) * 40;
+    particlePositions[i * 3] = (Math.random() - 0.5) * cfg.particleBounds;
     particlePositions[i * 3 + 1] = Math.random() * 15;
-    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 40;
+    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * cfg.particleBounds;
   }
 
   const particleGeometry = new THREE.BufferGeometry();
