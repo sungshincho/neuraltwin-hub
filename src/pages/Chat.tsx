@@ -32,8 +32,8 @@ const CHAT_MODES = [
   { id: "precise", label: "정확한" },
 ];
 
-// 타임라인 년도 데이터
-const TIMELINE_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+// 타임라인 연도
+const TIMELINE_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
 
 // 세션 ID 관리
 const getOrCreateSessionId = (): string => {
@@ -80,7 +80,9 @@ const Chat = () => {
   const [fsModeMenuOpen, setFsModeMenuOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fsMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fsInputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fsMessagesEndRef = useRef<HTMLDivElement>(null);
   const fsInputRef = useRef<HTMLTextAreaElement>(null);
@@ -293,39 +295,29 @@ const Chat = () => {
     setShowLeadForm(false);
   };
 
-  // 전체화면 열기
-  const openFullscreen = () => {
-    setIsFullscreen(true);
-    setFsInputValue(inputValue);
-  };
-
   // 전체화면 닫기
   const closeFullscreen = () => {
     setIsFullscreen(false);
-    setInputValue(fsInputValue);
   };
 
-  // 전체화면 메시지 전송
+  // 전체화면 전용 메시지 전송
   const handleFsSendMessage = async () => {
     if (!fsInputValue.trim() || isLoading) return;
-
+    setInputValue(fsInputValue);
+    setFsInputValue("");
+    // 메인 handleSendMessage 호출을 위해 inputValue 설정 후 트리거
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: fsInputValue.trim(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
-    setFsInputValue("");
     setIsLoading(true);
 
-    // AbortController 생성
     abortControllerRef.current = new AbortController();
-
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const sessionId = getOrCreateSessionId();
-
       const history = messages.slice(-20).map((m) => ({
         role: m.role,
         content: m.content,
@@ -333,9 +325,7 @@ const Chat = () => {
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.content,
           sessionId,
@@ -351,24 +341,11 @@ const Chat = () => {
       }
 
       const data = await response.json();
-
-      if (data.conversationId) {
-        setConversationId(data.conversationId);
-      }
-
-      if (data.suggestions && data.suggestions.length > 0) {
-        setSuggestions(data.suggestions);
-      } else {
-        setSuggestions([]);
-      }
-
-      if (data.showLeadForm && !leadSubmitted) {
-        setShowLeadForm(true);
-      }
-
-      if (data.vizDirective) {
-        setVizDirective(data.vizDirective);
-      }
+      if (data.conversationId) setConversationId(data.conversationId);
+      if (data.suggestions?.length > 0) setSuggestions(data.suggestions);
+      else setSuggestions([]);
+      if (data.showLeadForm && !leadSubmitted) setShowLeadForm(true);
+      if (data.vizDirective) setVizDirective(data.vizDirective);
 
       if (data.content) {
         const assistantMessage: Message = {
@@ -381,14 +358,11 @@ const Chat = () => {
         setMessages((prev) => [...prev, assistantMessage]);
       }
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        console.log("Request aborted");
-      } else {
-        console.error("Chat error:", error);
+      if (error instanceof Error && error.name !== "AbortError") {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다.",
         };
         setMessages((prev) => [...prev, errorMessage]);
       }
@@ -398,20 +372,13 @@ const Chat = () => {
     }
   };
 
-  // 전체화면 Enter 키 처리
+  // 전체화면 전용 키 핸들러
   const handleFsKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleFsSendMessage();
     }
   };
-
-  // 전체화면 열릴 때 입력창 포커스
-  useEffect(() => {
-    if (isFullscreen && fsInputRef.current) {
-      fsInputRef.current.focus();
-    }
-  }, [isFullscreen]);
 
   return (
     <div className="chat-page">
