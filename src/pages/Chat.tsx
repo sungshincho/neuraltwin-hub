@@ -514,29 +514,57 @@ const Chat = () => {
             축소
           </button>
         </div>
-        <div className="chat-fs-body" id="chat-fs-body">
-          <div className="chat-fs-inner">
-            {messages.length === 0 ? (
-              <div className="chat-fs-empty">대화를 시작해보세요</div>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className={`chat-fs-message ${msg.role}`}>
-                  {msg.content}
+
+        {/* body 영역: vizDirective 유무에 따라 분할 */}
+        <div className={`chat-fs-body-wrapper${vizDirective ? " with-viz" : ""}`}>
+          {/* 좌측: 채팅 메시지 */}
+          <div className="chat-fs-body" id="chat-fs-body">
+            <div className="chat-fs-inner">
+              {messages.length === 0 ? (
+                <div className="chat-fs-empty">대화를 시작해보세요</div>
+              ) : (
+                messages.map((msg) => (
+                  <div key={msg.id} className={`chat-fs-message ${msg.role}`}>
+                    {msg.content}
+                  </div>
+                ))
+              )}
+              {isLoading && (
+                <div className="chat-fs-message assistant">
+                  <div className="chat-fs-loading">
+                    <div className="chat-fs-loading-dot"></div>
+                    <div className="chat-fs-loading-dot"></div>
+                    <div className="chat-fs-loading-dot"></div>
+                  </div>
                 </div>
-              ))
-            )}
-            {isLoading && (
-              <div className="chat-fs-message assistant">
-                <div className="chat-fs-loading">
-                  <div className="chat-fs-loading-dot"></div>
-                  <div className="chat-fs-loading-dot"></div>
-                  <div className="chat-fs-loading-dot"></div>
-                </div>
-              </div>
-            )}
-            <div ref={fsMessagesEndRef} />
+              )}
+              <div ref={fsMessagesEndRef} />
+            </div>
           </div>
+
+          {/* 우측: 3D Visualizer (vizDirective 있을 때만 표시) */}
+          {vizDirective && (
+            <div className="chat-fs-viz">
+              {vizDirective.kpis && vizDirective.kpis.length > 0 && (
+                <KPIBar kpis={vizDirective.kpis} />
+              )}
+              <div style={{ flex: 1, position: "relative" }}>
+                <StoreVisualizer
+                  vizState={vizDirective.vizState}
+                  highlights={vizDirective.highlights || []}
+                  annotations={vizDirective.annotations || []}
+                  showFlow={vizDirective.flowPath || false}
+                  storeParams={vizDirective.storeParams}
+                  zoneScale={vizDirective.zoneScale}
+                />
+              </div>
+              {vizDirective.stage && (
+                <StageProgress stage={vizDirective.stage} />
+              )}
+            </div>
+          )}
         </div>
+
         <div className="chat-fs-footer">
           <div className="chat-fs-input-wrapper">
             <div className="chat-fs-input-box">
