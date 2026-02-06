@@ -108,27 +108,31 @@ export default function StoreVisualizer({
     }
 
     // 1. 카메라 lerp 보간 (사용자 인터랙션 중이 아닐 때만)
+    // TODO: 프리셋 전환 애니메이션 속도 조절 필요 시 lerpFactor 변경
     if (!isUserInteracting.current) {
-      const newPos = lerpVector3(camera.position, cameraTargetPos.current, 0.025);
-      camera.position.copy(newPos);
+      const lerpFactor = 0.025;
 
-      const currentLookAt = new THREE.Vector3();
-      camera.getWorldDirection(currentLookAt);
-      const newLookAt = lerpVector3(
-        camera.position.clone().add(currentLookAt),
-        cameraTargetLookAt.current,
-        0.025
-      );
-      camera.lookAt(newLookAt);
+      // 현재 위치가 타겟과 충분히 가까우면 lerp 스킵 (불필요한 미세 보정 방지)
+      const posDist = camera.position.distanceTo(cameraTargetPos.current);
+      if (posDist > 0.01) {
+        const newPos = lerpVector3(camera.position, cameraTargetPos.current, lerpFactor);
+        camera.position.copy(newPos);
+      }
 
-      // OrbitControls target 동기화
+      // OrbitControls target을 직접 lerp (lookAt 대신 — OrbitControls가 카메라 방향을 관리)
       if (controlsRef.current) {
-        controlsRef.current.target.lerp(cameraTargetLookAt.current, 0.025);
+        const targetDist = controlsRef.current.target.distanceTo(cameraTargetLookAt.current);
+        if (targetDist > 0.01) {
+          controlsRef.current.target.lerp(cameraTargetLookAt.current, lerpFactor);
+        }
       }
 
       // FOV lerp
-      camera.fov += (cameraTargetFov.current - camera.fov) * 0.025;
-      camera.updateProjectionMatrix();
+      const fovDiff = Math.abs(cameraTargetFov.current - camera.fov);
+      if (fovDiff > 0.01) {
+        camera.fov += (cameraTargetFov.current - camera.fov) * lerpFactor;
+        camera.updateProjectionMatrix();
+      }
     }
 
     // 2. 존 플레인 opacity pulse (하이라이트된 존만)
@@ -271,12 +275,18 @@ export default function StoreVisualizer({
     controls.maxPolarAngle = Math.PI * 0.45; // 수평선 아래로 카메라 회전 제한
     controls.target.set(...CAMERA_PRESETS.overview.target);
 
-    // 사용자 인터랙션 감지
+    // 사용자 인터랙션 감지 — 종료 시 현재 카메라 위치를 타겟에 저장하여 스냅백 방지
     controls.addEventListener('start', () => {
       isUserInteracting.current = true;
     });
     controls.addEventListener('end', () => {
       isUserInteracting.current = false;
+      // 사용자가 조작한 최종 위치를 lerp 타겟으로 저장 → 원래 위치로 돌아가지 않음
+      if (sceneRef.current) {
+        cameraTargetPos.current.copy(sceneRef.current.camera.position);
+        cameraTargetLookAt.current.copy(controls.target);
+        cameraTargetFov.current = sceneRef.current.camera.fov;
+      }
     });
 
     controlsRef.current = controls;
