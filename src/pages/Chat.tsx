@@ -668,7 +668,7 @@ const Chat = () => {
               <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
             </Link>
             <div className="hero-nav-links">
-              <Link to="/product">제품 &amp; 회사소개</Link>
+              <Link to="/about">제품 &amp; 회사소개</Link>
               <Link to="/contact">문의하기</Link>
             </div>
           </nav>
@@ -917,7 +917,7 @@ const Chat = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <Link to="/product">About</Link>
+              <Link to="/about">About</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>
