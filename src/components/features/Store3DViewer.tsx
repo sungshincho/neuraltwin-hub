@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, useGLTF } from "@react-three/drei";
-import { Suspense, useRef, useMemo, useState, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
+import { Suspense, useRef, useMemo, useState, useEffect, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as THREE from "three";
 import { RotateCcw, Mouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -529,7 +529,7 @@ furnitureLayout.forEach(item => useGLTF.preload(`/models/${item.file}`));
 const DEFAULT_CAMERA_POSITION: [number, number, number] = [18, 14, 18];
 const DEFAULT_TARGET: [number, number, number] = [0, 0, 0];
 
-// 카메라 컨트롤러 (리셋 기능 제공)
+// 카메라 컨트롤러 — dampening + 사용자 인터랙션 감지로 안정화
 interface CameraControllerHandle {
   reset: () => void;
 }
@@ -537,14 +537,53 @@ interface CameraControllerHandle {
 const CameraController = forwardRef<CameraControllerHandle, object>((_, ref) => {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
+  const isUserInteracting = useRef(false);
+  const isResetting = useRef(false);
+
+  // 초기 target 설정 (ref 기반 — prop 하드코딩 대신)
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.target.set(...DEFAULT_TARGET);
+      controlsRef.current.update();
+    }
+  }, []);
+
+  // 사용자 인터랙션 감지 (드래그 중 자동 애니메이션 충돌 방지)
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const onStart = () => { isUserInteracting.current = true; };
+    const onEnd = () => { isUserInteracting.current = false; };
+    controls.addEventListener('start', onStart);
+    controls.addEventListener('end', onEnd);
+    return () => {
+      controls.removeEventListener('start', onStart);
+      controls.removeEventListener('end', onEnd);
+    };
+  }, []);
+
+  // dampening 동작 + 리셋 시 부드러운 카메라 전환
+  useFrame(() => {
+    if (!controlsRef.current) return;
+    controlsRef.current.update();
+
+    if (isResetting.current && !isUserInteracting.current) {
+      camera.position.lerp(new THREE.Vector3(...DEFAULT_CAMERA_POSITION), 0.08);
+      controlsRef.current.target.lerp(new THREE.Vector3(...DEFAULT_TARGET), 0.08);
+
+      // 목표 위치에 충분히 가까우면 리셋 완료
+      const dist = camera.position.distanceTo(new THREE.Vector3(...DEFAULT_CAMERA_POSITION));
+      if (dist < 0.05) {
+        camera.position.set(...DEFAULT_CAMERA_POSITION);
+        controlsRef.current.target.set(...DEFAULT_TARGET);
+        isResetting.current = false;
+      }
+    }
+  });
 
   useImperativeHandle(ref, () => ({
     reset: () => {
-      if (controlsRef.current) {
-        camera.position.set(...DEFAULT_CAMERA_POSITION);
-        controlsRef.current.target.set(...DEFAULT_TARGET);
-        controlsRef.current.update();
-      }
+      isResetting.current = true;
     }
   }));
 
@@ -554,10 +593,11 @@ const CameraController = forwardRef<CameraControllerHandle, object>((_, ref) => 
       enablePan={true}
       enableZoom={true}
       enableRotate={true}
+      enableDamping={true}
+      dampingFactor={0.05}
       minDistance={8}
       maxDistance={45}
       maxPolarAngle={Math.PI / 2.1}
-      target={DEFAULT_TARGET}
     />
   );
 });
