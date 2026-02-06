@@ -33,6 +33,21 @@ interface VizKPI {
   highlight?: boolean;
 }
 
+// PHASE H: 파라메트릭 스토어 설정
+interface StoreParams {
+  storeWidth?: number;
+  storeDepth?: number;
+  storeHeight?: number;
+  fittingRoomCount?: number;
+}
+
+interface ZoneScale {
+  [zoneId: string]: {
+    scaleX?: number;
+    scaleZ?: number;
+  };
+}
+
 interface VizDirective {
   vizState: 'overview' | 'entry' | 'exploration' | 'purchase' | 'topdown';
   highlights: string[];
@@ -40,6 +55,8 @@ interface VizDirective {
   flowPath?: boolean;
   kpis?: VizKPI[];
   stage?: 'entry' | 'exploration' | 'purchase';
+  storeParams?: StoreParams;  // PHASE H
+  zoneScale?: ZoneScale;      // PHASE H
 }
 
 const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
@@ -103,13 +120,71 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       validatedStage = parsed.stage;
     }
 
+    // PHASE H: storeParams 유효성 검증
+    let validatedStoreParams: StoreParams | undefined;
+    if (parsed.storeParams && typeof parsed.storeParams === 'object') {
+      const sp = parsed.storeParams;
+      validatedStoreParams = {};
+
+      // 매장 크기 검증 (10m ~ 50m)
+      if (typeof sp.storeWidth === 'number') {
+        validatedStoreParams.storeWidth = Math.min(50, Math.max(10, sp.storeWidth));
+      }
+      if (typeof sp.storeDepth === 'number') {
+        validatedStoreParams.storeDepth = Math.min(50, Math.max(10, sp.storeDepth));
+      }
+      if (typeof sp.storeHeight === 'number') {
+        validatedStoreParams.storeHeight = Math.min(8, Math.max(3, sp.storeHeight));
+      }
+      if (typeof sp.fittingRoomCount === 'number') {
+        validatedStoreParams.fittingRoomCount = Math.min(10, Math.max(1, Math.floor(sp.fittingRoomCount)));
+      }
+
+      // 모든 값이 undefined면 전체를 undefined로
+      if (Object.values(validatedStoreParams).every(v => v === undefined)) {
+        validatedStoreParams = undefined;
+      }
+    }
+
+    // PHASE H: zoneScale 유효성 검증
+    let validatedZoneScale: ZoneScale | undefined;
+    if (parsed.zoneScale && typeof parsed.zoneScale === 'object') {
+      validatedZoneScale = {};
+
+      for (const [zoneId, scale] of Object.entries(parsed.zoneScale)) {
+        if (VALID_ZONES.includes(zoneId) && typeof scale === 'object' && scale !== null) {
+          const typedScale = scale as { scaleX?: number; scaleZ?: number };
+          const validScale: { scaleX?: number; scaleZ?: number } = {};
+
+          // 배율 범위: 0.5 ~ 2.0
+          if (typeof typedScale.scaleX === 'number') {
+            validScale.scaleX = Math.min(2, Math.max(0.5, typedScale.scaleX));
+          }
+          if (typeof typedScale.scaleZ === 'number') {
+            validScale.scaleZ = Math.min(2, Math.max(0.5, typedScale.scaleZ));
+          }
+
+          if (validScale.scaleX !== undefined || validScale.scaleZ !== undefined) {
+            validatedZoneScale[zoneId] = validScale;
+          }
+        }
+      }
+
+      // 빈 객체면 undefined로
+      if (Object.keys(validatedZoneScale).length === 0) {
+        validatedZoneScale = undefined;
+      }
+    }
+
     return {
       vizState: parsed.vizState,
       highlights: parsed.highlights,
       annotations: parsed.annotations?.length ? parsed.annotations : undefined,
       flowPath: parsed.flowPath,
       kpis: validatedKpis?.length ? validatedKpis : undefined,
-      stage: validatedStage
+      stage: validatedStage,
+      storeParams: validatedStoreParams,
+      zoneScale: validatedZoneScale
     };
   } catch (err) {
     console.warn('[VizDirective] JSON parse error:', err);

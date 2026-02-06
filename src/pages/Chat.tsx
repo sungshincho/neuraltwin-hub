@@ -7,7 +7,7 @@ import "@/styles/chat.css";
 
 // 3D Visualizer 컴포넌트
 import { StoreVisualizer, KPIBar, StageProgress } from "@/components/chatbot/visualizer";
-import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation } from "@/components/chatbot/visualizer";
+import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
 
 // 메시지 타입 정의
 interface Message {
@@ -524,6 +524,8 @@ const Chat = () => {
                     highlights={vizDirective.highlights || []}
                     annotations={vizDirective.annotations || []}
                     showFlow={vizDirective.flowPath || false}
+                    storeParams={vizDirective.storeParams}
+                    zoneScale={vizDirective.zoneScale}
                   />
                 </div>
 

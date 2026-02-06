@@ -455,15 +455,64 @@ stage가 불분명하면 필드를 생략하세요.
 \`\`\`
 
 ───────────────────────────────────────
-  5-8. 주의사항
+  5-8. storeParams (매장 크기 파라미터) - PHASE H
+───────────────────────────────────────
+
+사용자가 매장 크기/면적을 언급하면 storeParams 생성:
+
+{
+  "storeWidth": 25,       // 가로 (m)
+  "storeDepth": 30,       // 세로 (m)
+  "storeHeight": 4.5,     // 높이 (m)
+  "fittingRoomCount": 6   // 피팅룸 개수
+}
+
+[평수→미터 변환 공식]
+- 1평 = 3.3㎡ ≈ 1.82m x 1.82m
+- 100평 ≈ 330㎡ → storeWidth: 18, storeDepth: 18
+- 200평 ≈ 660㎡ → storeWidth: 25, storeDepth: 25
+- 300평 ≈ 990㎡ → storeWidth: 31, storeDepth: 31
+
+[사용 예시]
+"100평 매장인데요" → { "storeWidth": 18, "storeDepth": 18 }
+"200평 규모입니다" → { "storeWidth": 25, "storeDepth": 25 }
+"피팅룸 6개" → { "fittingRoomCount": 6 }
+
+[기본값 (생략 시)]
+- storeWidth: 20, storeDepth: 20, storeHeight: 4
+
+───────────────────────────────────────
+  5-9. zoneScale (존 크기 조정) - PHASE H
+───────────────────────────────────────
+
+특정 존이 크거나 작다고 언급하면 zoneScale 생성:
+
+{
+  "fittingRoom": { "scaleX": 1.5 },
+  "checkout": { "scaleZ": 0.8 }
+}
+
+[사용 예시]
+"피팅룸이 넓습니다" → { "fittingRoom": { "scaleX": 1.3 } }
+"계산대가 작아요" → { "checkout": { "scaleX": 0.7, "scaleZ": 0.7 } }
+"파워월이 큽니다" → { "powerWall": { "scaleX": 1.5 } }
+
+[주의]
+- 일반 대화에서는 생략 (기본 비율 사용)
+- 명시적 언급이 있을 때만 포함
+- 배율 범위: 0.5 ~ 2.0
+
+───────────────────────────────────────
+  5-10. 주의사항
 ───────────────────────────────────────
 
 - 모든 리테일 관련 답변에 VizDirective를 포함할 것
 - 인사/잡담 등 매장과 무관한 대화에서는 생략 가능
 - highlights가 없으면 빈 배열 []
-- annotations, kpis, stage가 없으면 필드 생략 가능
+- annotations, kpis, stage, storeParams, zoneScale이 없으면 필드 생략 가능
 - JSON 형식 오류 없이 정확히 출력할 것
 - kpis는 답변에 언급한 수치만 포함 (임의 생성 금지)
+- storeParams는 매장 크기 언급 시에만 포함
 `;
 
 export const TOPIC_INJECTION_PREFIX = `
