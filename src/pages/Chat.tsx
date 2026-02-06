@@ -1,13 +1,28 @@
-// 채팅 페이지 - NEURALTWIN 다크 테마 + 채팅 UI
+// 채팅 페이지 - NEURALTWIN 다크 테마 + retail-chatbot EF 연동
+// TASK 9: Suggestions + Lead Capture Form 추가
+// TASK C: 3D Wireframe Visualizer 통합
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/chat.css";
+
+// 3D Visualizer 컴포넌트
+import { StoreVisualizer, KPIBar, StageProgress } from "@/components/chatbot/visualizer";
+import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
 
 // 메시지 타입 정의
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  suggestions?: string[];
+  showLeadForm?: boolean;
+}
+
+// 리드 폼 데이터 타입
+interface LeadFormData {
+  email: string;
+  company: string;
+  role: string;
 }
 
 // 모드 옵션
@@ -17,8 +32,16 @@ const CHAT_MODES = [
   { id: "precise", label: "정확한" },
 ];
 
-// 타임라인 년도 데이터
-const TIMELINE_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+// 세션 ID 관리
+const getOrCreateSessionId = (): string => {
+  const key = "neuraltwin_chat_session_id";
+  let sessionId = localStorage.getItem(key);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(key, sessionId);
+  }
+  return sessionId;
+};
 
 const Chat = () => {
   const [introComplete, setIntroComplete] = useState(false);
@@ -32,6 +55,21 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState("thinking");
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+
+  // TASK 9: Suggestions + Lead Form 상태
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+
+  // TASK C: VizDirective 상태 (3D Visualizer)
+  const [vizDirective, setVizDirective] = useState<VizDirective | null>(null);
+  const [leadFormData, setLeadFormData] = useState<LeadFormData>({
+    email: "",
+    company: "",
+    role: "",
+  });
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
 
   // 전체화면 상태
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -40,8 +78,7 @@ const Chat = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fsMessagesEndRef = useRef<HTMLDivElement>(null);
-  const fsInputRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // 페이지 진입 시 body 스타일 조정
@@ -64,6 +101,8 @@ const Chat = () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      // 컴포넌트 언마운트 시 진행 중인 스트리밍 중단
+      abortControllerRef.current?.abort();
     };
   }, []);
 
@@ -73,14 +112,7 @@ const Chat = () => {
     fsMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 전체화면 열릴 때 입력창 포커스
-  useEffect(() => {
-    if (isFullscreen && fsInputRef.current) {
-      fsInputRef.current.focus();
-    }
-  }, [isFullscreen]);
-
-  // 메시지 전송
+  // 메시지 전송 (비스트리밍 모드)
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -94,17 +126,94 @@ const Chat = () => {
     setInputValue("");
     setIsLoading(true);
 
-    // TODO: 실제 AI API 연동
-    // 임시 응답 (데모용)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `안녕하세요! "${userMessage.content}"에 대한 답변입니다. 이것은 데모 응답입니다. 실제 AI 연동 시 이 부분이 교체됩니다.`,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+    // AbortController 생성
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const sessionId = getOrCreateSessionId();
+
+      // 히스토리 구성 (최근 10턴)
+      const history = messages.slice(-20).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          sessionId,
+          conversationId,
+          history,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API Error: ${response.status}`);
+      }
+
+      // JSON 응답 파싱
+      const data = await response.json();
+
+      // DEBUG: API 응답 전체 로그
+      console.log('[Chat] API Response:', JSON.stringify(data, null, 2));
+      console.log('[Chat] vizDirective:', data.vizDirective);
+
+      // conversationId 저장
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
+      }
+
+      // TASK 9: Suggestions 저장
+      if (data.suggestions && data.suggestions.length > 0) {
+        setSuggestions(data.suggestions);
+      } else {
+        setSuggestions([]);
+      }
+
+      // TASK 9: Lead Form 표시 여부
+      if (data.showLeadForm && !leadSubmitted) {
+        setShowLeadForm(true);
+      }
+
+      // TASK C: VizDirective 저장 (3D Visualizer)
+      if (data.vizDirective) {
+        setVizDirective(data.vizDirective);
+      }
+
+      // 어시스턴트 응답 추가
+      if (data.content) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.content,
+          suggestions: data.suggestions,
+          showLeadForm: data.showLeadForm,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log("Request aborted");
+      } else {
+        console.error("Chat error:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } finally {
       setIsLoading(false);
-    }, 1500);
+      abortControllerRef.current = null;
+    }
   };
 
   // Enter 키 처리
@@ -125,51 +234,58 @@ const Chat = () => {
   // 현재 모드 라벨
   const currentModeLabel = CHAT_MODES.find((m) => m.id === selectedMode)?.label || "생각 중";
 
-  // 전체화면 열기
-  const openFullscreen = () => {
-    setIsFullscreen(true);
-    setFsInputValue(inputValue);
+  // TASK 9: Suggestion 클릭 핸들러
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    setSuggestions([]);
+    // 자동 전송 (선택사항)
+    // setTimeout(() => handleSendMessage(), 100);
   };
 
-  // 전체화면 닫기
-  const closeFullscreen = () => {
-    setIsFullscreen(false);
-    setInputValue(fsInputValue);
-  };
+  // TASK 9: Lead Form 제출 핸들러
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadFormData.email.trim()) return;
 
-  // 전체화면 메시지 전송
-  const handleFsSendMessage = async () => {
-    if (!fsInputValue.trim() || isLoading) return;
+    setIsSubmittingLead(true);
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const sessionId = getOrCreateSessionId();
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: fsInputValue.trim(),
-    };
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "capture_lead",
+          sessionId,
+          conversationId,
+          lead: leadFormData,
+        }),
+      });
 
-    setMessages((prev) => [...prev, userMessage]);
-    setFsInputValue("");
-    setIsLoading(true);
-
-    // TODO: 실제 AI API 연동
-    // 임시 응답 (데모용)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `안녕하세요! "${userMessage.content}"에 대한 답변입니다. 이것은 데모 응답입니다. 실제 AI 연동 시 이 부분이 교체됩니다.`,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  // 전체화면 Enter 키 처리
-  const handleFsKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleFsSendMessage();
+      if (response.ok) {
+        setLeadSubmitted(true);
+        setShowLeadForm(false);
+        // 성공 메시지 추가
+        const thankYouMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: `감사합니다, ${leadFormData.company || "고객"}님! 입력하신 이메일(${leadFormData.email})로 연락드리겠습니다.`,
+        };
+        setMessages((prev) => [...prev, thankYouMessage]);
+      }
+    } catch (error) {
+      console.error("Lead submission error:", error);
+    } finally {
+      setIsSubmittingLead(false);
     }
+  };
+
+  // TASK 9: Lead Form 닫기
+  const handleLeadFormClose = () => {
+    setShowLeadForm(false);
   };
 
   return (
@@ -315,15 +431,11 @@ const Chat = () => {
             </div>
           </nav>
 
-          {/* Chat UI */}
-          <div className="hero-content" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <div className="chat-container">
-              <div className="chat-title-row">
-                <h2 className="chat-title">무엇을 도와드릴까요?</h2>
-                <button className="chat-expand-fullscreen-btn" onClick={openFullscreen}>
-                  전체화면
-                </button>
-              </div>
+          {/* Chat UI + Visualizer Split Layout */}
+          <div className="hero-content" style={{ display: "flex", gap: "16px", padding: "0 24px", height: "calc(100vh - 160px)" }}>
+            {/* 좌측: 채팅 영역 (45%) */}
+            <div className="chat-container" style={{ width: vizDirective ? "45%" : "100%", transition: "width 0.5s ease" }}>
+              <h2 className="chat-title">무엇을 도와드릴까요?</h2>
 
               {/* 채팅 기록 */}
               <div className="chat-messages">
@@ -347,6 +459,79 @@ const Chat = () => {
                     </div>
                   </div>
                 )}
+
+                {/* TASK 9: Suggestions 칩 */}
+                {!isLoading && suggestions.length > 0 && (
+                  <div className="chat-suggestions">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        className="chat-suggestion-chip"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* TASK 9: Lead Capture Form */}
+                {showLeadForm && !leadSubmitted && (
+                  <div className="chat-lead-form-container">
+                    <div className="chat-lead-form">
+                      <div className="chat-lead-form-header">
+                        <h4>더 자세한 상담을 원하시나요?</h4>
+                        <button
+                          className="chat-lead-form-close"
+                          onClick={handleLeadFormClose}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <p className="chat-lead-form-desc">
+                        연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.
+                      </p>
+                      <form onSubmit={handleLeadSubmit}>
+                        <input
+                          type="email"
+                          className="chat-lead-input"
+                          placeholder="이메일 *"
+                          value={leadFormData.email}
+                          onChange={(e) =>
+                            setLeadFormData({ ...leadFormData, email: e.target.value })
+                          }
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="chat-lead-input"
+                          placeholder="회사명"
+                          value={leadFormData.company}
+                          onChange={(e) =>
+                            setLeadFormData({ ...leadFormData, company: e.target.value })
+                          }
+                        />
+                        <input
+                          type="text"
+                          className="chat-lead-input"
+                          placeholder="직책/역할"
+                          value={leadFormData.role}
+                          onChange={(e) =>
+                            setLeadFormData({ ...leadFormData, role: e.target.value })
+                          }
+                        />
+                        <button
+                          type="submit"
+                          className="chat-lead-submit"
+                          disabled={isSubmittingLead || !leadFormData.email.trim()}
+                        >
+                          {isSubmittingLead ? "제출 중..." : "상담 요청"}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
 
@@ -410,6 +595,47 @@ const Chat = () => {
                 </div>
               </div>
             </div>
+
+            {/* 우측: 3D Visualizer (55%) - vizDirective가 있을 때만 표시 */}
+            {vizDirective && (
+              <div
+                className="visualizer-container"
+                style={{
+                  width: "55%",
+                  height: "600px",
+                  minHeight: "500px",
+                  display: "flex",
+                  flexDirection: "column",
+                  backgroundColor: "rgba(3, 7, 18, 0.9)",
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  animation: "fadeIn 0.5s ease"
+                }}
+              >
+                {/* KPI Bar */}
+                {vizDirective.kpis && vizDirective.kpis.length > 0 && (
+                  <KPIBar kpis={vizDirective.kpis} />
+                )}
+
+                {/* 3D Store Visualizer */}
+                <div style={{ flex: 1, position: "relative" }}>
+                  <StoreVisualizer
+                    vizState={vizDirective.vizState}
+                    highlights={vizDirective.highlights || []}
+                    annotations={vizDirective.annotations || []}
+                    showFlow={vizDirective.flowPath || false}
+                    storeParams={vizDirective.storeParams}
+                    zoneScale={vizDirective.zoneScale}
+                  />
+                </div>
+
+                {/* Stage Progress */}
+                {vizDirective.stage && (
+                  <StageProgress stage={vizDirective.stage} />
+                )}
+              </div>
+            )}
           </div>
 
           {/* Semicircle Decoration */}

@@ -1,0 +1,922 @@
+/**
+ * NEURALTWIN Website Chatbot Edge Function
+ *
+ * 웹사이트 방문자를 위한 리테일 전문 AI 챗봇
+ * - 비회원(session_id) + 회원(user_id via JWT) 모두 지원 (v2.1)
+ * - Gemini 2.5 Pro via Lovable Gateway
+ * - SSE 스트리밍 응답
+ * - 토픽 라우터 기반 도메인 지식 주입
+ */
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { buildEnrichedPrompt, formatClassification } from './topicRouter.ts';
+import { extractPainPoints, type PainPointResult } from './painPointExtractor.ts';
+import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } from './salesBridge.ts';
+import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
+
+// ═══════════════════════════════════════════
+//  VizDirective 타입 및 파싱 유틸리티
+// ═══════════════════════════════════════════
+
+interface VizAnnotation {
+  zone: string;
+  text: string;
+  color: string;
+}
+
+interface VizKPI {
+  label: string;
+  value: string;
+  sub: string;
+  alert?: boolean;
+  highlight?: boolean;
+}
+
+// PHASE H: 파라메트릭 스토어 설정
+interface StoreParams {
+  storeWidth?: number;
+  storeDepth?: number;
+  storeHeight?: number;
+  fittingRoomCount?: number;
+}
+
+interface ZoneScale {
+  [zoneId: string]: {
+    scaleX?: number;
+    scaleZ?: number;
+  };
+}
+
+interface VizDirective {
+  vizState: 'overview' | 'entry' | 'exploration' | 'purchase' | 'topdown';
+  highlights: string[];
+  annotations?: VizAnnotation[];
+  flowPath?: boolean;
+  kpis?: VizKPI[];
+  stage?: 'entry' | 'exploration' | 'purchase';
+  storeParams?: StoreParams;  // PHASE H
+  zoneScale?: ZoneScale;      // PHASE H
+}
+
+const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
+const VALID_ZONES = ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'];
+const VALID_STAGES = ['entry', 'exploration', 'purchase'];
+
+/**
+ * AI 응답에서 ```viz 블록을 추출하고 VizDirective로 파싱
+ * PHASE G: kpis, stage 필드 지원 추가
+ */
+function extractVizDirectiveFromResponse(response: string): VizDirective | null {
+  // ```viz ... ``` 블록 찾기
+  const match = response.match(/```viz\s*\n?([\s\S]*?)\n?```/);
+  if (!match) return null;
+
+  try {
+    const parsed = JSON.parse(match[1].trim());
+
+    // vizState 유효성 검증
+    if (!parsed.vizState || !VALID_VIZ_STATES.includes(parsed.vizState)) {
+      console.warn('[VizDirective] Invalid vizState:', parsed.vizState);
+      return null;
+    }
+
+    // highlights 유효성 검증
+    if (!Array.isArray(parsed.highlights)) {
+      parsed.highlights = [];
+    }
+    parsed.highlights = parsed.highlights.filter((z: string) => VALID_ZONES.includes(z));
+
+    // annotations 유효성 검증
+    if (parsed.annotations && Array.isArray(parsed.annotations)) {
+      parsed.annotations = parsed.annotations
+        .filter((a: VizAnnotation) => a.zone && a.text && VALID_ZONES.includes(a.zone))
+        .slice(0, 3); // 최대 3개
+    }
+
+    // flowPath 기본값
+    if (typeof parsed.flowPath !== 'boolean') {
+      parsed.flowPath = false;
+    }
+
+    // PHASE G: kpis 유효성 검증 (AI가 응답에서 언급한 수치)
+    let validatedKpis: VizKPI[] | undefined;
+    if (parsed.kpis && Array.isArray(parsed.kpis)) {
+      validatedKpis = parsed.kpis
+        .filter((k: VizKPI) => k.label && k.value)
+        .slice(0, 4)  // 최대 4개
+        .map((k: VizKPI) => ({
+          label: String(k.label).slice(0, 15),
+          value: String(k.value),
+          sub: k.sub ? String(k.sub).slice(0, 20) : '',
+          alert: !!k.alert,
+          highlight: !!k.highlight
+        }));
+    }
+
+    // PHASE G: stage 유효성 검증
+    let validatedStage: 'entry' | 'exploration' | 'purchase' | undefined;
+    if (parsed.stage && VALID_STAGES.includes(parsed.stage)) {
+      validatedStage = parsed.stage;
+    }
+
+    // PHASE H: storeParams 유효성 검증
+    let validatedStoreParams: StoreParams | undefined;
+    if (parsed.storeParams && typeof parsed.storeParams === 'object') {
+      const sp = parsed.storeParams;
+      validatedStoreParams = {};
+
+      // 매장 크기 검증 (10m ~ 50m)
+      if (typeof sp.storeWidth === 'number') {
+        validatedStoreParams.storeWidth = Math.min(50, Math.max(10, sp.storeWidth));
+      }
+      if (typeof sp.storeDepth === 'number') {
+        validatedStoreParams.storeDepth = Math.min(50, Math.max(10, sp.storeDepth));
+      }
+      if (typeof sp.storeHeight === 'number') {
+        validatedStoreParams.storeHeight = Math.min(8, Math.max(3, sp.storeHeight));
+      }
+      if (typeof sp.fittingRoomCount === 'number') {
+        validatedStoreParams.fittingRoomCount = Math.min(10, Math.max(1, Math.floor(sp.fittingRoomCount)));
+      }
+
+      // 모든 값이 undefined면 전체를 undefined로
+      if (Object.values(validatedStoreParams).every(v => v === undefined)) {
+        validatedStoreParams = undefined;
+      }
+    }
+
+    // PHASE H: zoneScale 유효성 검증
+    let validatedZoneScale: ZoneScale | undefined;
+    if (parsed.zoneScale && typeof parsed.zoneScale === 'object') {
+      validatedZoneScale = {};
+
+      for (const [zoneId, scale] of Object.entries(parsed.zoneScale)) {
+        if (VALID_ZONES.includes(zoneId) && typeof scale === 'object' && scale !== null) {
+          const typedScale = scale as { scaleX?: number; scaleZ?: number };
+          const validScale: { scaleX?: number; scaleZ?: number } = {};
+
+          // 배율 범위: 0.5 ~ 2.0
+          if (typeof typedScale.scaleX === 'number') {
+            validScale.scaleX = Math.min(2, Math.max(0.5, typedScale.scaleX));
+          }
+          if (typeof typedScale.scaleZ === 'number') {
+            validScale.scaleZ = Math.min(2, Math.max(0.5, typedScale.scaleZ));
+          }
+
+          if (validScale.scaleX !== undefined || validScale.scaleZ !== undefined) {
+            validatedZoneScale[zoneId] = validScale;
+          }
+        }
+      }
+
+      // 빈 객체면 undefined로
+      if (Object.keys(validatedZoneScale).length === 0) {
+        validatedZoneScale = undefined;
+      }
+    }
+
+    return {
+      vizState: parsed.vizState,
+      highlights: parsed.highlights,
+      annotations: parsed.annotations?.length ? parsed.annotations : undefined,
+      flowPath: parsed.flowPath,
+      kpis: validatedKpis?.length ? validatedKpis : undefined,
+      stage: validatedStage,
+      storeParams: validatedStoreParams,
+      zoneScale: validatedZoneScale
+    };
+  } catch (err) {
+    console.warn('[VizDirective] JSON parse error:', err);
+    return null;
+  }
+}
+
+/**
+ * 응답 텍스트에서 ```viz 블록 제거 (클라이언트에 표시할 텍스트)
+ */
+function cleanResponseText(response: string): string {
+  return response
+    .replace(/```viz[\s\S]*?```/g, '')
+    .replace(/\n{3,}/g, '\n\n')  // 연속 빈 줄 정리
+    .trim();
+}
+
+// ═══════════════════════════════════════════
+//  타입 정의
+// ═══════════════════════════════════════════
+
+interface WebChatRequest {
+  message?: string;
+  sessionId?: string;         // 비회원용 세션 ID
+  conversationId?: string;    // 기존 대화 이어가기
+  history?: ChatMessage[];    // 클라이언트 측 히스토리 (선택적)
+  // TASK 9: Action 분기
+  action?: 'chat' | 'capture_lead' | 'handover_session';
+  lead?: LeadFormData;
+}
+
+// TASK 9: 리드 폼 데이터
+interface LeadFormData {
+  email: string;
+  company?: string;
+  role?: string;
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface ConversationRecord {
+  id: string;
+  session_id: string | null;
+  user_id: string | null;
+  channel: 'website' | 'os_app';
+  message_count: number;
+}
+
+// ═══════════════════════════════════════════
+//  CORS 헤더
+// ═══════════════════════════════════════════
+
+const ALLOWED_ORIGINS = [
+  'https://neuraltwin.com',
+  'https://www.neuraltwin.com',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8080',
+];
+
+function getCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get('Origin') || '';
+
+  // Lovable 프리뷰/배포 URL 패턴 허용
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) ||
+                    origin.endsWith('.lovable.app') ||
+                    origin.endsWith('.lovableproject.com');
+
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-session-id',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
+
+// ═══════════════════════════════════════════
+//  JWT 검증 & 사용자 추출 (v2.1)
+// ═══════════════════════════════════════════
+
+interface AuthResult {
+  isAuthenticated: boolean;
+  userId: string | null;
+  email: string | null;
+}
+
+async function extractUserFromJWT(request: Request): Promise<AuthResult> {
+  const authHeader = request.headers.get('Authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { isAuthenticated: false, userId: null, email: null };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    });
+
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      console.warn('[Auth] JWT validation failed:', error?.message);
+      return { isAuthenticated: false, userId: null, email: null };
+    }
+
+    return {
+      isAuthenticated: true,
+      userId: user.id,
+      email: user.email || null
+    };
+  } catch (err) {
+    console.error('[Auth] Error extracting user from JWT:', err);
+    return { isAuthenticated: false, userId: null, email: null };
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Rate Limiting (간단 버전)
+// ═══════════════════════════════════════════
+
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(identifier: string, limit: number = 10): boolean {
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1분
+
+  const entry = rateLimitStore.get(identifier);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(identifier, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+
+  if (entry.count >= limit) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
+
+// ═══════════════════════════════════════════
+//  대화 로깅 (DB)
+// ═══════════════════════════════════════════
+
+// deno-lint-ignore no-explicit-any
+type SupabaseClientAny = any;
+
+async function getOrCreateConversation(
+  supabase: SupabaseClientAny,
+  sessionId: string | null,
+  userId: string | null,
+  conversationId?: string
+): Promise<ConversationRecord | null> {
+  // 기존 대화 이어가기
+  if (conversationId) {
+    const { data, error } = await supabase
+      .from('chat_conversations')
+      .select('*')
+      .eq('id', conversationId)
+      .single();
+
+    if (!error && data) {
+      return data as ConversationRecord;
+    }
+  }
+
+  // 새 대화 생성
+  const { data, error } = await supabase
+    .from('chat_conversations')
+    .insert({
+      channel: 'website',
+      session_id: sessionId,
+      user_id: userId,
+      message_count: 0,
+      channel_metadata: {
+        source: 'web_chatbot',
+        created_at: new Date().toISOString()
+      }
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[DB] Failed to create conversation:', error);
+    return null;
+  }
+
+  return data as ConversationRecord;
+}
+
+async function logMessage(
+  supabase: SupabaseClientAny,
+  conversationId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  try {
+    await supabase.from('chat_messages').insert({
+      conversation_id: conversationId,
+      role,
+      content,
+      channel_data: metadata || {}
+    });
+
+    // 메시지 카운트 증가 (에러 무시)
+    try {
+      await supabase.rpc('increment_message_count', {
+        p_conversation_id: conversationId
+      });
+    } catch {
+      // RPC가 없을 수 있음 - 무시
+    }
+  } catch (err) {
+    console.error('[DB] Failed to log message:', err);
+    // 실패해도 계속 진행 (fail-open)
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Lovable Gateway API 호출
+// ═══════════════════════════════════════════
+
+const LOVABLE_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+
+async function callLovableGateway(
+  systemPrompt: string,
+  messages: ChatMessage[],
+  stream: boolean = true
+): Promise<Response> {
+  const apiKey = Deno.env.get('LOVABLE_API_KEY');
+
+  if (!apiKey) {
+    throw new Error('LOVABLE_API_KEY not configured');
+  }
+
+  const response = await fetch(LOVABLE_GATEWAY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-pro',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+      temperature: 0.7,
+      max_tokens: 4096,
+      stream,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Lovable Gateway error: ${response.status} - ${errorText}`);
+  }
+
+  return response;
+}
+
+// ═══════════════════════════════════════════
+//  SSE 스트리밍 응답
+// ═══════════════════════════════════════════
+
+function createSSEStream(
+  upstreamResponse: Response,
+  conversationId: string,
+  classification: { primaryTopic: string; confidence: number },
+  onComplete: (fullContent: string) => void
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  let fullContent = '';
+
+  return new ReadableStream({
+    async start(controller) {
+      const reader = upstreamResponse.body?.getReader();
+
+      if (!reader) {
+        controller.close();
+        return;
+      }
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            // 완료 이벤트 전송
+            const doneEvent = `event: done\ndata: ${JSON.stringify({
+              conversationId,
+              classification,
+              totalLength: fullContent.length
+            })}\n\n`;
+            controller.enqueue(encoder.encode(doneEvent));
+
+            onComplete(fullContent);
+            controller.close();
+            break;
+          }
+
+          // 업스트림 SSE 파싱
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+
+              if (data === '[DONE]') {
+                continue;
+              }
+
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+
+                if (content) {
+                  fullContent += content;
+
+                  // 청크 이벤트 전송
+                  const chunkEvent = `event: chunk\ndata: ${JSON.stringify({ content })}\n\n`;
+                  controller.enqueue(encoder.encode(chunkEvent));
+                }
+              } catch {
+                // JSON 파싱 실패는 무시
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[SSE] Stream error:', err);
+
+        const errorEvent = `event: error\ndata: ${JSON.stringify({ error: 'Stream error' })}\n\n`;
+        controller.enqueue(encoder.encode(errorEvent));
+        controller.close();
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+//  TASK 9: Lead Capture 핸들러
+// ═══════════════════════════════════════════
+
+async function handleCaptureLead(
+  supabase: SupabaseClientAny,
+  body: WebChatRequest,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const { sessionId, conversationId, lead } = body;
+
+  if (!lead?.email) {
+    return new Response(
+      JSON.stringify({ error: 'Email is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    // 1. conversationId로 Pain Point 정보 조회
+    let painPoints: string[] = [];
+    if (conversationId) {
+      const { data: messages } = await supabase
+        .from('chat_messages')
+        .select('channel_data')
+        .eq('conversation_id', conversationId)
+        .not('channel_data->painPointSummary', 'is', null);
+
+      if (messages && messages.length > 0) {
+        painPoints = messages
+          .map((m: { channel_data?: { painPointSummary?: string } }) => m.channel_data?.painPointSummary)
+          .filter((p: string | undefined): p is string => !!p);
+      }
+    }
+
+    // 2. chat_leads 테이블에 저장
+    const { data, error } = await supabase
+      .from('chat_leads')
+      .insert({
+        conversation_id: conversationId || null,
+        email: lead.email,
+        company: lead.company || null,
+        role: lead.role || null,
+        pain_points: painPoints,
+        source_page: '/chat'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Lead] Insert error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to capture lead' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. chat_events에 이벤트 기록
+    if (conversationId) {
+      await supabase.from('chat_events').insert({
+        conversation_id: conversationId,
+        channel: 'website',
+        event_type: 'lead_captured',
+        event_data: { lead_id: data.id, email: lead.email, company: lead.company }
+      });
+    }
+
+    console.log(`[Lead] Captured: ${lead.email} (${lead.company || 'no company'})`);
+
+    return new Response(
+      JSON.stringify({ success: true, leadId: data.id }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (err) {
+    console.error('[Lead] Error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// ═══════════════════════════════════════════
+//  TASK 9: Session Handover 핸들러
+// ═══════════════════════════════════════════
+
+async function handleSessionHandover(
+  supabase: SupabaseClientAny,
+  body: WebChatRequest,
+  auth: AuthResult,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const { sessionId } = body;
+
+  if (!auth.isAuthenticated || !auth.userId) {
+    return new Response(
+      JSON.stringify({ error: 'Authentication required for session handover' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!sessionId) {
+    return new Response(
+      JSON.stringify({ error: 'Session ID required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    // DB 함수 호출 (handover_chat_session)
+    const { data, error } = await supabase
+      .rpc('handover_chat_session', {
+        p_session_id: sessionId,
+        p_user_id: auth.userId
+      });
+
+    if (error) {
+      console.error('[Handover] RPC error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Session handover failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[Handover] Session ${sessionId} → User ${auth.userId} (${data} conversations updated)`);
+
+    return new Response(
+      JSON.stringify({ success: true, updatedCount: data }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (err) {
+    console.error('[Handover] Error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// ═══════════════════════════════════════════
+//  메인 핸들러
+// ═══════════════════════════════════════════
+
+serve(async (request: Request) => {
+  const corsHeaders = getCorsHeaders(request);
+
+  // CORS Preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // POST만 허용
+  if (request.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    // 1. 요청 파싱
+    const body: WebChatRequest = await request.json();
+    const { message, sessionId, conversationId, history, action } = body;
+
+    // 2. 인증 확인 (v2.1)
+    const auth = await extractUserFromJWT(request);
+
+    // 3. Supabase 클라이언트 생성 (action 분기에서도 필요)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ═══════════════════════════════════════════
+    // TASK 9: Action 분기 처리
+    // ═══════════════════════════════════════════
+
+    if (action === 'capture_lead') {
+      return handleCaptureLead(supabase, body, corsHeaders);
+    }
+
+    if (action === 'handover_session') {
+      return handleSessionHandover(supabase, body, auth, corsHeaders);
+    }
+
+    // ═══════════════════════════════════════════
+    // 기본 Chat 로직 (action이 없거나 'chat'인 경우)
+    // ═══════════════════════════════════════════
+
+    if (!message || message.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Message is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 세션/사용자 식별자 결정
+    const effectiveSessionId = auth.isAuthenticated ? null : (sessionId || crypto.randomUUID());
+    const effectiveUserId = auth.isAuthenticated ? auth.userId : null;
+
+    // 식별자가 없으면 에러
+    if (!effectiveSessionId && !effectiveUserId) {
+      return new Response(
+        JSON.stringify({ error: 'Session ID or authentication required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. Rate Limiting
+    const rateLimitKey = effectiveUserId || effectiveSessionId || 'unknown';
+    const rateLimit = auth.isAuthenticated ? 30 : 10; // 회원은 더 높은 한도
+
+    if (!checkRateLimit(rateLimitKey, rateLimit)) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 4. 대화 생성/조회
+    const conversation = await getOrCreateConversation(
+      supabase,
+      effectiveSessionId,
+      effectiveUserId,
+      conversationId
+    );
+
+    // 6. 토픽 분류 & 시스템 프롬프트 빌드 (+ VizDirective)
+    const historyTexts = history?.map(h => h.content) || [];
+    const turnCount = conversation?.message_count || historyTexts.length;
+    const { systemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
+
+    console.log(`[Topic] ${formatClassification(classification)}`);
+    if (vizDirective) {
+      console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
+    }
+
+    // 7. 메시지 히스토리 구성
+    const chatMessages: ChatMessage[] = history || [];
+    chatMessages.push({ role: 'user', content: message });
+
+    // 8. 사용자 메시지 로깅
+    if (conversation) {
+      await logMessage(supabase, conversation.id, 'user', message, {
+        topic: classification.primaryTopic,
+        confidence: classification.confidence,
+        keywords: classification.detectedKeywords
+      });
+    }
+
+    // 9. Lovable Gateway 호출 (비스트리밍 모드)
+    const upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
+
+    // 10. JSON 응답 파싱
+    const data = await upstreamResponse.json();
+    const rawAssistantContent = data.choices?.[0]?.message?.content || '';
+
+    if (!rawAssistantContent) {
+      console.error('[AI] No content in response:', JSON.stringify(data));
+      throw new Error('AI가 응답을 생성하지 못했습니다.');
+    }
+
+    // 11. AI 응답에서 VizDirective 추출 (B 방식: AI가 직접 생성)
+    const aiGeneratedVizDirective = extractVizDirectiveFromResponse(rawAssistantContent);
+
+    // 클라이언트에 보낼 텍스트에서 ```viz 블록 제거
+    const assistantContent = cleanResponseText(rawAssistantContent);
+
+    // PHASE G: VizDirective 병합 (AI 생성 우선, 토픽 기반 fallback)
+    let finalVizDirective: VizDirective | null = null;
+
+    if (aiGeneratedVizDirective) {
+      // AI가 생성한 모든 필드 우선 사용
+      // AI가 kpis/stage를 생성하지 않은 경우만 토픽 기반 fallback
+      finalVizDirective = {
+        ...aiGeneratedVizDirective,
+        // AI가 kpis를 생성했으면 AI 것 사용, 아니면 토픽 기반 fallback
+        kpis: aiGeneratedVizDirective.kpis || vizDirective?.kpis,
+        // AI가 stage를 생성했으면 AI 것 사용, 아니면 토픽 기반 fallback
+        stage: aiGeneratedVizDirective.stage || vizDirective?.stage
+      };
+
+      const kpiSource = aiGeneratedVizDirective.kpis ? 'AI' : 'topic-fallback';
+      const stageSource = aiGeneratedVizDirective.stage ? 'AI' : 'topic-fallback';
+      console.log(`[VizDirective] AI Generated: state=${aiGeneratedVizDirective.vizState}, kpis=${kpiSource}(${finalVizDirective.kpis?.length || 0}), stage=${stageSource}(${finalVizDirective.stage || 'none'})`);
+    } else if (vizDirective) {
+      // AI가 생성하지 않은 경우 토픽 기반 fallback
+      finalVizDirective = vizDirective;
+      console.log(`[VizDirective] Fallback to topic-based: state=${vizDirective.vizState}`);
+    } else {
+      console.log(`[VizDirective] None generated`);
+    }
+
+    // 12. TASK 7: Pain Point 추출
+    const painPointResult: PainPointResult = extractPainPoints(message, historyTexts);
+
+    // 13. TASK 7: Sales Bridge 평가
+    const salesBridgeResult: SalesBridgeResult = evaluateSalesBridge({
+      turnCount: conversation?.message_count || historyTexts.length,
+      painPointDetected: painPointResult.painPoints.length > 0,
+      primaryPainCategory: painPointResult.primaryPain,
+      topicCategory: classification.primaryTopic,
+      hasExplicitInterest: checkExplicitInterest(message),
+      repeatTopics: false
+    });
+
+    // 14. TASK 7: 후속 질문 생성
+    const suggestionResult: SuggestionResult = generateSuggestions({
+      topicCategory: classification.primaryTopic,
+      painPointCategory: painPointResult.primaryPain,
+      conversationStage: salesBridgeResult.stage,
+      detectedKeywords: classification.detectedKeywords,
+      turnCount: conversation?.message_count || 0
+    });
+
+    console.log(`[SalesBridge] score=${salesBridgeResult.leadScore}, stage=${salesBridgeResult.stage}, showForm=${salesBridgeResult.showLeadForm}`);
+    if (painPointResult.primaryPain) {
+      console.log(`[PainPoint] ${painPointResult.summary}`);
+    }
+
+    // 15. 어시스턴트 응답 로깅 (Pain Point 데이터 포함)
+    if (conversation) {
+      await logMessage(supabase, conversation.id, 'assistant', assistantContent, {
+        topic: classification.primaryTopic,
+        painPointSummary: painPointResult.summary,
+        containsPainPoint: painPointResult.painPoints.length > 0,
+        confidence: classification.confidence,
+        solutionMentioned: assistantContent.toLowerCase().includes('neuraltwin')
+      });
+    }
+
+    // 16. JSON 응답 반환 (TASK 7 필드 + AI 생성 VizDirective)
+    return new Response(
+      JSON.stringify({
+        content: assistantContent,
+        conversationId: conversation?.id || '',
+        sessionId: effectiveSessionId || '',
+        classification: {
+          topic: classification.primaryTopic,
+          confidence: classification.confidence
+        },
+        // TASK 7: 세일즈 브릿지 + Pain Point 필드
+        suggestions: suggestionResult.suggestions,
+        showLeadForm: salesBridgeResult.showLeadForm,
+        salesBridge: {
+          leadScore: salesBridgeResult.leadScore,
+          stage: salesBridgeResult.stage
+        },
+        painPoints: {
+          detected: painPointResult.painPoints.length > 0,
+          primary: painPointResult.primaryPain,
+          summary: painPointResult.summary
+        },
+        // 3D 비주얼라이저 지시 데이터 (AI 생성 또는 토픽 기반 fallback)
+        vizDirective: finalVizDirective
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'X-Conversation-Id': conversation?.id || '',
+          'X-Session-Id': effectiveSessionId || '',
+          'X-Is-Authenticated': String(auth.isAuthenticated),
+        }
+      }
+    );
+
+  } catch (err) {
+    console.error('[Handler] Error:', err);
+
+    return new Response(
+      JSON.stringify({
+        error: err instanceof Error ? err.message : 'Internal server error'
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
