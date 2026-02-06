@@ -14,7 +14,7 @@ const DEFAULT_MAX_LENGTH = 1000;
 
 export function ChatInput({
   onSend,
-  placeholder = '무엇이든 물어보세요',
+  placeholder = '예: 이번 시즌 VMD 트렌드 알려줘',
   disabled = false,
   maxLength = DEFAULT_MAX_LENGTH,
   variant = 'website',
