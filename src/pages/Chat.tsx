@@ -504,7 +504,9 @@ const Chat = () => {
   return (
     <div className="chat-page">
       {/* ==================== FULLSCREEN CHAT OVERLAY ==================== */}
-      <div className={`chat-fullscreen${isFullscreen ? " open" : ""}`}>
+      {/* 조건부 렌더링: isFullscreen일 때만 DOM에 마운트 (CSS display:none FOUC 방지) */}
+      {isFullscreen && (
+      <div className="chat-fullscreen open">
         <div className="chat-fs-header">
           <span className="chat-fs-brand">NEURALTWIN CHAT</span>
           <button className="chat-fs-minimize" onClick={closeFullscreen}>
@@ -595,6 +597,7 @@ const Chat = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* ==================== INTRO ANIMATION ==================== */}
       {!introHidden && (
