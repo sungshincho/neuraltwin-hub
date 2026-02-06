@@ -1408,6 +1408,327 @@
 .chat-fs-loading-dot:nth-of-type(2) { animation-delay: -0.16s; }
 .chat-fs-loading-dot:nth-of-type(3) { animation-delay: 0; }
 
+/* ===================== PHASE J: MESSAGE ACTIONS (Copy/Like/Dislike) ===================== */
+
+.chat-message-wrapper,
+.chat-fs-message-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.chat-message-wrapper .chat-message,
+.chat-fs-message-wrapper .chat-fs-message {
+    margin-bottom: 0;
+}
+
+.msg-actions,
+.fs-msg-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 4px;
+    margin-right: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    padding-left: 4px;
+}
+
+.chat-message-wrapper:hover .msg-actions,
+.chat-fs-message-wrapper:hover .msg-actions,
+.chat-fs-message-wrapper:hover .fs-msg-actions {
+    opacity: 1;
+}
+
+/* 활성 상태일 때는 항상 표시 */
+.msg-actions:has(.active-positive, .active-negative, .copied),
+.fs-msg-actions:has(.active-positive, .active-negative, .copied) {
+    opacity: 1;
+}
+
+.msg-action-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.msg-action-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--gray-300);
+}
+
+.msg-action-btn.copied {
+    color: #22c55e;
+}
+
+.msg-action-btn.active-positive {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.msg-action-btn.active-negative {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ===================== PHASE J: EXPORT MENU ===================== */
+
+.chat-fs-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-fs-action-btn {
+    padding: 7px 16px;
+    background: transparent;
+    border: 1px solid var(--gray-700);
+    border-radius: 8px;
+    color: var(--gray-300);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-fs-action-btn:hover:not(:disabled) {
+    border-color: var(--gray-500);
+    color: var(--white);
+}
+
+.chat-fs-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.export-menu-container {
+    position: relative;
+}
+
+.export-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 180px;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    animation: slideInUp 0.15s ease;
+}
+
+.export-menu-dropdown.export-menu-up {
+    top: auto;
+    bottom: calc(100% + 6px);
+}
+
+.export-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--gray-100);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-align: left;
+}
+
+.export-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.export-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--gray-300);
+}
+
+/* ===================== PHASE J: FILE UPLOAD ===================== */
+
+.chat-file-input-hidden {
+    display: none;
+}
+
+.chat-action-icon-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.chat-action-icon-btn:hover:not(:disabled) {
+    color: var(--gray-300);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--gray-700);
+}
+
+.chat-action-icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* 첨부 파일 미리보기 (입력 영역 위) */
+.chat-pending-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pending-file-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--gray-700);
+    border-radius: 8px;
+    padding: 6px 10px;
+    max-width: 250px;
+}
+
+.pending-file-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.pending-file-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--gray-300);
+    letter-spacing: 0.5px;
+}
+
+.pending-file-name {
+    font-size: 12px;
+    color: var(--gray-100);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.pending-file-size {
+    font-size: 10px;
+    color: var(--gray-500);
+    white-space: nowrap;
+}
+
+.pending-file-remove {
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.pending-file-remove:hover {
+    color: #ef4444;
+}
+
+/* 메시지 내 첨부 파일 표시 */
+.msg-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.msg-attachment-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+.msg-attachment-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    object-fit: cover;
+}
+
+.msg-attachment-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--gray-300);
+}
+
+.msg-attachment-name {
+    font-size: 11px;
+    color: var(--gray-300);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* 인라인 Export 메뉴 위치 */
+.export-menu-inline {
+    position: relative;
+}
+
+/* ===================== END PHASE J ===================== */
+
 /* 전체화면 반응형 */
 @media (max-width: 768px) {
     .chat-fs-header {
@@ -1448,5 +1769,27 @@
         width: 100%;
         height: 300px;
         flex: none;
+    }
+
+    /* PHASE J: 모바일 반응형 */
+    .chat-pending-files {
+        gap: 6px;
+    }
+
+    .pending-file-chip {
+        max-width: 200px;
+    }
+
+    .msg-actions,
+    .fs-msg-actions {
+        opacity: 1;  /* 모바일에서는 항상 표시 */
+    }
+
+    .chat-fs-header-actions {
+        gap: 6px;
+    }
+
+    .export-menu-dropdown {
+        min-width: 150px;
     }
 }

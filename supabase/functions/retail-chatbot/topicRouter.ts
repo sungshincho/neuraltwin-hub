@@ -217,8 +217,24 @@ export function buildEnrichedPrompt(
   // 3. 컨텍스트 조합
   const topicContext = combineKnowledgeContexts(topicIds);
 
-  // 4. 최종 시스템 프롬프트 조립
-  let finalPrompt = SYSTEM_PROMPT;
+  // 4. 최종 시스템 프롬프트 조립 (현재 날짜 주입)
+  const now = new Date();
+  const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const year = koreaTime.getFullYear();
+  const month = koreaTime.getMonth() + 1;
+  const day = koreaTime.getDate();
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][koreaTime.getDay()];
+
+  const dateContext = `
+[현재 시점 정보]
+- 오늘 날짜: ${year}년 ${month}월 ${day}일 (${dayOfWeek}요일)
+- 현재 연도: ${year}년
+- 현재 시즌: ${month <= 2 || month === 12 ? '겨울(Winter)' : month <= 5 ? '봄(Spring)' : month <= 8 ? '여름(Summer)' : '가을(Fall)'}
+- 분기: Q${Math.ceil(month / 3)} ${year}
+- 중요: 트렌드, 시즌, 연도를 언급할 때 반드시 위 날짜 기준으로 답변하세요. "2024-2025 트렌드" 같은 과거 표현 대신 현재 연도(${year}년) 기준으로 작성하세요.
+`;
+
+  let finalPrompt = SYSTEM_PROMPT + '\n' + dateContext;
 
   if (topicContext && classification.confidence > 0.2) {
     finalPrompt += '\n' + TOPIC_INJECTION_PREFIX + '\n' + topicContext;
