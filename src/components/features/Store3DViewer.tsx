@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Box, Plane, Sphere, Line, useGLTF } from "@react-three/drei";
-import { Suspense, useRef, useMemo, useState, useEffect, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
+import { Suspense, useRef, useMemo, useState, useEffect, memo, Component, ReactNode, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as THREE from "three";
 import { RotateCcw, Mouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -381,9 +381,9 @@ const FurnitureLayout = () => {
   );
 };
 
-// 3D 매장 모델
-const StoreModel = ({ 
-  mode, 
+// 3D 매장 모델 — memo로 래핑하여 props 변경 시에만 리렌더 (카메라 스냅백 방지)
+const StoreModel = memo(({
+  mode,
   showReturning = true,
   showNew = true,
   customerPaths = [],
@@ -519,7 +519,9 @@ const StoreModel = ({
       )}
     </>
   );
-};
+});
+
+StoreModel.displayName = 'StoreModel';
 
 // GLB 파일 프리로드
 useGLTF.preload('/models/store-kolon.glb');
@@ -540,8 +542,9 @@ const CameraController = forwardRef<CameraControllerHandle, object>((_, ref) => 
   const isUserInteracting = useRef(false);
   const isResetting = useRef(false);
 
-  // 초기 target 설정 (ref 기반 — prop 하드코딩 대신)
+  // 초기 카메라 위치 + target 설정 (1회만 실행 — 리렌더 시 카메라 리셋 방지)
   useEffect(() => {
+    camera.position.set(...DEFAULT_CAMERA_POSITION);
     if (controlsRef.current) {
       controlsRef.current.target.set(...DEFAULT_TARGET);
       controlsRef.current.update();
@@ -615,7 +618,8 @@ export const Store3DViewer = (props: Store3DViewerProps) => {
     <div className="relative w-full h-[500px] rounded-xl overflow-hidden bg-gradient-to-b from-muted/10 to-muted/30 border border-border/50">
       <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }}>
         <Suspense fallback={null}>
-          <PerspectiveCamera makeDefault position={DEFAULT_CAMERA_POSITION} fov={50} />
+          {/* PerspectiveCamera에서 position prop 제거 — CameraController가 초기 위치를 1회만 설정 */}
+          <PerspectiveCamera makeDefault fov={50} />
           <CameraController ref={cameraControllerRef} />
           
           {/* 조명 */}
