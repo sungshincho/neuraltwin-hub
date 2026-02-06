@@ -317,6 +317,18 @@ const About = () => {
     [openService]
   );
 
+  // 아코디언 패널 높이 계산 — DOM 측정 후 세팅하여 scrollHeight 0 버그 방지
+  useEffect(() => {
+    panelRefs.current.forEach((panel, i) => {
+      if (!panel) return;
+      if (openService === i) {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      } else {
+        panel.style.maxHeight = "0px";
+      }
+    });
+  }, [openService]);
+
   return (
     <div className="about-page">
       {/* ==================== INTRO ANIMATION ==================== */}
@@ -422,11 +434,6 @@ const About = () => {
               <div
                 className="service-panel"
                 ref={(el) => { panelRefs.current[i] = el; }}
-                style={{
-                  maxHeight: openService === i
-                    ? (panelRefs.current[i]?.scrollHeight ?? 0) + "px"
-                    : "0px",
-                }}
               >
                 <div className="service-panel-inner">
                   <div className="service-panel-image">
@@ -525,7 +532,7 @@ const About = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <Link to="/about">About</Link>
+              <Link to="/about">제품 & 회사소개</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>
