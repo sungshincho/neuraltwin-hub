@@ -5,7 +5,7 @@
  * wireframe-3d-viz.jsx 레퍼런스 기반
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildScene, disposeScene, lerpVector3, applyParamsToConfig, type SceneObjects } from './sceneBuilder';
@@ -76,6 +76,12 @@ export default function StoreVisualizer({
 
   // 어노테이션 스크린 좌표
   const [annotationPositions, setAnnotationPositions] = useState<AnnotationPosition[]>([]);
+
+  // 파라메트릭 설정 메모이제이션 (불필요한 씬 재빌드 방지)
+  const sceneConfigKey = useMemo(() => {
+    if (!storeParams && !zoneScale) return 'default';
+    return JSON.stringify({ storeParams, zoneScale });
+  }, [storeParams, zoneScale]);
 
   // ─────────────────────────────────────────
   // 애니메이션 루프
@@ -230,6 +236,13 @@ export default function StoreVisualizer({
     const container = containerRef.current;
     const canvas = canvasRef.current;
 
+    // WebGL 컨텍스트 가용성 체크
+    const testContext = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    if (!testContext) {
+      console.error('WebGL not available on this canvas');
+      return;
+    }
+
     // 파라메트릭 설정 적용 (PHASE H)
     const sceneConfig = (storeParams || zoneScale)
       ? applyParamsToConfig(storeParams, zoneScale)
@@ -302,7 +315,8 @@ export default function StoreVisualizer({
         sceneRef.current = null;
       }
     };
-  }, [animate, storeParams, zoneScale]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animate, sceneConfigKey]);
 
   // ─────────────────────────────────────────
   // vizState 변경 시 카메라 업데이트

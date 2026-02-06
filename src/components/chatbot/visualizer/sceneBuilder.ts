@@ -470,9 +470,8 @@ export function disposeScene(sceneObjects: SceneObjects): void {
     }
   });
 
-  // 렌더러 정리
+  // 렌더러 정리 (forceContextLoss 제거 - 같은 캔버스 재사용 시 문제 발생)
   renderer.dispose();
-  renderer.forceContextLoss();
 }
 
 // ═══════════════════════════════════════════
