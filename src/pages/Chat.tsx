@@ -1,14 +1,18 @@
 // 채팅 페이지 - NEURALTWIN 다크 테마 + retail-chatbot EF 연동
 // TASK 9: Suggestions + Lead Capture Form 추가
 // TASK C: 3D Wireframe Visualizer 통합
+// PHASE J: 파일 업로드, 메시지 리액션, Export 기능
 // UI 통합: collapsible messages, 타임라인 minor ticks, fullscreen UX 개선
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/chat.css";
 
 // 3D Visualizer 컴포넌트
 import { StoreVisualizer, KPIBar, StageProgress } from "@/components/chatbot/visualizer";
 import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
+
+// Export 유틸리티
+import { exportAsMarkdown, exportAsPDF, exportAsDocx } from "@/shared/chat/utils/exportConversation";
 
 // 메시지 타입 정의
 interface Message {
@@ -17,6 +21,18 @@ interface Message {
   content: string;
   suggestions?: string[];
   showLeadForm?: boolean;
+  feedback?: "positive" | "negative" | null;
+  attachments?: FileAttachment[];
+}
+
+// 파일 첨부 타입
+interface FileAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;           // Supabase storage URL (업로드 완료 후)
+  previewUrl?: string;    // 로컬 미리보기 URL
 }
 
 // 리드 폼 데이터 타입
@@ -75,6 +91,19 @@ const Chat = () => {
 
   // 이전 대화 접기/펼치기 상태
   const [expandedOldMessages, setExpandedOldMessages] = useState(false);
+
+  // PHASE J: Export 메뉴 상태
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // PHASE J: 파일 업로드 상태
+  const [pendingFiles, setPendingFiles] = useState<FileAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fsFileInputRef = useRef<HTMLInputElement>(null);
+
+  // PHASE J: 복사 알림
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
   // 플레이스홀더 로테이션
   const PLACEHOLDERS = [
@@ -141,14 +170,22 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
+    // 파일 첨부 정보를 메시지에 포함
+    const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
+    const fileContext = currentFiles
+      ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
+      : '';
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue.trim(),
+      content: inputValue.trim() + fileContext,
+      attachments: currentFiles,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
+    setPendingFiles([]);
     setIsLoading(true);
 
     // AbortController 생성
@@ -300,6 +337,223 @@ const Chat = () => {
     setShowLeadForm(false);
   };
 
+  // ═══════════════════════════════════════════
+  // PHASE J: 메시지 리액션 핸들러 (Copy / Like / Dislike)
+  // ═══════════════════════════════════════════
+
+  const handleCopyMessage = useCallback((messageId: string, content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    }).catch(() => {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = content;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    });
+  }, []);
+
+  const handleFeedback = useCallback((messageId: string, feedback: "positive" | "negative") => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? { ...msg, feedback: msg.feedback === feedback ? null : feedback }
+          : msg
+      )
+    );
+    // TODO: DB에 피드백 저장 (chat_messages.user_feedback 컬럼)
+  }, []);
+
+  // ═══════════════════════════════════════════
+  // PHASE J: Export 핸들러
+  // ═══════════════════════════════════════════
+
+  const handleExport = useCallback(async (format: 'md' | 'pdf' | 'docx') => {
+    if (messages.length === 0 || isExporting) return;
+
+    setIsExporting(true);
+    setShowExportMenu(false);
+
+    try {
+      const exportMessages = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      switch (format) {
+        case 'md':
+          exportAsMarkdown(exportMessages);
+          break;
+        case 'pdf':
+          await exportAsPDF(exportMessages);
+          break;
+        case 'docx':
+          await exportAsDocx(exportMessages);
+          break;
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [messages, isExporting]);
+
+  // Export 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportMenu]);
+
+  // ═══════════════════════════════════════════
+  // PHASE J: 파일 업로드 핸들러
+  // ═══════════════════════════════════════════
+
+  const ALLOWED_FILE_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'text/plain', 'text/csv', 'text/markdown',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newAttachments: FileAttachment[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        alert(`지원하지 않는 파일 형식입니다: ${file.name}`);
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`파일 크기가 10MB를 초과합니다: ${file.name}`);
+        continue;
+      }
+
+      const previewUrl = file.type.startsWith('image/')
+        ? URL.createObjectURL(file)
+        : undefined;
+
+      newAttachments.push({
+        id: crypto.randomUUID(),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        previewUrl,
+      });
+    }
+
+    if (newAttachments.length > 0) {
+      setPendingFiles((prev) => [...prev, ...newAttachments]);
+    }
+
+    // Reset input
+    e.target.value = '';
+  }, []);
+
+  const handleRemoveFile = useCallback((fileId: string) => {
+    setPendingFiles((prev) => {
+      const file = prev.find((f) => f.id === fileId);
+      if (file?.previewUrl) {
+        URL.revokeObjectURL(file.previewUrl);
+      }
+      return prev.filter((f) => f.id !== fileId);
+    });
+  }, []);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  };
+
+  // ═══════════════════════════════════════════
+  // PHASE J: 첨부 파일 렌더러
+  // ═══════════════════════════════════════════
+
+  const renderAttachments = (attachments?: FileAttachment[]) => {
+    if (!attachments || attachments.length === 0) return null;
+    return (
+      <div className="msg-attachments">
+        {attachments.map((file) => (
+          <div key={file.id} className="msg-attachment-chip">
+            {file.previewUrl ? (
+              <img src={file.previewUrl} alt={file.name} className="msg-attachment-thumb" />
+            ) : (
+              <span className="msg-attachment-icon">
+                {file.type.includes('pdf') ? 'PDF' : file.type.includes('word') || file.type.includes('document') ? 'DOC' : 'FILE'}
+              </span>
+            )}
+            <span className="msg-attachment-name">{file.name}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ═══════════════════════════════════════════
+  // 메시지 액션 버튼 렌더러
+  // ═══════════════════════════════════════════
+
+  const renderMessageActions = (msg: Message, variant: 'inline' | 'fullscreen' = 'inline') => {
+    if (msg.role === 'user') return null;
+
+    const prefix = variant === 'fullscreen' ? 'fs-' : '';
+    const isCopied = copiedMessageId === msg.id;
+
+    return (
+      <div className={`msg-actions ${prefix}msg-actions`}>
+        {/* Copy */}
+        <button
+          className={`msg-action-btn ${isCopied ? 'copied' : ''}`}
+          onClick={() => handleCopyMessage(msg.id, msg.content)}
+          title={isCopied ? '복사됨!' : '복사'}
+        >
+          {isCopied ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          )}
+        </button>
+
+        {/* Like */}
+        <button
+          className={`msg-action-btn ${msg.feedback === 'positive' ? 'active-positive' : ''}`}
+          onClick={() => handleFeedback(msg.id, 'positive')}
+          title="좋아요"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={msg.feedback === 'positive' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+        </button>
+
+        {/* Dislike */}
+        <button
+          className={`msg-action-btn ${msg.feedback === 'negative' ? 'active-negative' : ''}`}
+          onClick={() => handleFeedback(msg.id, 'negative')}
+          title="싫어요"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={msg.feedback === 'negative' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z"/></svg>
+        </button>
+      </div>
+    );
+  };
+
   // 전체화면 열기/닫기
   const openFullscreen = () => {
     setIsFullscreen(true);
@@ -314,12 +568,20 @@ const Chat = () => {
   // 전체화면 전용 메시지 전송
   const handleFsSendMessage = async () => {
     if (!fsInputValue.trim() || isLoading) return;
+
+    const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
+    const fileContext = currentFiles
+      ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
+      : '';
+
     setInputValue(fsInputValue);
     setFsInputValue("");
+    setPendingFiles([]);
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: fsInputValue.trim(),
+      content: fsInputValue.trim() + fileContext,
+      attachments: currentFiles,
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
@@ -433,8 +695,12 @@ const Chat = () => {
               </button>
               <div className={`chat-hidden-messages${expandedOldMessages ? " expanded" : ""}`}>
                 {hiddenTurns.flat().map((msg) => (
-                  <div key={msg.id} className={`chat-message ${msg.role}`}>
-                    {msg.content}
+                  <div key={msg.id} className="chat-message-wrapper">
+                    <div className={`chat-message ${msg.role}`}>
+                      {msg.role === 'user' && renderAttachments(msg.attachments)}
+                      {msg.content}
+                    </div>
+                    {renderMessageActions(msg, 'inline')}
                   </div>
                 ))}
               </div>
@@ -447,15 +713,19 @@ const Chat = () => {
 
         {/* 최근 대화 (항상 표시) */}
         {visibleTurns.flat().map((msg) => (
-          <div key={msg.id} className={`chat-message ${msg.role}`}>
-            {msg.content}
+          <div key={msg.id} className="chat-message-wrapper">
+            <div className={`chat-message ${msg.role}`}>
+              {msg.role === 'user' && renderAttachments(msg.attachments)}
+              {msg.content}
+            </div>
+            {renderMessageActions(msg, 'inline')}
           </div>
         ))}
       </>
     );
   };
 
-  // 전체화면 채팅 메시지 렌더링 — 축소모드와 동일한 collapsible 패턴 (chat-fs-* 클래스 사용)
+  // 전체화면 채팅 메시지 렌더링 — 축소모드와 동일한 collapsible 패턴 + Phase J 기능 통합
   const renderFsCollapsibleMessages = () => {
     if (messages.length === 0 && !isLoading) {
       return <div className="chat-fs-empty">대화를 시작해보세요</div>;
@@ -483,8 +753,12 @@ const Chat = () => {
               </button>
               <div className={`chat-hidden-messages${expandedOldMessages ? " expanded" : ""}`}>
                 {hiddenTurns.flat().map((msg) => (
-                  <div key={msg.id} className={`chat-fs-message ${msg.role}`}>
-                    {msg.content}
+                  <div key={msg.id} className="chat-fs-message-wrapper">
+                    <div className={`chat-fs-message ${msg.role}`}>
+                      {msg.role === 'user' && renderAttachments(msg.attachments)}
+                      {msg.content}
+                    </div>
+                    {renderMessageActions(msg, 'fullscreen')}
                   </div>
                 ))}
               </div>
@@ -497,8 +771,12 @@ const Chat = () => {
 
         {/* 최근 대화 (항상 표시) */}
         {visibleTurns.flat().map((msg) => (
-          <div key={msg.id} className={`chat-fs-message ${msg.role}`}>
-            {msg.content}
+          <div key={msg.id} className="chat-fs-message-wrapper">
+            <div className={`chat-fs-message ${msg.role}`}>
+              {msg.role === 'user' && renderAttachments(msg.attachments)}
+              {msg.content}
+            </div>
+            {renderMessageActions(msg, 'fullscreen')}
           </div>
         ))}
       </>
@@ -562,10 +840,41 @@ const Chat = () => {
       <div className="chat-fullscreen open">
         <div className="chat-fs-header">
           <span className="chat-fs-brand">NEURALTWIN CHAT</span>
-          <button className="chat-fs-minimize" onClick={closeFullscreen}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
-            축소
-          </button>
+          <div className="chat-fs-header-actions">
+            {/* Export 버튼 */}
+            <div className="export-menu-container" ref={exportMenuRef}>
+              <button
+                className="chat-fs-action-btn"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={messages.length === 0 || isExporting}
+                title="대화 내보내기"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                {isExporting ? '내보내는 중...' : '내보내기'}
+              </button>
+              {showExportMenu && (
+                <div className="export-menu-dropdown">
+                  <button className="export-menu-item" onClick={() => handleExport('md')}>
+                    <span className="export-icon">MD</span>
+                    Markdown (.md)
+                  </button>
+                  <button className="export-menu-item" onClick={() => handleExport('pdf')}>
+                    <span className="export-icon">PDF</span>
+                    PDF (.pdf)
+                  </button>
+                  <button className="export-menu-item" onClick={() => handleExport('docx')}>
+                    <span className="export-icon">DOC</span>
+                    Word (.docx)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button className="chat-fs-minimize" onClick={closeFullscreen}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
+              축소
+            </button>
+          </div>
         </div>
 
         {/* body 영역: vizDirective 유무에 따라 분할 */}
@@ -573,7 +882,7 @@ const Chat = () => {
           {/* 좌측: 채팅 메시지 */}
           <div className="chat-fs-body" id="chat-fs-body">
             <div className="chat-fs-inner">
-              {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 */}
+              {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 (Phase J 통합) */}
               {renderFsCollapsibleMessages()}
               {isLoading && (
                 <div className="chat-fs-message assistant">
@@ -688,6 +997,31 @@ const Chat = () => {
         <div className="chat-fs-footer">
           <div className="chat-fs-input-wrapper">
             <div className="chat-fs-input-box">
+              {/* 첨부 파일 미리보기 (풀스크린) */}
+              {pendingFiles.length > 0 && (
+                <div className="chat-pending-files">
+                  {pendingFiles.map((file) => (
+                    <div key={file.id} className="pending-file-chip">
+                      {file.previewUrl ? (
+                        <img src={file.previewUrl} alt={file.name} className="pending-file-thumb" />
+                      ) : (
+                        <span className="pending-file-icon">
+                          {file.type.includes('pdf') ? 'PDF' : file.type.includes('word') || file.type.includes('document') ? 'DOC' : 'FILE'}
+                        </span>
+                      )}
+                      <span className="pending-file-name">{file.name}</span>
+                      <span className="pending-file-size">{formatFileSize(file.size)}</span>
+                      <button
+                        className="pending-file-remove"
+                        onClick={() => handleRemoveFile(file.id)}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="chat-fs-input-row">
                 <textarea
                   ref={fsInputRef}
@@ -701,6 +1035,22 @@ const Chat = () => {
               </div>
               <div className="chat-fs-input-actions">
                 <div className="chat-fs-input-left">
+                  {/* 파일 업로드 버튼 (풀스크린) */}
+                  <input
+                    ref={fsFileInputRef}
+                    type="file"
+                    className="chat-file-input-hidden"
+                    onChange={handleFileSelect}
+                    multiple
+                    accept="image/*,.pdf,.txt,.csv,.md,.docx,.xlsx"
+                  />
+                  <button
+                    className="chat-action-icon-btn"
+                    onClick={() => fsFileInputRef.current?.click()}
+                    title="파일 첨부"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  </button>
                 </div>
                 <button
                   className="chat-send-btn"
@@ -888,6 +1238,32 @@ const Chat = () => {
 
               {/* 입력 박스 */}
               <div className="chat-input-box">
+                {/* 첨부 파일 미리보기 */}
+                {pendingFiles.length > 0 && (
+                  <div className="chat-pending-files">
+                    {pendingFiles.map((file) => (
+                      <div key={file.id} className="pending-file-chip">
+                        {file.previewUrl ? (
+                          <img src={file.previewUrl} alt={file.name} className="pending-file-thumb" />
+                        ) : (
+                          <span className="pending-file-icon">
+                            {file.type.includes('pdf') ? 'PDF' : file.type.includes('word') || file.type.includes('document') ? 'DOC' : 'FILE'}
+                          </span>
+                        )}
+                        <span className="pending-file-name">{file.name}</span>
+                        <span className="pending-file-size">{formatFileSize(file.size)}</span>
+                        <button
+                          className="pending-file-remove"
+                          onClick={() => handleRemoveFile(file.id)}
+                          title="파일 제거"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="chat-input-row">
                   <textarea
                     ref={inputRef}
@@ -901,6 +1277,50 @@ const Chat = () => {
                 </div>
                 <div className="chat-input-actions">
                   <div className="chat-input-left">
+                    {/* 파일 업로드 버튼 */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="chat-file-input-hidden"
+                      onChange={handleFileSelect}
+                      multiple
+                      accept="image/*,.pdf,.txt,.csv,.md,.docx,.xlsx"
+                    />
+                    <button
+                      className="chat-action-icon-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="파일 첨부"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    </button>
+
+                    {/* Export 버튼 (인라인) */}
+                    <div className="export-menu-container export-menu-inline" ref={messages.length > 0 ? undefined : exportMenuRef}>
+                      <button
+                        className="chat-action-icon-btn"
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        disabled={messages.length === 0}
+                        title="대화 내보내기"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </button>
+                      {showExportMenu && !isFullscreen && (
+                        <div className="export-menu-dropdown export-menu-up">
+                          <button className="export-menu-item" onClick={() => handleExport('md')}>
+                            <span className="export-icon">MD</span>
+                            Markdown
+                          </button>
+                          <button className="export-menu-item" onClick={() => handleExport('pdf')}>
+                            <span className="export-icon">PDF</span>
+                            PDF
+                          </button>
+                          <button className="export-menu-item" onClick={() => handleExport('docx')}>
+                            <span className="export-icon">DOC</span>
+                            Word
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <button
                     className="chat-send-btn"
