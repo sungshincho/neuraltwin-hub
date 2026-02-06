@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildScene, disposeScene, lerpVector3, type SceneObjects } from './sceneBuilder';
 import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeData';
 import type { VizState, VizAnnotation } from './vizDirectiveTypes';
@@ -52,6 +53,10 @@ export default function StoreVisualizer({
   const sceneRef = useRef<SceneObjects | null>(null);
   const animationFrameRef = useRef<number>(0);
 
+  // OrbitControls 관련
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const isUserInteracting = useRef<boolean>(false);
+
   // 카메라 목표 위치 (lerp용)
   const cameraTargetPos = useRef<THREE.Vector3>(
     new THREE.Vector3(...CAMERA_PRESETS.overview.pos)
@@ -83,22 +88,34 @@ export default function StoreVisualizer({
 
     const time = performance.now() * 0.001;
 
-    // 1. 카메라 lerp 보간
-    const newPos = lerpVector3(camera.position, cameraTargetPos.current, 0.025);
-    camera.position.copy(newPos);
+    // OrbitControls 업데이트
+    if (controlsRef.current) {
+      controlsRef.current.update();
+    }
 
-    const currentLookAt = new THREE.Vector3();
-    camera.getWorldDirection(currentLookAt);
-    const newLookAt = lerpVector3(
-      camera.position.clone().add(currentLookAt),
-      cameraTargetLookAt.current,
-      0.025
-    );
-    camera.lookAt(newLookAt);
+    // 1. 카메라 lerp 보간 (사용자 인터랙션 중이 아닐 때만)
+    if (!isUserInteracting.current) {
+      const newPos = lerpVector3(camera.position, cameraTargetPos.current, 0.025);
+      camera.position.copy(newPos);
 
-    // FOV lerp
-    camera.fov += (cameraTargetFov.current - camera.fov) * 0.025;
-    camera.updateProjectionMatrix();
+      const currentLookAt = new THREE.Vector3();
+      camera.getWorldDirection(currentLookAt);
+      const newLookAt = lerpVector3(
+        camera.position.clone().add(currentLookAt),
+        cameraTargetLookAt.current,
+        0.025
+      );
+      camera.lookAt(newLookAt);
+
+      // OrbitControls target 동기화
+      if (controlsRef.current) {
+        controlsRef.current.target.lerp(cameraTargetLookAt.current, 0.025);
+      }
+
+      // FOV lerp
+      camera.fov += (cameraTargetFov.current - camera.fov) * 0.025;
+      camera.updateProjectionMatrix();
+    }
 
     // 2. 존 플레인 opacity pulse (하이라이트된 존만)
     Object.values(zonePlanes).forEach(({ plane, border }) => {
@@ -213,6 +230,30 @@ export default function StoreVisualizer({
     );
     sceneRef.current = sceneObjects;
 
+    // OrbitControls 설정
+    const controls = new OrbitControls(sceneObjects.camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enablePan = true;
+    controls.panSpeed = 0.8;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.rotateSpeed = 0.5;
+    controls.minDistance = 5;
+    controls.maxDistance = 50;
+    controls.maxPolarAngle = Math.PI * 0.45; // 수평선 아래로 카메라 회전 제한
+    controls.target.set(...CAMERA_PRESETS.overview.target);
+
+    // 사용자 인터랙션 감지
+    controls.addEventListener('start', () => {
+      isUserInteracting.current = true;
+    });
+    controls.addEventListener('end', () => {
+      isUserInteracting.current = false;
+    });
+
+    controlsRef.current = controls;
+
     // 애니메이션 시작
     animationFrameRef.current = requestAnimationFrame(animate);
 
@@ -237,6 +278,11 @@ export default function StoreVisualizer({
       cancelAnimationFrame(animationFrameRef.current);
       resizeObserver.disconnect();
 
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+        controlsRef.current = null;
+      }
+
       if (sceneRef.current) {
         disposeScene(sceneRef.current);
         sceneRef.current = null;
@@ -253,6 +299,19 @@ export default function StoreVisualizer({
       cameraTargetPos.current = new THREE.Vector3(...preset.pos);
       cameraTargetLookAt.current = new THREE.Vector3(...preset.target);
       cameraTargetFov.current = preset.fov;
+    }
+  }, [vizState]);
+
+  // ─────────────────────────────────────────
+  // 카메라 리셋 함수
+  // ─────────────────────────────────────────
+  const resetCamera = useCallback(() => {
+    const preset = CAMERA_PRESETS[vizState];
+    if (preset && controlsRef.current) {
+      cameraTargetPos.current = new THREE.Vector3(...preset.pos);
+      cameraTargetLookAt.current = new THREE.Vector3(...preset.target);
+      cameraTargetFov.current = preset.fov;
+      controlsRef.current.target.copy(cameraTargetLookAt.current);
     }
   }, [vizState]);
 
@@ -326,12 +385,34 @@ export default function StoreVisualizer({
         ) : null
       )}
 
+      {/* 좌상단: RESET VIEW 버튼 */}
+      <button
+        onClick={resetCamera}
+        className="absolute top-3 left-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
+                   border border-[#1a1a1a] text-[9px] font-mono text-[#64748b]
+                   backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9]
+                   transition-colors cursor-pointer"
+      >
+        RESET VIEW
+      </button>
+
       {/* 좌하단: 현재 뷰 상태 */}
-      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded bg-[#030712cc]
-                      border border-[#15243d] text-[9px] font-mono text-[#475569]
+      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
+                      border border-[#1a1a1a] text-[9px] font-mono text-[#475569]
                       backdrop-blur-sm">
         VIEW: {vizState.toUpperCase()}
         {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
+      </div>
+
+      {/* 우하단: 조작 힌트 */}
+      <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
+                      border border-[#1a1a1a] text-[8px] font-mono text-[#404040]
+                      backdrop-blur-sm flex items-center gap-2">
+        <span>SCROLL 줌</span>
+        <span className="text-[#262626]">·</span>
+        <span>L-DRAG 회전</span>
+        <span className="text-[#262626]">·</span>
+        <span>R-DRAG 이동</span>
       </div>
 
       {/* 우상단: 범례 (하이라이트 활성 시) */}

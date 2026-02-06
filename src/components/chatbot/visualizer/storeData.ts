@@ -191,16 +191,16 @@ export const FLOW_CURVE_POINTS: [number, number, number][] = [
 // ═══════════════════════════════════════════
 
 export const COLORS = {
-  background: 0x030712,
+  background: 0x0a0a0a,    // 순검정 (chat.css 일치)
   grid: {
-    primary: 0x1a2332,
-    secondary: 0x0d1520
+    primary: 0x1a1a1a,     // 화이트 투명도 기반
+    secondary: 0x141414
   },
-  walls: 0x334155,
-  entrance: 0x0ea5e9,
-  furniture: 0x475569,
-  particle: 0x1e293b,
-  fog: 0x030712
+  walls: 0x333333,         // 더 미니멀
+  entrance: 0x0ea5e9,      // 시안 유지
+  furniture: 0x262626,     // 화이트 투명도 기반
+  particle: 0x404040,      // 밝은 파티클
+  fog: 0x0a0a0a
 };
 
 // ═══════════════════════════════════════════
