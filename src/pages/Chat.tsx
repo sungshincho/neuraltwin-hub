@@ -26,13 +26,6 @@ interface LeadFormData {
   role: string;
 }
 
-// 모드 옵션
-const CHAT_MODES = [
-  { id: "thinking", label: "생각 중" },
-  { id: "creative", label: "창의적" },
-  { id: "precise", label: "정확한" },
-];
-
 // 타임라인 연도 (2018~2026, HTML 원본 동일)
 const TIMELINE_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 
@@ -60,8 +53,6 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedMode, setSelectedMode] = useState("thinking");
-  const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   // TASK 9: Suggestions + Lead Form 상태
@@ -81,7 +72,6 @@ const Chat = () => {
   // 전체화면 상태
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fsInputValue, setFsInputValue] = useState("");
-  const [fsModeMenuOpen, setFsModeMenuOpen] = useState(false);
 
   // 이전 대화 접기/펼치기 상태
   const [expandedOldMessages, setExpandedOldMessages] = useState(false);
@@ -252,16 +242,6 @@ const Chat = () => {
       handleSendMessage();
     }
   };
-
-  // 모드 선택
-  const handleModeSelect = (modeId: string) => {
-    setSelectedMode(modeId);
-    setModeMenuOpen(false);
-    setFsModeMenuOpen(false);
-  };
-
-  // 현재 모드 라벨
-  const currentModeLabel = CHAT_MODES.find((m) => m.id === selectedMode)?.label || "생각 중";
 
   // TASK 9: Suggestion 클릭 핸들러
   const handleSuggestionClick = (suggestion: string) => {
@@ -599,27 +579,6 @@ const Chat = () => {
               </div>
               <div className="chat-fs-input-actions">
                 <div className="chat-fs-input-left">
-                  <div style={{ position: "relative" }}>
-                    <button
-                      className="chat-mode-dropdown"
-                      onClick={() => setFsModeMenuOpen(!fsModeMenuOpen)}
-                    >
-                      <span className="chat-mode-icon"></span>
-                      <span>{currentModeLabel}</span>
-                      <span className="chat-mode-arrow">▾</span>
-                    </button>
-                    <div className={`chat-mode-menu${fsModeMenuOpen ? " open" : ""}`}>
-                      {CHAT_MODES.map((mode) => (
-                        <button
-                          key={mode.id}
-                          className={`chat-mode-option${selectedMode === mode.id ? " active" : ""}`}
-                          onClick={() => handleModeSelect(mode.id)}
-                        >
-                          {mode.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
                 <button
                   className="chat-send-btn"
@@ -820,27 +779,6 @@ const Chat = () => {
                 </div>
                 <div className="chat-input-actions">
                   <div className="chat-input-left">
-                    <div style={{ position: "relative" }}>
-                      <button
-                        className="chat-mode-dropdown"
-                        onClick={() => setModeMenuOpen(!modeMenuOpen)}
-                      >
-                        <span className="chat-mode-icon"></span>
-                        <span>{currentModeLabel}</span>
-                        <span className="chat-mode-arrow">▾</span>
-                      </button>
-                      <div className={`chat-mode-menu${modeMenuOpen ? " open" : ""}`}>
-                        {CHAT_MODES.map((mode) => (
-                          <button
-                            key={mode.id}
-                            className={`chat-mode-option${selectedMode === mode.id ? " active" : ""}`}
-                            onClick={() => handleModeSelect(mode.id)}
-                          >
-                            {mode.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                   <button
                     className="chat-send-btn"
