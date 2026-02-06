@@ -725,6 +725,64 @@ const Chat = () => {
     );
   };
 
+  // 전체화면 채팅 메시지 렌더링 — 축소모드와 동일한 collapsible 패턴 + Phase J 기능 통합
+  const renderFsCollapsibleMessages = () => {
+    if (messages.length === 0 && !isLoading) {
+      return <div className="chat-fs-empty">대화를 시작해보세요</div>;
+    }
+
+    const turns = computeTurns();
+    const hiddenCount = Math.max(0, turns.length - VISIBLE_TURNS);
+    const hiddenTurns = turns.slice(0, hiddenCount);
+    const visibleTurns = turns.slice(hiddenCount);
+
+    return (
+      <>
+        {/* 접기 가능한 이전 대화 */}
+        {hiddenTurns.length > 0 && (
+          <>
+            <div className="chat-collapsed-group">
+              <button
+                className={`chat-expand-btn${expandedOldMessages ? " expanded" : ""}`}
+                onClick={() => setExpandedOldMessages(!expandedOldMessages)}
+              >
+                <span className="expand-arrow">▶</span>
+                {expandedOldMessages
+                  ? "이전 대화 접기"
+                  : `이전 대화 ${hiddenTurns.length}개 보기`}
+              </button>
+              <div className={`chat-hidden-messages${expandedOldMessages ? " expanded" : ""}`}>
+                {hiddenTurns.flat().map((msg) => (
+                  <div key={msg.id} className="chat-fs-message-wrapper">
+                    <div className={`chat-fs-message ${msg.role}`}>
+                      {msg.role === 'user' && renderAttachments(msg.attachments)}
+                      {msg.content}
+                    </div>
+                    {renderMessageActions(msg, 'fullscreen')}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="chat-divider">
+              <span>최근 대화</span>
+            </div>
+          </>
+        )}
+
+        {/* 최근 대화 (항상 표시) */}
+        {visibleTurns.flat().map((msg) => (
+          <div key={msg.id} className="chat-fs-message-wrapper">
+            <div className={`chat-fs-message ${msg.role}`}>
+              {msg.role === 'user' && renderAttachments(msg.attachments)}
+              {msg.content}
+            </div>
+            {renderMessageActions(msg, 'fullscreen')}
+          </div>
+        ))}
+      </>
+    );
+  };
+
   // 타임라인 룰러 렌더링 (minor tick 포함)
   const renderTimelineRuler = () => {
     const elements: JSX.Element[] = [];
@@ -824,19 +882,8 @@ const Chat = () => {
           {/* 좌측: 채팅 메시지 */}
           <div className="chat-fs-body" id="chat-fs-body">
             <div className="chat-fs-inner">
-              {messages.length === 0 ? (
-                <div className="chat-fs-empty">대화를 시작해보세요</div>
-              ) : (
-                messages.map((msg) => (
-                  <div key={msg.id} className="chat-fs-message-wrapper">
-                    <div className={`chat-fs-message ${msg.role}`}>
-                      {msg.role === 'user' && renderAttachments(msg.attachments)}
-                      {msg.content}
-                    </div>
-                    {renderMessageActions(msg, 'fullscreen')}
-                  </div>
-                ))
-              )}
+              {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 (Phase J 통합) */}
+              {renderFsCollapsibleMessages()}
               {isLoading && (
                 <div className="chat-fs-message assistant">
                   <div className="chat-fs-loading">
