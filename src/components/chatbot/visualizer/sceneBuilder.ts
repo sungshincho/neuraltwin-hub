@@ -118,7 +118,7 @@ export function buildScene(
   // ─────────────────────────────────────────
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(COLORS.background);
-  scene.fog = new THREE.FogExp2(COLORS.fog, 0.018);
+  scene.fog = new THREE.FogExp2(COLORS.fog, 0.012);  // 더 넓은 시야
 
   // ─────────────────────────────────────────
   // 2. Camera 설정
@@ -155,7 +155,7 @@ export function buildScene(
   const wallMaterial = new THREE.LineBasicMaterial({
     color: COLORS.walls,
     transparent: true,
-    opacity: 0.6
+    opacity: 0.3
   });
 
   const storeWalls = createWireBox(
@@ -190,7 +190,7 @@ export function buildScene(
   const furnitureMaterial = new THREE.LineBasicMaterial({
     color: COLORS.furniture,
     transparent: true,
-    opacity: 0.5
+    opacity: 0.3
   });
 
   const furnitureObjects: THREE.LineSegments[] = [];
@@ -285,7 +285,7 @@ export function buildScene(
     color: COLORS.particle,
     size: 0.08,
     transparent: true,
-    opacity: 0.6
+    opacity: 0.4
   });
 
   const particles = new THREE.Points(particleGeometry, particleMaterial);
