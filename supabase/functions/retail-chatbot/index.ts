@@ -44,9 +44,11 @@ interface VizDirective {
 
 const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
 const VALID_ZONES = ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'];
+const VALID_STAGES = ['entry', 'exploration', 'purchase'];
 
 /**
  * AI 응답에서 ```viz 블록을 추출하고 VizDirective로 파싱
+ * PHASE G: kpis, stage 필드 지원 추가
  */
 function extractVizDirectiveFromResponse(response: string): VizDirective | null {
   // ```viz ... ``` 블록 찾기
@@ -80,11 +82,34 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       parsed.flowPath = false;
     }
 
+    // PHASE G: kpis 유효성 검증 (AI가 응답에서 언급한 수치)
+    let validatedKpis: VizKPI[] | undefined;
+    if (parsed.kpis && Array.isArray(parsed.kpis)) {
+      validatedKpis = parsed.kpis
+        .filter((k: VizKPI) => k.label && k.value)
+        .slice(0, 4)  // 최대 4개
+        .map((k: VizKPI) => ({
+          label: String(k.label).slice(0, 15),
+          value: String(k.value),
+          sub: k.sub ? String(k.sub).slice(0, 20) : '',
+          alert: !!k.alert,
+          highlight: !!k.highlight
+        }));
+    }
+
+    // PHASE G: stage 유효성 검증
+    let validatedStage: 'entry' | 'exploration' | 'purchase' | undefined;
+    if (parsed.stage && VALID_STAGES.includes(parsed.stage)) {
+      validatedStage = parsed.stage;
+    }
+
     return {
       vizState: parsed.vizState,
       highlights: parsed.highlights,
       annotations: parsed.annotations?.length ? parsed.annotations : undefined,
-      flowPath: parsed.flowPath
+      flowPath: parsed.flowPath,
+      kpis: validatedKpis?.length ? validatedKpis : undefined,
+      stage: validatedStage
     };
   } catch (err) {
     console.warn('[VizDirective] JSON parse error:', err);
@@ -702,19 +727,23 @@ serve(async (request: Request) => {
     // 클라이언트에 보낼 텍스트에서 ```viz 블록 제거
     const assistantContent = cleanResponseText(rawAssistantContent);
 
-    // VizDirective 병합: AI 생성 (시각화) + 토픽 기반 (KPI/Stage)
+    // PHASE G: VizDirective 병합 (AI 생성 우선, 토픽 기반 fallback)
     let finalVizDirective: VizDirective | null = null;
 
     if (aiGeneratedVizDirective) {
-      // AI가 생성한 vizState, highlights, annotations, flowPath 사용
-      // 토픽 기반의 kpis, stage 병합 (있으면)
+      // AI가 생성한 모든 필드 우선 사용
+      // AI가 kpis/stage를 생성하지 않은 경우만 토픽 기반 fallback
       finalVizDirective = {
         ...aiGeneratedVizDirective,
-        kpis: vizDirective?.kpis,
-        stage: vizDirective?.stage
+        // AI가 kpis를 생성했으면 AI 것 사용, 아니면 토픽 기반 fallback
+        kpis: aiGeneratedVizDirective.kpis || vizDirective?.kpis,
+        // AI가 stage를 생성했으면 AI 것 사용, 아니면 토픽 기반 fallback
+        stage: aiGeneratedVizDirective.stage || vizDirective?.stage
       };
 
-      console.log(`[VizDirective] AI Generated: state=${aiGeneratedVizDirective.vizState}, highlights=[${aiGeneratedVizDirective.highlights.join(',')}]`);
+      const kpiSource = aiGeneratedVizDirective.kpis ? 'AI' : 'topic-fallback';
+      const stageSource = aiGeneratedVizDirective.stage ? 'AI' : 'topic-fallback';
+      console.log(`[VizDirective] AI Generated: state=${aiGeneratedVizDirective.vizState}, kpis=${kpiSource}(${finalVizDirective.kpis?.length || 0}), stage=${stageSource}(${finalVizDirective.stage || 'none'})`);
     } else if (vizDirective) {
       // AI가 생성하지 않은 경우 토픽 기반 fallback
       finalVizDirective = vizDirective;
