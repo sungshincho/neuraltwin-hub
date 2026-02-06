@@ -1,6 +1,7 @@
 // 채팅 페이지 - NEURALTWIN 다크 테마 + retail-chatbot EF 연동
 // TASK 9: Suggestions + Lead Capture Form 추가
 // TASK C: 3D Wireframe Visualizer 통합
+// UI 통합: collapsible messages, 타임라인 minor ticks, fullscreen UX 개선
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/chat.css";
@@ -32,8 +33,11 @@ const CHAT_MODES = [
   { id: "precise", label: "정확한" },
 ];
 
-// 타임라인 연도
-const TIMELINE_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
+// 타임라인 연도 (2018~2026, HTML 원본 동일)
+const TIMELINE_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
+// 인라인 채팅에서 최근 N턴만 표시, 나머지는 접기
+const VISIBLE_TURNS = 3;
 
 // 세션 ID 관리
 const getOrCreateSessionId = (): string => {
@@ -79,13 +83,14 @@ const Chat = () => {
   const [fsInputValue, setFsInputValue] = useState("");
   const [fsModeMenuOpen, setFsModeMenuOpen] = useState(false);
 
+  // 이전 대화 접기/펼치기 상태
+  const [expandedOldMessages, setExpandedOldMessages] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fsMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fsInputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const fsMessagesEndRef = useRef<HTMLDivElement>(null);
-  const fsInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     // 페이지 진입 시 body 스타일 조정
@@ -93,13 +98,13 @@ const Chat = () => {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
 
-    // 인트로 애니메이션 시퀀스
-    const timer1 = setTimeout(() => setIntroComplete(true), 2200);
+    // 인트로 애니메이션 시퀀스 (HTML 원본 타이밍과 동일)
+    const timer1 = setTimeout(() => setIntroComplete(true), 1100);
     const timer2 = setTimeout(() => {
       setCurtainsOpen(true);
       setContentVisible(true);
-    }, 2600);
-    const timer3 = setTimeout(() => setIntroHidden(true), 3600);
+    }, 1400);
+    const timer3 = setTimeout(() => setIntroHidden(true), 2200);
 
     return () => {
       document.body.style.backgroundColor = "";
@@ -245,8 +250,6 @@ const Chat = () => {
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
     setSuggestions([]);
-    // 자동 전송 (선택사항)
-    // setTimeout(() => handleSendMessage(), 100);
   };
 
   // TASK 9: Lead Form 제출 핸들러
@@ -275,7 +278,6 @@ const Chat = () => {
       if (response.ok) {
         setLeadSubmitted(true);
         setShowLeadForm(false);
-        // 성공 메시지 추가
         const thankYouMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
@@ -295,9 +297,15 @@ const Chat = () => {
     setShowLeadForm(false);
   };
 
-  // 전체화면 닫기
+  // 전체화면 열기/닫기
+  const openFullscreen = () => {
+    setIsFullscreen(true);
+    document.body.style.overflow = "hidden";
+  };
+
   const closeFullscreen = () => {
     setIsFullscreen(false);
+    document.body.style.overflow = "";
   };
 
   // 전체화면 전용 메시지 전송
@@ -305,7 +313,6 @@ const Chat = () => {
     if (!fsInputValue.trim() || isLoading) return;
     setInputValue(fsInputValue);
     setFsInputValue("");
-    // 메인 handleSendMessage 호출을 위해 inputValue 설정 후 트리거
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -380,6 +387,120 @@ const Chat = () => {
     }
   };
 
+  // 메시지를 턴(user+assistant 쌍) 단위로 그룹화
+  const computeTurns = (): Message[][] => {
+    const turns: Message[][] = [];
+    let currentTurn: Message[] = [];
+    messages.forEach((msg) => {
+      currentTurn.push(msg);
+      if (msg.role === "assistant") {
+        turns.push([...currentTurn]);
+        currentTurn = [];
+      }
+    });
+    if (currentTurn.length > 0) turns.push([...currentTurn]);
+    return turns;
+  };
+
+  // 인라인 채팅 메시지 렌더링 (collapsible turns)
+  const renderCollapsibleMessages = () => {
+    if (messages.length === 0 && !isLoading) {
+      return <div className="chat-message-empty">대화를 시작해보세요</div>;
+    }
+
+    const turns = computeTurns();
+    const hiddenCount = Math.max(0, turns.length - VISIBLE_TURNS);
+    const hiddenTurns = turns.slice(0, hiddenCount);
+    const visibleTurns = turns.slice(hiddenCount);
+
+    return (
+      <>
+        {/* 접기 가능한 이전 대화 */}
+        {hiddenTurns.length > 0 && (
+          <>
+            <div className="chat-collapsed-group">
+              <button
+                className={`chat-expand-btn${expandedOldMessages ? " expanded" : ""}`}
+                onClick={() => setExpandedOldMessages(!expandedOldMessages)}
+              >
+                <span className="expand-arrow">▶</span>
+                {expandedOldMessages
+                  ? "이전 대화 접기"
+                  : `이전 대화 ${hiddenTurns.length}개 보기`}
+              </button>
+              <div className={`chat-hidden-messages${expandedOldMessages ? " expanded" : ""}`}>
+                {hiddenTurns.flat().map((msg) => (
+                  <div key={msg.id} className={`chat-message ${msg.role}`}>
+                    {msg.content}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="chat-divider">
+              <span>최근 대화</span>
+            </div>
+          </>
+        )}
+
+        {/* 최근 대화 (항상 표시) */}
+        {visibleTurns.flat().map((msg) => (
+          <div key={msg.id} className={`chat-message ${msg.role}`}>
+            {msg.content}
+          </div>
+        ))}
+      </>
+    );
+  };
+
+  // 타임라인 룰러 렌더링 (minor tick 포함)
+  const renderTimelineRuler = () => {
+    const elements: JSX.Element[] = [];
+    TIMELINE_YEARS.forEach((year, index) => {
+      const isActive = year === 2026;
+      const pos = 3 + (index / (TIMELINE_YEARS.length - 1)) * 94;
+
+      // 활성 연도의 dot
+      if (isActive) {
+        elements.push(
+          <div
+            key={`dot-${year}`}
+            className="ruler-dot"
+            style={{ left: `${pos}%`, transform: "translateX(-50%)" }}
+          />
+        );
+      }
+
+      // 연도 마크
+      elements.push(
+        <div
+          key={year}
+          className={`ruler-mark${isActive ? " active" : ""}`}
+          style={{ left: `${pos}%` }}
+        >
+          <div className="line"></div>
+          <div className="label">{year}</div>
+        </div>
+      );
+
+      // minor tick marks (연도 사이 3개씩)
+      if (index < TIMELINE_YEARS.length - 1) {
+        const gap = 94 / (TIMELINE_YEARS.length - 1);
+        for (let t = 1; t <= 3; t++) {
+          elements.push(
+            <div
+              key={`${year}-tick-${t}`}
+              className="ruler-mark ruler-minor"
+              style={{ left: `${pos + (t * gap) / 4}%` }}
+            >
+              <div className="line"></div>
+            </div>
+          );
+        }
+      }
+    });
+    return elements;
+  };
+
   return (
     <div className="chat-page">
       {/* ==================== FULLSCREEN CHAT OVERLAY ==================== */}
@@ -387,10 +508,11 @@ const Chat = () => {
         <div className="chat-fs-header">
           <span className="chat-fs-brand">NEURALTWIN CHAT</span>
           <button className="chat-fs-minimize" onClick={closeFullscreen}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
             축소
           </button>
         </div>
-        <div className="chat-fs-body">
+        <div className="chat-fs-body" id="chat-fs-body">
           <div className="chat-fs-inner">
             {messages.length === 0 ? (
               <div className="chat-fs-empty">대화를 시작해보세요</div>
@@ -429,7 +551,6 @@ const Chat = () => {
               </div>
               <div className="chat-fs-input-actions">
                 <div className="chat-fs-input-left">
-                  {/* 모드 드롭다운 */}
                   <div style={{ position: "relative" }}>
                     <button
                       className="chat-mode-dropdown"
@@ -452,8 +573,6 @@ const Chat = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* 전송 버튼 */}
                 <button
                   className="chat-send-btn"
                   onClick={handleFsSendMessage}
@@ -524,24 +643,33 @@ const Chat = () => {
           </nav>
 
           {/* Chat UI + Visualizer Split Layout */}
-          <div className="hero-content" style={{ display: "flex", gap: "16px", padding: "0 24px", height: "calc(100vh - 160px)" }}>
-            {/* 좌측: 채팅 영역 (45%) */}
-            <div className="chat-container" style={{ width: vizDirective ? "45%" : "100%", transition: "width 0.5s ease" }}>
-              <h2 className="chat-title">무엇을 도와드릴까요?</h2>
+          <div
+            className="hero-content"
+            style={vizDirective ? { gap: "16px", padding: "0 24px" } : undefined}
+          >
+            {/* 채팅 영역 */}
+            <div
+              className="chat-container"
+              style={{ width: vizDirective ? "45%" : "100%", transition: "width 0.5s ease" }}
+            >
+              {/* 타이틀 + 전체화면 버튼 */}
+              <div className="chat-title-row">
+                <h2 className="chat-title">무엇을 도와드릴까요?</h2>
+                <button
+                  className="chat-expand-fullscreen-btn"
+                  onClick={openFullscreen}
+                  title="전체화면으로 보기"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  전체화면
+                </button>
+              </div>
 
-              {/* 채팅 기록 */}
+              {/* 채팅 기록 (collapsible turns) */}
               <div className="chat-messages">
-                {messages.length === 0 ? (
-                  <div className="chat-message-empty">
-                    대화를 시작해보세요
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className={`chat-message ${msg.role}`}>
-                      {msg.content}
-                    </div>
-                  ))
-                )}
+                {renderCollapsibleMessages()}
+
+                {/* 로딩 인디케이터 */}
                 {isLoading && (
                   <div className="chat-message assistant">
                     <div className="chat-loading">
@@ -642,7 +770,6 @@ const Chat = () => {
                 </div>
                 <div className="chat-input-actions">
                   <div className="chat-input-left">
-                    {/* 모드 드롭다운 */}
                     <div style={{ position: "relative" }}>
                       <button
                         className="chat-mode-dropdown"
@@ -665,8 +792,6 @@ const Chat = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* 전송 버튼 */}
                   <button
                     className="chat-send-btn"
                     onClick={handleSendMessage}
@@ -739,24 +864,10 @@ const Chat = () => {
             <p>NEURALTWIN은 데이터를 의사결정으로 전환하는 AI 플랫폼입니다. 복잡성을 명확함으로.</p>
           </div>
 
-          {/* Timeline Ruler */}
+          {/* Timeline Ruler (minor ticks 포함) */}
           <div className="hero-ruler">
             <div className="ruler-track">
-              {TIMELINE_YEARS.map((year, index) => {
-                const isActive = year === 2026;
-                const leftPercent = (index / (TIMELINE_YEARS.length - 1)) * 100;
-                return (
-                  <div
-                    key={year}
-                    className={`ruler-mark${isActive ? " active" : ""}`}
-                    style={{ left: `${leftPercent}%` }}
-                  >
-                    {isActive && <div className="ruler-dot"></div>}
-                    <div className="line"></div>
-                    <div className="label">{year}</div>
-                  </div>
-                );
-              })}
+              {renderTimelineRuler()}
             </div>
           </div>
 
@@ -775,16 +886,11 @@ const Chat = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <a href="#">About Us</a>
-              <Link to="/product">Platform</Link>
-              <a href="#">AI Engine</a>
-              <a href="#">Careers</a>
+              <Link to="/product">About</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>
               <Link to="/contact">문의하기</Link>
-              <a href="#">Documentation</a>
-              <a href="#">Support</a>
             </div>
           </div>
         </footer>
