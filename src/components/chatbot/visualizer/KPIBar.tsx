@@ -47,10 +47,10 @@ export default function KPIBar({ kpis }: KPIBarProps) {
               {kpi.label}
             </div>
 
-            {/* 값 */}
+            {/* 값 — 숫자+한글 혼합 대응 (예: "< 7개") */}
             <div
-              className={`text-lg font-bold ${valueColor}`}
-              style={{ fontFamily: "'Fira Code', monospace" }}
+              className={`text-xl font-bold ${valueColor}`}
+              style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
             >
               {kpi.value}
             </div>
