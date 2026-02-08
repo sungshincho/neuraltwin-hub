@@ -444,12 +444,12 @@ export default function StoreVisualizer({
       {/* 우상단: RESET VIEW 버튼 — KPI 있으면 아래로 밀림 */}
       <button
         onClick={resetCamera}
-        className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
-                   border border-[#1e293b] text-[11px] text-[#94a3b8]
-                   backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9]
-                   transition-colors cursor-pointer z-10
-                   ${kpis && kpis.length > 0 ? 'top-14' : 'top-3'}`}
-        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+        className="absolute px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
+        style={{
+          right: 12,
+          top: kpis && kpis.length > 0 ? 56 : 12,
+          fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
+        }}
       >
         RESET VIEW
       </button>
