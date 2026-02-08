@@ -447,7 +447,7 @@ export default function StoreVisualizer({
         className="absolute px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
         style={{
           right: 12,
-          top: kpis && kpis.length > 0 ? 4 : 12,
+          top: kpis && kpis.length > 0 ? 12 : 12,
           fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
         }}
       >
@@ -492,7 +492,7 @@ export default function StoreVisualizer({
       {highlights.length > 0 && (
         <div
           className="absolute px-3.5 py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
-          style={{ right: 12, bottom: stage ? 80 : 40 }}
+          style={{ right: 12, bottom: stage ? 100 : 56 }}
         >
           <div
             className="text-[10px] text-[#94a3b8] mb-2 font-semibold tracking-wider"
