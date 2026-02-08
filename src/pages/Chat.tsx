@@ -1394,11 +1394,13 @@ const Chat = () => {
           {/* Semicircle Decoration */}
           <div className="hero-semicircle"></div>
 
-          {/* Caption */}
-          <div className="hero-caption">
-            <div className="dot"></div>
-            <p>리테일 전문 지식으로 학습된 AI 어시스턴트, NEURALTWIN.</p>
-          </div>
+          {/* Caption — 3D 비주얼라이저 활성 시 숨김 (z-index 관통 방지) */}
+          {!vizDirective && (
+            <div className="hero-caption">
+              <div className="dot"></div>
+              <p>리테일 전문 지식으로 학습된 AI 어시스턴트, NEURALTWIN.</p>
+            </div>
+          )}
 
           {/* Timeline Ruler (minor ticks 포함) */}
           <div className="hero-ruler">
