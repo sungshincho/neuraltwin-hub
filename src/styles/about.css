@@ -451,9 +451,10 @@
     color: var(--gray-500);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
     transform-origin: center center;
+    pointer-events: none;
 }
 
-.about-page .service-row:hover .service-arrow {
+.about-page .service-item:hover .service-arrow {
     color: var(--white);
 }
 

@@ -317,15 +317,17 @@ const About = () => {
     [openService]
   );
 
-  // 아코디언 패널 높이 계산 — DOM 측정 후 세팅하여 scrollHeight 0 버그 방지
+  // 아코디언 패널 높이 계산 — rAF로 레이아웃 완료 후 측정하여 scrollHeight 0 버그 방지
   useEffect(() => {
-    panelRefs.current.forEach((panel, i) => {
-      if (!panel) return;
-      if (openService === i) {
-        panel.style.maxHeight = panel.scrollHeight + "px";
-      } else {
-        panel.style.maxHeight = "0px";
-      }
+    requestAnimationFrame(() => {
+      panelRefs.current.forEach((panel, i) => {
+        if (!panel) return;
+        if (openService === i) {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        } else {
+          panel.style.maxHeight = "0px";
+        }
+      });
     });
   }, [openService]);
 
