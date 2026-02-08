@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import "@/styles/chat.css";
 
 // 3D Visualizer 컴포넌트
-import { StoreVisualizer, KPIBar, StageProgress } from "@/components/chatbot/visualizer";
+import { StoreVisualizer } from "@/components/chatbot/visualizer";
 import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
 
 // Export 유틸리티
@@ -980,22 +980,16 @@ const Chat = () => {
           {/* 우측: 3D Visualizer (vizDirective 있을 때만 표시) */}
           {vizDirective && (
             <div className="chat-fs-viz">
-              {vizDirective.kpis && vizDirective.kpis.length > 0 && (
-                <KPIBar kpis={vizDirective.kpis} />
-              )}
-              <div style={{ flex: 1, position: "relative" }}>
-                <StoreVisualizer
-                  vizState={vizDirective.vizState}
-                  highlights={vizDirective.highlights || []}
-                  annotations={vizDirective.annotations || []}
-                  showFlow={vizDirective.flowPath || false}
-                  storeParams={vizDirective.storeParams}
-                  zoneScale={vizDirective.zoneScale}
-                />
-              </div>
-              {vizDirective.stage && (
-                <StageProgress stage={vizDirective.stage} />
-              )}
+              <StoreVisualizer
+                vizState={vizDirective.vizState}
+                highlights={vizDirective.highlights || []}
+                annotations={vizDirective.annotations || []}
+                showFlow={vizDirective.flowPath || false}
+                kpis={vizDirective.kpis}
+                stage={vizDirective.stage}
+                storeParams={vizDirective.storeParams}
+                zoneScale={vizDirective.zoneScale}
+              />
             </div>
           )}
         </div>
@@ -1357,8 +1351,7 @@ const Chat = () => {
                   width: "55%",
                   height: "600px",
                   minHeight: "500px",
-                  display: "flex",
-                  flexDirection: "column",
+                  position: "relative",
                   backgroundColor: "rgba(3, 7, 18, 0.9)",
                   borderRadius: "16px",
                   overflow: "hidden",
@@ -1366,27 +1359,17 @@ const Chat = () => {
                   animation: "fadeIn 0.5s ease"
                 }}
               >
-                {/* KPI Bar */}
-                {vizDirective.kpis && vizDirective.kpis.length > 0 && (
-                  <KPIBar kpis={vizDirective.kpis} />
-                )}
-
-                {/* 3D Store Visualizer */}
-                <div style={{ flex: 1, position: "relative" }}>
-                  <StoreVisualizer
-                    vizState={vizDirective.vizState}
-                    highlights={vizDirective.highlights || []}
-                    annotations={vizDirective.annotations || []}
-                    showFlow={vizDirective.flowPath || false}
-                    storeParams={vizDirective.storeParams}
-                    zoneScale={vizDirective.zoneScale}
-                  />
-                </div>
-
-                {/* Stage Progress */}
-                {vizDirective.stage && (
-                  <StageProgress stage={vizDirective.stage} />
-                )}
+                {/* 3D Store Visualizer — KPI/Stage는 내부 오버레이로 렌더링 */}
+                <StoreVisualizer
+                  vizState={vizDirective.vizState}
+                  highlights={vizDirective.highlights || []}
+                  annotations={vizDirective.annotations || []}
+                  showFlow={vizDirective.flowPath || false}
+                  kpis={vizDirective.kpis}
+                  stage={vizDirective.stage}
+                  storeParams={vizDirective.storeParams}
+                  zoneScale={vizDirective.zoneScale}
+                />
               </div>
             )}
           </div>
