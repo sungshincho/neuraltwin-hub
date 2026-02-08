@@ -255,6 +255,8 @@ const About = () => {
 
   // 패널 ref 배열 (아코디언 높이 계산용)
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 서비스 아이템 ref 배열 (classList 기반 open 토글 — React className 충돌 방지)
+  const serviceItemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     // body 다크 배경
@@ -316,6 +318,14 @@ const About = () => {
     },
     [openService]
   );
+
+  // open 클래스를 classList로 관리 — React className이 IntersectionObserver의 visible을 덮어쓰지 않도록
+  useEffect(() => {
+    serviceItemRefs.current.forEach((el, i) => {
+      if (!el) return;
+      el.classList.toggle('open', openService === i);
+    });
+  }, [openService]);
 
   // 아코디언 패널 높이 계산 — rAF로 레이아웃 완료 후 측정하여 scrollHeight 0 버그 방지
   useEffect(() => {
@@ -425,7 +435,8 @@ const About = () => {
           {SERVICES.map((svc, i) => (
             <div
               key={svc.num}
-              className={`service-item reveal${openService === i ? " open" : ""}`}
+              ref={(el) => { serviceItemRefs.current[i] = el; }}
+              className="service-item reveal"
             >
               <div className="service-row" onClick={() => toggleService(i)}>
                 <div className="service-num">{svc.num}</div>
