@@ -483,7 +483,7 @@ export default function StoreVisualizer({
 
       {/* 하단: Stage Progress 오버레이 (3D 캔버스 위에 떠있음) */}
       {stage && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+        <div className="absolute bottom-3 left-0 right-0 z-10 pointer-events-none">
           <StageProgress stage={stage} />
         </div>
       )}

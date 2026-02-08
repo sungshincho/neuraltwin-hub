@@ -40,7 +40,7 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
   const currentIndex = STAGE_ORDER[activeStage];
 
   return (
-    <div className="flex items-center justify-center gap-0 px-4 py-3 bg-[#030712cc]">
+    <div className="flex items-center justify-center gap-0 px-4 py-2">
       {STAGES.map((stage, index) => {
         const isCompleted = index < currentIndex;
         const isCurrent = index === currentIndex;
