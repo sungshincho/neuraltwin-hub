@@ -399,23 +399,24 @@ export default function StoreVisualizer({
         ann.visible ? (
           <div
             key={`${ann.zone}-${index}`}
-            className="absolute pointer-events-none animate-fadeInUp"
+            className="absolute pointer-events-none animate-fade-in-up"
             style={{
               left: ann.x,
               top: ann.y,
               transform: 'translate(-50%, -50%)',
-              padding: '6px 10px',
+              padding: '8px 14px',
               borderRadius: '6px',
-              backgroundColor: `${ann.color}22`,
-              border: `1px solid ${ann.color}66`,
+              backgroundColor: `${ann.color}33`,
+              border: `1px solid ${ann.color}88`,
               color: ann.color,
-              fontSize: '10px',
-              fontFamily: 'monospace',
+              fontSize: '12px',
+              fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
               fontWeight: 600,
-              backdropFilter: 'blur(4px)',
+              backdropFilter: 'blur(6px)',
               whiteSpace: 'pre-line',
               textAlign: 'center',
-              zIndex: 10
+              zIndex: 10,
+              lineHeight: 1.5
             }}
           >
             {ann.text}
@@ -426,46 +427,61 @@ export default function StoreVisualizer({
       {/* 좌상단: RESET VIEW 버튼 */}
       <button
         onClick={resetCamera}
-        className="absolute top-3 left-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
-                   border border-[#1a1a1a] text-[9px] font-mono text-[#64748b]
+        className="absolute top-3 left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+                   border border-[#1e293b] text-[11px] text-[#94a3b8]
                    backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9]
                    transition-colors cursor-pointer"
+        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
       >
         RESET VIEW
       </button>
 
       {/* 좌하단: 현재 뷰 상태 */}
-      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
-                      border border-[#1a1a1a] text-[9px] font-mono text-[#475569]
-                      backdrop-blur-sm">
+      <div
+        className="absolute bottom-3 left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+                    border border-[#1e293b] text-[11px] text-[#94a3b8]
+                    backdrop-blur-sm truncate max-w-[280px]"
+        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+      >
         VIEW: {vizState.toUpperCase()}
         {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
       </div>
 
       {/* 우하단: 조작 힌트 */}
-      <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
-                      border border-[#1a1a1a] text-[8px] font-mono text-[#404040]
-                      backdrop-blur-sm flex items-center gap-2">
+      <div
+        className="absolute bottom-3 right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+                    border border-[#1e293b] text-[10px] text-[#64748b]
+                    backdrop-blur-sm flex items-center gap-2.5"
+        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+      >
         <span>SCROLL 줌</span>
-        <span className="text-[#262626]">·</span>
+        <span className="text-[#334155]">·</span>
         <span>L-DRAG 회전</span>
-        <span className="text-[#262626]">·</span>
+        <span className="text-[#334155]">·</span>
         <span>R-DRAG 이동</span>
       </div>
 
       {/* 우상단: 범례 (하이라이트 활성 시) */}
       {highlights.length > 0 && (
-        <div className="absolute top-3 right-3 px-3 py-2 rounded bg-[#030712dd]
-                        border border-[#15243d] backdrop-blur-sm">
-          <div className="text-[9px] font-mono text-[#64748b] mb-1.5">ZONES</div>
-          <div className="flex flex-col gap-1">
+        <div className="absolute top-3 right-3 px-3.5 py-2.5 rounded bg-[#030712dd]
+                        border border-[#1e293b] backdrop-blur-sm">
+          <div
+            className="text-[10px] text-[#94a3b8] mb-2 font-semibold tracking-wider"
+            style={{ fontFamily: "'Fira Code', monospace" }}
+          >
+            ZONES
+          </div>
+          <div className="flex flex-col gap-1.5">
             {highlights.map((zoneId) => (
               <div key={zoneId} className="flex items-center gap-2">
                 <div
-                  className="w-2 h-2 rounded-full"
+                  className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: getZoneColorHex(zoneId) }}
                 />
-                <span className="text-[10px] font-mono text-[#94a3b8]">
+                <span
+                  className="text-[12px] text-[#cbd5e1]"
+                  style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+                >
                   {ZONE_LABELS_KO[zoneId] || zoneId}
                 </span>
               </div>
