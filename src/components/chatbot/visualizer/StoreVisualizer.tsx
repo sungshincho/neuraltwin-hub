@@ -441,10 +441,10 @@ export default function StoreVisualizer({
         </div>
       )}
 
-      {/* 좌상단: RESET VIEW 버튼 — KPI 있으면 아래로 밀림 */}
+      {/* 우상단: RESET VIEW 버튼 — KPI 있으면 아래로 밀림 */}
       <button
         onClick={resetCamera}
-        className={`absolute left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+        className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
                    border border-[#1e293b] text-[11px] text-[#94a3b8]
                    backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9]
                    transition-colors cursor-pointer z-10
@@ -483,14 +483,14 @@ export default function StoreVisualizer({
 
       {/* 하단: Stage Progress 오버레이 (3D 캔버스 위에 떠있음) */}
       {stage && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+        <div className="absolute bottom-3 left-0 right-0 z-10 pointer-events-none">
           <StageProgress stage={stage} />
         </div>
       )}
 
-      {/* 우상단: 범례 (하이라이트 활성 시) */}
+      {/* 좌상단: 범례 (하이라이트 활성 시) */}
       {highlights.length > 0 && (
-        <div className={`absolute right-3 px-3.5 py-2.5 rounded bg-[#030712dd]
+        <div className={`absolute left-3 px-3.5 py-2.5 rounded bg-[#030712dd]
                         border border-[#1e293b] backdrop-blur-sm z-10
                         ${kpis && kpis.length > 0 ? 'top-14' : 'top-3'}`}>
           <div
