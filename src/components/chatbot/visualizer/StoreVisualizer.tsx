@@ -10,7 +10,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildScene, disposeScene, lerpVector3, applyParamsToConfig, type SceneObjects } from './sceneBuilder';
 import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeData';
-import type { VizState, VizAnnotation, StoreParams, ZoneScale } from './vizDirectiveTypes';
+import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale } from './vizDirectiveTypes';
+import KPIBar from './KPIBar';
+import StageProgress from './StageProgress';
 
 // ═══════════════════════════════════════════
 //  Props 인터페이스
@@ -22,6 +24,12 @@ interface StoreVisualizerProps {
   annotations: VizAnnotation[];
   showFlow: boolean;
   className?: string;
+
+  /** KPI 데이터 — 3D 캔버스 위 좌상단 오버레이 */
+  kpis?: VizKPI[];
+
+  /** 고객 여정 단계 — 3D 캔버스 위 하단 오버레이 */
+  stage?: CustomerStage;
 
   /** 파라메트릭 매장 설정 (PHASE H) */
   storeParams?: StoreParams;
@@ -53,6 +61,8 @@ export default function StoreVisualizer({
   annotations = [],
   showFlow,
   className = '',
+  kpis,
+  stage,
   storeParams,
   zoneScale
 }: StoreVisualizerProps) {
@@ -424,13 +434,21 @@ export default function StoreVisualizer({
         ) : null
       )}
 
-      {/* 좌상단: RESET VIEW 버튼 */}
+      {/* 상단: KPI Bar 오버레이 (3D 캔버스 위에 떠있음) */}
+      {kpis && kpis.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+          <KPIBar kpis={kpis} />
+        </div>
+      )}
+
+      {/* 좌상단: RESET VIEW 버튼 — KPI 있으면 아래로 밀림 */}
       <button
         onClick={resetCamera}
-        className="absolute top-3 left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+        className={`absolute left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
                    border border-[#1e293b] text-[11px] text-[#94a3b8]
                    backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9]
-                   transition-colors cursor-pointer"
+                   transition-colors cursor-pointer z-10
+                   ${kpis && kpis.length > 0 ? 'top-14' : 'top-3'}`}
         style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
       >
         RESET VIEW
@@ -438,9 +456,10 @@ export default function StoreVisualizer({
 
       {/* 좌하단: 현재 뷰 상태 */}
       <div
-        className="absolute bottom-3 left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+        className={`absolute left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
                     border border-[#1e293b] text-[11px] text-[#94a3b8]
-                    backdrop-blur-sm truncate max-w-[280px]"
+                    backdrop-blur-sm truncate max-w-[280px] z-10
+                    ${stage ? 'bottom-14' : 'bottom-3'}`}
         style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
       >
         VIEW: {vizState.toUpperCase()}
@@ -449,9 +468,10 @@ export default function StoreVisualizer({
 
       {/* 우하단: 조작 힌트 */}
       <div
-        className="absolute bottom-3 right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+        className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
                     border border-[#1e293b] text-[10px] text-[#64748b]
-                    backdrop-blur-sm flex items-center gap-2.5"
+                    backdrop-blur-sm flex items-center gap-2.5 z-10
+                    ${stage ? 'bottom-14' : 'bottom-3'}`}
         style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
       >
         <span>SCROLL 줌</span>
@@ -461,10 +481,18 @@ export default function StoreVisualizer({
         <span>R-DRAG 이동</span>
       </div>
 
+      {/* 하단: Stage Progress 오버레이 (3D 캔버스 위에 떠있음) */}
+      {stage && (
+        <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+          <StageProgress stage={stage} />
+        </div>
+      )}
+
       {/* 우상단: 범례 (하이라이트 활성 시) */}
       {highlights.length > 0 && (
-        <div className="absolute top-3 right-3 px-3.5 py-2.5 rounded bg-[#030712dd]
-                        border border-[#1e293b] backdrop-blur-sm">
+        <div className={`absolute right-3 px-3.5 py-2.5 rounded bg-[#030712dd]
+                        border border-[#1e293b] backdrop-blur-sm z-10
+                        ${kpis && kpis.length > 0 ? 'top-14' : 'top-3'}`}>
           <div
             className="text-[10px] text-[#94a3b8] mb-2 font-semibold tracking-wider"
             style={{ fontFamily: "'Fira Code', monospace" }}
