@@ -1477,7 +1477,7 @@ const Chat = () => {
           {!vizDirective && (
             <div className="hero-caption">
               <div className="dot"></div>
-              <p>리테일 전문 지식으로 학습된 AI 어시스턴트, NEURALTWIN.</p>
+              <p>리테일 전문 지식으로 학습된<br />AI 어시스턴트, NEURALTWIN.</p>
             </div>
           )}
 
