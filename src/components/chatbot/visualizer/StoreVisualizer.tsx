@@ -10,7 +10,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildScene, disposeScene, lerpVector3, applyParamsToConfig, type SceneObjects } from './sceneBuilder';
 import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeData';
-import type { VizState, VizAnnotation, StoreParams, ZoneScale } from './vizDirectiveTypes';
+import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale } from './vizDirectiveTypes';
+import KPIBar from './KPIBar';
+import StageProgress from './StageProgress';
 
 // ═══════════════════════════════════════════
 //  Props 인터페이스
@@ -22,6 +24,12 @@ interface StoreVisualizerProps {
   annotations: VizAnnotation[];
   showFlow: boolean;
   className?: string;
+
+  /** KPI 데이터 — 3D 캔버스 위 좌상단 오버레이 */
+  kpis?: VizKPI[];
+
+  /** 고객 여정 단계 — 3D 캔버스 위 하단 오버레이 */
+  stage?: CustomerStage;
 
   /** 파라메트릭 매장 설정 (PHASE H) */
   storeParams?: StoreParams;
@@ -53,6 +61,8 @@ export default function StoreVisualizer({
   annotations = [],
   showFlow,
   className = '',
+  kpis,
+  stage,
   storeParams,
   zoneScale
 }: StoreVisualizerProps) {
@@ -108,27 +118,31 @@ export default function StoreVisualizer({
     }
 
     // 1. 카메라 lerp 보간 (사용자 인터랙션 중이 아닐 때만)
+    // TODO: 프리셋 전환 애니메이션 속도 조절 필요 시 lerpFactor 변경
     if (!isUserInteracting.current) {
-      const newPos = lerpVector3(camera.position, cameraTargetPos.current, 0.025);
-      camera.position.copy(newPos);
+      const lerpFactor = 0.025;
 
-      const currentLookAt = new THREE.Vector3();
-      camera.getWorldDirection(currentLookAt);
-      const newLookAt = lerpVector3(
-        camera.position.clone().add(currentLookAt),
-        cameraTargetLookAt.current,
-        0.025
-      );
-      camera.lookAt(newLookAt);
+      // 현재 위치가 타겟과 충분히 가까우면 lerp 스킵 (불필요한 미세 보정 방지)
+      const posDist = camera.position.distanceTo(cameraTargetPos.current);
+      if (posDist > 0.01) {
+        const newPos = lerpVector3(camera.position, cameraTargetPos.current, lerpFactor);
+        camera.position.copy(newPos);
+      }
 
-      // OrbitControls target 동기화
+      // OrbitControls target을 직접 lerp (lookAt 대신 — OrbitControls가 카메라 방향을 관리)
       if (controlsRef.current) {
-        controlsRef.current.target.lerp(cameraTargetLookAt.current, 0.025);
+        const targetDist = controlsRef.current.target.distanceTo(cameraTargetLookAt.current);
+        if (targetDist > 0.01) {
+          controlsRef.current.target.lerp(cameraTargetLookAt.current, lerpFactor);
+        }
       }
 
       // FOV lerp
-      camera.fov += (cameraTargetFov.current - camera.fov) * 0.025;
-      camera.updateProjectionMatrix();
+      const fovDiff = Math.abs(cameraTargetFov.current - camera.fov);
+      if (fovDiff > 0.01) {
+        camera.fov += (cameraTargetFov.current - camera.fov) * lerpFactor;
+        camera.updateProjectionMatrix();
+      }
     }
 
     // 2. 존 플레인 opacity pulse (하이라이트된 존만)
@@ -271,12 +285,18 @@ export default function StoreVisualizer({
     controls.maxPolarAngle = Math.PI * 0.45; // 수평선 아래로 카메라 회전 제한
     controls.target.set(...CAMERA_PRESETS.overview.target);
 
-    // 사용자 인터랙션 감지
+    // 사용자 인터랙션 감지 — 종료 시 현재 카메라 위치를 타겟에 저장하여 스냅백 방지
     controls.addEventListener('start', () => {
       isUserInteracting.current = true;
     });
     controls.addEventListener('end', () => {
       isUserInteracting.current = false;
+      // 사용자가 조작한 최종 위치를 lerp 타겟으로 저장 → 원래 위치로 돌아가지 않음
+      if (sceneRef.current) {
+        cameraTargetPos.current.copy(sceneRef.current.camera.position);
+        cameraTargetLookAt.current.copy(controls.target);
+        cameraTargetFov.current = sceneRef.current.camera.fov;
+      }
     });
 
     controlsRef.current = controls;
@@ -389,23 +409,24 @@ export default function StoreVisualizer({
         ann.visible ? (
           <div
             key={`${ann.zone}-${index}`}
-            className="absolute pointer-events-none animate-fadeInUp"
+            className="absolute pointer-events-none animate-fade-in-up"
             style={{
               left: ann.x,
               top: ann.y,
               transform: 'translate(-50%, -50%)',
-              padding: '6px 10px',
+              padding: '8px 14px',
               borderRadius: '6px',
-              backgroundColor: `${ann.color}22`,
-              border: `1px solid ${ann.color}66`,
+              backgroundColor: `${ann.color}33`,
+              border: `1px solid ${ann.color}88`,
               color: ann.color,
-              fontSize: '10px',
-              fontFamily: 'monospace',
+              fontSize: '12px',
+              fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
               fontWeight: 600,
-              backdropFilter: 'blur(4px)',
+              backdropFilter: 'blur(6px)',
               whiteSpace: 'pre-line',
               textAlign: 'center',
-              zIndex: 10
+              zIndex: 10,
+              lineHeight: 1.5
             }}
           >
             {ann.text}
@@ -413,49 +434,83 @@ export default function StoreVisualizer({
         ) : null
       )}
 
-      {/* 좌상단: RESET VIEW 버튼 */}
+      {/* 상단: KPI Bar 오버레이 (3D 캔버스 위에 떠있음) */}
+      {kpis && kpis.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+          <KPIBar kpis={kpis} />
+        </div>
+      )}
+
+      {/* 우상단: RESET VIEW 버튼 — KPI 바로 아래 여백 없이 배치 */}
       <button
         onClick={resetCamera}
-        className="absolute top-3 left-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
-                   border border-[#1a1a1a] text-[9px] font-mono text-[#64748b]
-                   backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9]
-                   transition-colors cursor-pointer"
+        className="absolute px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
+        style={{
+          right: 12,
+          top: kpis && kpis.length > 0 ? 12 : 12,
+          fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
+        }}
       >
         RESET VIEW
       </button>
 
       {/* 좌하단: 현재 뷰 상태 */}
-      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
-                      border border-[#1a1a1a] text-[9px] font-mono text-[#475569]
-                      backdrop-blur-sm">
+      <div
+        className={`absolute left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+                    border border-[#1e293b] text-[11px] text-[#94a3b8]
+                    backdrop-blur-sm truncate max-w-[280px] z-10
+                    ${stage ? 'bottom-14' : 'bottom-3'}`}
+        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+      >
         VIEW: {vizState.toUpperCase()}
         {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
       </div>
 
       {/* 우하단: 조작 힌트 */}
-      <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded bg-[#0a0a0acc]
-                      border border-[#1a1a1a] text-[8px] font-mono text-[#404040]
-                      backdrop-blur-sm flex items-center gap-2">
+      <div
+        className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
+                    border border-[#1e293b] text-[10px] text-[#64748b]
+                    backdrop-blur-sm flex items-center gap-2.5 z-10
+                    ${stage ? 'bottom-14' : 'bottom-3'}`}
+        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+      >
         <span>SCROLL 줌</span>
-        <span className="text-[#262626]">·</span>
+        <span className="text-[#334155]">·</span>
         <span>L-DRAG 회전</span>
-        <span className="text-[#262626]">·</span>
+        <span className="text-[#334155]">·</span>
         <span>R-DRAG 이동</span>
       </div>
 
-      {/* 우상단: 범례 (하이라이트 활성 시) */}
+      {/* 하단: Stage Progress 오버레이 (3D 캔버스 위에 떠있음) */}
+      {stage && (
+        <div className="absolute bottom-3 left-0 right-0 z-10 pointer-events-none">
+          <StageProgress stage={stage} />
+        </div>
+      )}
+
+      {/* 우하단: 범례 (하이라이트 활성 시) — 조작힌트/Stage 위쪽 */}
       {highlights.length > 0 && (
-        <div className="absolute top-3 right-3 px-3 py-2 rounded bg-[#030712dd]
-                        border border-[#15243d] backdrop-blur-sm">
-          <div className="text-[9px] font-mono text-[#64748b] mb-1.5">ZONES</div>
-          <div className="flex flex-col gap-1">
+        <div
+          className="absolute px-3.5 py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
+          style={{ right: 12, bottom: stage ? 100 : 56 }}
+        >
+          <div
+            className="text-[10px] text-[#94a3b8] mb-2 font-semibold tracking-wider"
+            style={{ fontFamily: "'Fira Code', monospace" }}
+          >
+            ZONES
+          </div>
+          <div className="flex flex-col gap-1.5">
             {highlights.map((zoneId) => (
               <div key={zoneId} className="flex items-center gap-2">
                 <div
-                  className="w-2 h-2 rounded-full"
+                  className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: getZoneColorHex(zoneId) }}
                 />
-                <span className="text-[10px] font-mono text-[#94a3b8]">
+                <span
+                  className="text-[12px] text-[#cbd5e1]"
+                  style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+                >
                   {ZONE_LABELS_KO[zoneId] || zoneId}
                 </span>
               </div>

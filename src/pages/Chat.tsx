@@ -4,11 +4,11 @@
 // PHASE J: 파일 업로드, 메시지 리액션, Export 기능
 // UI 통합: collapsible messages, 타임라인 minor ticks, fullscreen UX 개선
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "@/styles/chat.css";
 
 // 3D Visualizer 컴포넌트
-import { StoreVisualizer, KPIBar, StageProgress } from "@/components/chatbot/visualizer";
+import { StoreVisualizer } from "@/components/chatbot/visualizer";
 import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
 
 // Export 유틸리티
@@ -61,6 +61,7 @@ const getOrCreateSessionId = (): string => {
 };
 
 const Chat = () => {
+  const location = useLocation();
   const [introComplete, setIntroComplete] = useState(false);
   const [curtainsOpen, setCurtainsOpen] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
@@ -305,7 +306,7 @@ const Chat = () => {
     }
   };
 
-  // TASK 9: Suggestion 클릭 핸들러
+  // TASK 9: Suggestion 클릭 핸들러 — 현재 모드에 맞는 input state 업데이트
   const handleSuggestionClick = (suggestion: string) => {
     if (isGuestLimitReached) {
       setShowTurnLimitModal(true);
@@ -598,13 +599,15 @@ const Chat = () => {
     );
   };
 
-  // 전체화면 열기/닫기
+  // 전체화면 열기/닫기 — 모드 전환 시 입력값 동기화
   const openFullscreen = () => {
+    setFsInputValue(inputValue);
     setIsFullscreen(true);
     document.body.style.overflow = "hidden";
   };
 
   const closeFullscreen = () => {
+    setInputValue(fsInputValue);
     setIsFullscreen(false);
     document.body.style.overflow = "";
   };
@@ -682,7 +685,7 @@ const Chat = () => {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다.",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
         };
         setMessages((prev) => [...prev, errorMessage]);
       }
@@ -767,6 +770,64 @@ const Chat = () => {
               {msg.content}
             </div>
             {renderMessageActions(msg, 'inline')}
+          </div>
+        ))}
+      </>
+    );
+  };
+
+  // 전체화면 채팅 메시지 렌더링 — 축소모드와 동일한 collapsible 패턴 + Phase J 기능 통합
+  const renderFsCollapsibleMessages = () => {
+    if (messages.length === 0 && !isLoading) {
+      return <div className="chat-fs-empty">대화를 시작해보세요</div>;
+    }
+
+    const turns = computeTurns();
+    const hiddenCount = Math.max(0, turns.length - VISIBLE_TURNS);
+    const hiddenTurns = turns.slice(0, hiddenCount);
+    const visibleTurns = turns.slice(hiddenCount);
+
+    return (
+      <>
+        {/* 접기 가능한 이전 대화 */}
+        {hiddenTurns.length > 0 && (
+          <>
+            <div className="chat-collapsed-group">
+              <button
+                className={`chat-expand-btn${expandedOldMessages ? " expanded" : ""}`}
+                onClick={() => setExpandedOldMessages(!expandedOldMessages)}
+              >
+                <span className="expand-arrow">▶</span>
+                {expandedOldMessages
+                  ? "이전 대화 접기"
+                  : `이전 대화 ${hiddenTurns.length}개 보기`}
+              </button>
+              <div className={`chat-hidden-messages${expandedOldMessages ? " expanded" : ""}`}>
+                {hiddenTurns.flat().map((msg) => (
+                  <div key={msg.id} className="chat-fs-message-wrapper">
+                    <div className={`chat-fs-message ${msg.role}`}>
+                      {msg.role === 'user' && renderAttachments(msg.attachments)}
+                      {msg.content}
+                    </div>
+                    {renderMessageActions(msg, 'fullscreen')}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="chat-divider">
+              <span>최근 대화</span>
+            </div>
+          </>
+        )}
+
+        {/* 최근 대화 (항상 표시) */}
+        {visibleTurns.flat().map((msg) => (
+          <div key={msg.id} className="chat-fs-message-wrapper">
+            <div className={`chat-fs-message ${msg.role}`}>
+              {msg.role === 'user' && renderAttachments(msg.attachments)}
+              {msg.content}
+            </div>
+            {renderMessageActions(msg, 'fullscreen')}
           </div>
         ))}
       </>
@@ -877,15 +938,15 @@ const Chat = () => {
                 <div className="export-menu-dropdown">
                   <button className="export-menu-item" onClick={() => handleExport('md')}>
                     <span className="export-icon">MD</span>
-                    Markdown (.md)
+                    Markdown
                   </button>
                   <button className="export-menu-item" onClick={() => handleExport('pdf')}>
                     <span className="export-icon">PDF</span>
-                    PDF (.pdf)
+                    PDF
                   </button>
                   <button className="export-menu-item" onClick={() => handleExport('docx')}>
                     <span className="export-icon">DOC</span>
-                    Word (.docx)
+                    Word
                   </button>
                 </div>
               )}
@@ -903,19 +964,8 @@ const Chat = () => {
           {/* 좌측: 채팅 메시지 */}
           <div className="chat-fs-body" id="chat-fs-body">
             <div className="chat-fs-inner">
-              {messages.length === 0 ? (
-                <div className="chat-fs-empty">대화를 시작해보세요</div>
-              ) : (
-                messages.map((msg) => (
-                  <div key={msg.id} className="chat-fs-message-wrapper">
-                    <div className={`chat-fs-message ${msg.role}`}>
-                      {msg.role === 'user' && renderAttachments(msg.attachments)}
-                      {msg.content}
-                    </div>
-                    {renderMessageActions(msg, 'fullscreen')}
-                  </div>
-                ))
-              )}
+              {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 (Phase J 통합) */}
+              {renderFsCollapsibleMessages()}
               {isLoading && (
                 <div className="chat-fs-message assistant">
                   <div className="chat-fs-loading">
@@ -1006,22 +1056,16 @@ const Chat = () => {
           {/* 우측: 3D Visualizer (vizDirective 있을 때만 표시) */}
           {vizDirective && (
             <div className="chat-fs-viz">
-              {vizDirective.kpis && vizDirective.kpis.length > 0 && (
-                <KPIBar kpis={vizDirective.kpis} />
-              )}
-              <div style={{ flex: 1, position: "relative" }}>
-                <StoreVisualizer
-                  vizState={vizDirective.vizState}
-                  highlights={vizDirective.highlights || []}
-                  annotations={vizDirective.annotations || []}
-                  showFlow={vizDirective.flowPath || false}
-                  storeParams={vizDirective.storeParams}
-                  zoneScale={vizDirective.zoneScale}
-                />
-              </div>
-              {vizDirective.stage && (
-                <StageProgress stage={vizDirective.stage} />
-              )}
+              <StoreVisualizer
+                vizState={vizDirective.vizState}
+                highlights={vizDirective.highlights || []}
+                annotations={vizDirective.annotations || []}
+                showFlow={vizDirective.flowPath || false}
+                kpis={vizDirective.kpis}
+                stage={vizDirective.stage}
+                storeParams={vizDirective.storeParams}
+                zoneScale={vizDirective.zoneScale}
+              />
             </div>
           )}
         </div>
@@ -1154,12 +1198,14 @@ const Chat = () => {
 
           {/* Nav */}
           <nav className="hero-nav">
-            <Link to="/">
+            <a href="/" onClick={(e) => { if (location.pathname === "/") { e.preventDefault(); window.location.reload(); } }}>
               <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
-            </Link>
+            </a>
             <div className="hero-nav-links">
               <Link to="/about">제품 &amp; 회사소개</Link>
               <Link to="/contact">문의하기</Link>
+              <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
+              <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
             </div>
           </nav>
 
@@ -1401,8 +1447,7 @@ const Chat = () => {
                   width: "55%",
                   height: "600px",
                   minHeight: "500px",
-                  display: "flex",
-                  flexDirection: "column",
+                  position: "relative",
                   backgroundColor: "rgba(3, 7, 18, 0.9)",
                   borderRadius: "16px",
                   overflow: "hidden",
@@ -1410,27 +1455,17 @@ const Chat = () => {
                   animation: "fadeIn 0.5s ease"
                 }}
               >
-                {/* KPI Bar */}
-                {vizDirective.kpis && vizDirective.kpis.length > 0 && (
-                  <KPIBar kpis={vizDirective.kpis} />
-                )}
-
-                {/* 3D Store Visualizer */}
-                <div style={{ flex: 1, position: "relative" }}>
-                  <StoreVisualizer
-                    vizState={vizDirective.vizState}
-                    highlights={vizDirective.highlights || []}
-                    annotations={vizDirective.annotations || []}
-                    showFlow={vizDirective.flowPath || false}
-                    storeParams={vizDirective.storeParams}
-                    zoneScale={vizDirective.zoneScale}
-                  />
-                </div>
-
-                {/* Stage Progress */}
-                {vizDirective.stage && (
-                  <StageProgress stage={vizDirective.stage} />
-                )}
+                {/* 3D Store Visualizer — KPI/Stage는 내부 오버레이로 렌더링 */}
+                <StoreVisualizer
+                  vizState={vizDirective.vizState}
+                  highlights={vizDirective.highlights || []}
+                  annotations={vizDirective.annotations || []}
+                  showFlow={vizDirective.flowPath || false}
+                  kpis={vizDirective.kpis}
+                  stage={vizDirective.stage}
+                  storeParams={vizDirective.storeParams}
+                  zoneScale={vizDirective.zoneScale}
+                />
               </div>
             )}
           </div>
@@ -1438,11 +1473,13 @@ const Chat = () => {
           {/* Semicircle Decoration */}
           <div className="hero-semicircle"></div>
 
-          {/* Caption */}
-          <div className="hero-caption">
-            <div className="dot"></div>
-            <p>리테일 전문 지식으로 학습된 AI 어시스턴트, NEURALTWIN.</p>
-          </div>
+          {/* Caption — 3D 비주얼라이저 활성 시 숨김 (z-index 관통 방지) */}
+          {!vizDirective && (
+            <div className="hero-caption">
+              <div className="dot"></div>
+              <p>리테일 전문 지식으로 학습된 AI 어시스턴트, NEURALTWIN.</p>
+            </div>
+          )}
 
           {/* Timeline Ruler (minor ticks 포함) */}
           <div className="hero-ruler">
@@ -1466,7 +1503,7 @@ const Chat = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <Link to="/about">About</Link>
+              <Link to="/about">제품 & 회사소개</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>

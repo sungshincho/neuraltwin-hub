@@ -5,11 +5,13 @@ import { Link } from "react-router-dom";
 import "@/styles/about.css";
 
 // 서비스 아코디언 데이터
+// 서비스별 스크린샷 이미지 경로 — public/images/services/ 에 실제 파일 배치 필요
 const SERVICES = [
   {
     num: "01",
     title: "데이터컨트롤타워",
     desc: "Data Aggregator Hub - 단일 진실 소스",
+    image: "/images/services/data-control-tower.png",
     panelTitle: "모든 데이터를 하나로",
     panelDesc:
       "POS, IoT 센서, CCTV, ERP 등 매장 내 모든 데이터 소스를 단일 플랫폼으로 통합합니다. 실시간 스트리밍과 배치 처리를 동시에 지원하며, 데이터 품질 모니터링이 자동으로 이루어집니다.",
@@ -19,6 +21,7 @@ const SERVICES = [
     num: "02",
     title: "인사이트허브",
     desc: "실시간 대시보드 분석 및 AI 추천",
+    image: "/images/services/insight-hub.png",
     panelTitle: "데이터에서 인사이트로",
     panelDesc:
       "통합된 데이터를 AI가 분석하여 실시간 대시보드로 시각화합니다. 매출 트렌드, 고객 동선 패턴, 재고 예측 등 핵심 지표를 한눈에 파악하고 AI 기반 추천을 받을 수 있습니다.",
@@ -28,6 +31,7 @@ const SERVICES = [
     num: "03",
     title: "디지털트윈스튜디오",
     desc: "매장 레이아웃 변경 & 상품 배치 최적화를 사전 시뮬레이션",
+    image: "/images/services/digital-twin-studio.png",
     panelTitle: "실제 적용 전에 검증",
     panelDesc:
       "매장의 3D 디지털 트윈을 생성하여 레이아웃 변경, 상품 재배치, 동선 최적화를 사전에 시뮬레이션합니다. 변경이 매출에 미치는 영향을 미리 예측하여 리스크를 최소화합니다.",
@@ -37,6 +41,7 @@ const SERVICES = [
     num: "04",
     title: "ROI 측정",
     desc: "시뮬레이션 적용 결과를 추적 분석",
+    image: "/images/services/roi-measurement.png",
     panelTitle: "성과를 숫자로 증명",
     panelDesc:
       "시뮬레이션 결과를 실제 매장에 적용한 후, 변경 전후의 성과를 자동으로 비교 분석합니다. 매출 변화, 고객 체류 시간, 동선 효율성 등 주요 KPI를 실시간으로 추적합니다.",
@@ -46,6 +51,7 @@ const SERVICES = [
     num: "05",
     title: "설정 & 관리",
     desc: "시스템 설정, 매장 관리, 사용자 권한",
+    image: "/images/services/settings-management.png",
     panelTitle: "유연한 시스템 관리",
     panelDesc:
       "다중 매장 관리, 사용자 권한 설정, 알림 규칙, 데이터 연동 설정 등 플랫폼의 모든 설정을 직관적인 인터페이스로 관리합니다. 역할 기반 접근 제어(RBAC)를 지원합니다.",
@@ -53,190 +59,6 @@ const SERVICES = [
   },
 ];
 
-// 캔버스 그리기 함수 (서비스별 placeholder 시각화)
-function drawServiceCanvas(canvas: HTMLCanvasElement, index: number) {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  const w = canvas.width;
-  const h = canvas.height;
-
-  // 다크 배경 + 그리드
-  ctx.fillStyle = "#0f0f0f";
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = "rgba(255,255,255,0.04)";
-  ctx.lineWidth = 1;
-  for (let x = 0; x < w; x += 40) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-  }
-  for (let y = 0; y < h; y += 40) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-  }
-
-  if (index === 0) {
-    // 01: Data flow - nodes and connections
-    const nodes = [
-      { x: 80, y: 120, label: "POS" },
-      { x: 80, y: 200, label: "IoT" },
-      { x: 80, y: 280, label: "CCTV" },
-      { x: 320, y: 200, label: "HUB" },
-      { x: 540, y: 140, label: "Store" },
-      { x: 540, y: 260, label: "Report" },
-    ];
-    ctx.strokeStyle = "rgba(255,255,255,0.15)";
-    ctx.lineWidth = 1;
-    [[0, 3], [1, 3], [2, 3], [3, 4], [3, 5]].forEach(([a, b]) => {
-      ctx.beginPath();
-      ctx.moveTo(nodes[a].x, nodes[a].y);
-      ctx.lineTo(nodes[b].x, nodes[b].y);
-      ctx.stroke();
-    });
-    nodes.forEach((n) => {
-      const isCenter = n.label === "HUB";
-      const r = isCenter ? 32 : 22;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = isCenter ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.2)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = isCenter ? "#fff" : "rgba(255,255,255,0.5)";
-      ctx.font = (isCenter ? "600 13px" : "500 11px") + " 'Fira Code', monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(n.label, n.x, n.y);
-    });
-  } else if (index === 1) {
-    // 02: Dashboard bar chart
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
-    ctx.fillRect(40, 40, w - 80, h - 80);
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(40, 40, w - 80, h - 80);
-    const bars = [60, 85, 45, 90, 70, 95, 55, 80, 100, 75, 65, 88];
-    const barW = 32;
-    const gap = 12;
-    const startX = 70;
-    bars.forEach((val, i) => {
-      const bh = val * 2.2;
-      const x = startX + i * (barW + gap);
-      const y = h - 80 - bh;
-      ctx.fillStyle = i === 9 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.12)";
-      ctx.fillRect(x, y, barW, bh);
-    });
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.font = "500 11px 'Fira Code', monospace";
-    ctx.textAlign = "left";
-    ctx.fillText("Monthly Revenue", 50, 30);
-  } else if (index === 2) {
-    // 03: Store floor plan
-    ctx.strokeStyle = "rgba(255,255,255,0.15)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(80, 60, 480, 280);
-    const shelves: number[][] = [
-      [120, 100, 140, 20], [120, 160, 140, 20], [120, 220, 140, 20],
-      [340, 100, 180, 20], [340, 160, 180, 20], [340, 260, 100, 20],
-    ];
-    shelves.forEach(([x, y, sw, sh]) => {
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.fillRect(x, y, sw, sh);
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
-      ctx.strokeRect(x, y, sw, sh);
-    });
-    ctx.setLineDash([4, 6]);
-    ctx.strokeStyle = "rgba(255,255,255,0.3)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(160, 300);
-    ctx.quadraticCurveTo(200, 140, 320, 140);
-    ctx.quadraticCurveTo(440, 140, 480, 280);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.font = "500 10px 'Fira Code', monospace";
-    ctx.textAlign = "left";
-    ctx.fillText("ENTRANCE", 130, 320);
-  } else if (index === 3) {
-    // 04: ROI before/after
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.font = "500 11px 'Fira Code', monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("BEFORE", 200, 50);
-    ctx.fillText("AFTER", 440, 50);
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(320, 40); ctx.lineTo(320, 360); ctx.stroke();
-    ctx.setLineDash([]);
-    const before = [55, 40, 65, 50];
-    const after = [80, 72, 90, 85];
-    const labels = ["매출", "체류", "전환", "효율"];
-    const bw = 40;
-    before.forEach((v, i) => {
-      const x = 100 + i * 55;
-      const bh = v * 2.5;
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.fillRect(x, 340 - bh, bw, bh);
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.font = "500 9px 'Fira Code', monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(labels[i], x + bw / 2, 360);
-    });
-    after.forEach((v, i) => {
-      const x = 340 + i * 55;
-      const bh = v * 2.5;
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.fillRect(x, 340 - bh, bw, bh);
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.font = "500 9px 'Fira Code', monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(labels[i], x + bw / 2, 360);
-    });
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.font = "700 24px 'Fira Code', monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("→", 320, 200);
-  } else if (index === 4) {
-    // 05: Settings admin panel
-    ctx.fillStyle = "rgba(255,255,255,0.05)";
-    ctx.fillRect(40, 40, 140, 320);
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.strokeRect(40, 40, 140, 320);
-    const menuItems = ["General", "Stores", "Users", "Alerts", "API"];
-    menuItems.forEach((item, i) => {
-      const y = 70 + i * 40;
-      if (i === 2) {
-        ctx.fillStyle = "rgba(255,255,255,0.08)";
-        ctx.fillRect(44, y - 10, 132, 30);
-      }
-      ctx.fillStyle = i === 2 ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.2)";
-      ctx.font = "500 11px 'Fira Code', monospace";
-      ctx.textAlign = "left";
-      ctx.fillText(item, 60, y + 5);
-    });
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.strokeRect(200, 40, 400, 320);
-    ctx.fillStyle = "rgba(255,255,255,0.04)";
-    ctx.fillRect(200, 40, 400, 36);
-    const headers = ["Name", "Role", "Status"];
-    headers.forEach((h, i) => {
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.font = "600 10px 'Fira Code', monospace";
-      ctx.textAlign = "left";
-      ctx.fillText(h, 220 + i * 140, 63);
-    });
-    for (let r = 0; r < 6; r++) {
-      const ry = 90 + r * 40;
-      ctx.strokeStyle = "rgba(255,255,255,0.04)";
-      ctx.beginPath(); ctx.moveTo(200, ry); ctx.lineTo(600, ry); ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.12)";
-      ctx.fillRect(220, ry + 8, 80, 8);
-      ctx.fillRect(360, ry + 8, 50, 8);
-      ctx.fillStyle = r < 4 ? "rgba(100,255,150,0.15)" : "rgba(255,100,100,0.15)";
-      ctx.fillRect(500, ry + 8, 40, 8);
-    }
-  }
-}
 
 const About = () => {
   // 인트로 애니메이션 상태
@@ -248,13 +70,10 @@ const About = () => {
   // 아코디언 상태 (열려있는 서비스 인덱스, -1이면 모두 닫힘)
   const [openService, setOpenService] = useState(-1);
 
-  // 캔버스 ref 배열 (서비스 패널 내부)
-  const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
-  // 캔버스가 이미 그려졌는지 추적
-  const canvasDrawn = useRef<boolean[]>([false, false, false, false, false]);
-
   // 패널 ref 배열 (아코디언 높이 계산용)
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 서비스 아이템 ref 배열 (classList 기반 open 토글 — React className 충돌 방지)
+  const serviceItemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     // body 다크 배경
@@ -302,20 +121,32 @@ const About = () => {
   // 아코디언 토글
   const toggleService = useCallback(
     (index: number) => {
-      const nextOpen = openService === index ? -1 : index;
-      setOpenService(nextOpen);
-
-      // 캔버스 그리기 (처음 열릴 때만)
-      if (nextOpen >= 0 && !canvasDrawn.current[nextOpen]) {
-        const canvas = canvasRefs.current[nextOpen];
-        if (canvas) {
-          drawServiceCanvas(canvas, nextOpen);
-          canvasDrawn.current[nextOpen] = true;
-        }
-      }
+      setOpenService(openService === index ? -1 : index);
     },
     [openService]
   );
+
+  // open 클래스를 classList로 관리 — React className이 IntersectionObserver의 visible을 덮어쓰지 않도록
+  useEffect(() => {
+    serviceItemRefs.current.forEach((el, i) => {
+      if (!el) return;
+      el.classList.toggle('open', openService === i);
+    });
+  }, [openService]);
+
+  // 아코디언 패널 높이 계산 — rAF로 레이아웃 완료 후 측정하여 scrollHeight 0 버그 방지
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      panelRefs.current.forEach((panel, i) => {
+        if (!panel) return;
+        if (openService === i) {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        } else {
+          panel.style.maxHeight = "0px";
+        }
+      });
+    });
+  }, [openService]);
 
   return (
     <div className="about-page">
@@ -352,6 +183,8 @@ const About = () => {
           <div className="page-nav-links">
             <Link to="/about" className="active">제품 &amp; 회사소개</Link>
             <Link to="/contact">문의하기</Link>
+            <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
+            <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
           </div>
         </nav>
 
@@ -411,7 +244,8 @@ const About = () => {
           {SERVICES.map((svc, i) => (
             <div
               key={svc.num}
-              className={`service-item reveal${openService === i ? " open" : ""}`}
+              ref={(el) => { serviceItemRefs.current[i] = el; }}
+              className="service-item reveal"
             >
               <div className="service-row" onClick={() => toggleService(i)}>
                 <div className="service-num">{svc.num}</div>
@@ -422,20 +256,14 @@ const About = () => {
               <div
                 className="service-panel"
                 ref={(el) => { panelRefs.current[i] = el; }}
-                style={{
-                  maxHeight: openService === i
-                    ? (panelRefs.current[i]?.scrollHeight ?? 0) + "px"
-                    : "0px",
-                }}
               >
                 <div className="service-panel-inner">
                   <div className="service-panel-image">
-                    <canvas
-                      ref={(el) => { canvasRefs.current[i] = el; }}
-                      width={640}
-                      height={400}
+                    <img
+                      src={svc.image}
+                      alt={svc.title}
+                      loading="lazy"
                     />
-                    <span className="service-panel-image-label">Preview</span>
                   </div>
                   <div className="service-panel-text">
                     <h3>{svc.panelTitle}</h3>
@@ -525,7 +353,7 @@ const About = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <Link to="/about">About</Link>
+              <Link to="/about">제품 & 회사소개</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>

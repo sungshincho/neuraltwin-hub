@@ -451,9 +451,10 @@
     color: var(--gray-500);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
     transform-origin: center center;
+    pointer-events: none;
 }
 
-.about-page .service-row:hover .service-arrow {
+.about-page .service-item:hover .service-arrow {
     color: var(--white);
 }
 
@@ -482,12 +483,12 @@
     padding-left: 128px;
 }
 
-/* --- Panel Image (Canvas Placeholder) --- */
+/* --- Panel Image (서비스 스크린샷) --- */
 .about-page .service-panel-image {
     background: var(--gray-800);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    aspect-ratio: 16 / 10;
+    border-radius: 8px;
+    aspect-ratio: 16 / 9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -495,20 +496,11 @@
     overflow: hidden;
 }
 
-.about-page .service-panel-image canvas {
+.about-page .service-panel-image img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
     display: block;
-}
-
-.about-page .service-panel-image-label {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    font-size: 10px;
-    color: var(--gray-500);
-    letter-spacing: 1px;
-    text-transform: uppercase;
 }
 
 /* --- Panel Text --- */

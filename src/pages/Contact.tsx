@@ -149,6 +149,8 @@ const Contact = () => {
           <div className="page-nav-links">
             <Link to="/about">제품 &amp; 회사소개</Link>
             <Link to="/contact" className="active">문의하기</Link>
+            <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
+            <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
           </div>
         </nav>
 
@@ -397,7 +399,7 @@ const Contact = () => {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>Company &amp; Product</h4>
-              <Link to="/about">About</Link>
+              <Link to="/about">제품 & 회사소개</Link>
             </div>
             <div className="footer-col">
               <h4>Contact</h4>
