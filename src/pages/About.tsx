@@ -183,8 +183,8 @@ const About = () => {
           <div className="page-nav-links">
             <Link to="/about" className="active">제품 &amp; 회사소개</Link>
             <Link to="/contact">문의하기</Link>
-            <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
-            <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
+            <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
+            <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
           </div>
         </nav>
 
