@@ -149,6 +149,8 @@ const Contact = () => {
           <div className="page-nav-links">
             <Link to="/about">제품 &amp; 회사소개</Link>
             <Link to="/contact" className="active">문의하기</Link>
+            <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
+            <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
           </div>
         </nav>
 
