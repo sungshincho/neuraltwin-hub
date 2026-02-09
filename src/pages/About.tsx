@@ -9,53 +9,53 @@ import "@/styles/about.css";
 const SERVICES = [
   {
     num: "01",
-    title: "데이터컨트롤타워",
-    desc: "Data Aggregator Hub - 단일 진실 소스",
+    title: "데이터 컨트롤 타워",
+    desc: "Single Source of Truth — 단일 진실 소스",
     image: "/images/services/data-control-tower.png",
-    panelTitle: "모든 데이터를 하나로",
+    panelTitle: "흩어진 데이터, 하나의 진실로",
     panelDesc:
-      "POS, IoT 센서, CCTV, ERP 등 매장 내 모든 데이터 소스를 단일 플랫폼으로 통합합니다. 실시간 스트리밍과 배치 처리를 동시에 지원하며, 데이터 품질 모니터링이 자동으로 이루어집니다.",
-    tags: ["실시간 연동", "데이터 정합성", "멀티소스 통합"],
+      "POS, IoT 센서, CCTV, ERP 등 50개 이상의 레거시 시스템을 단일 플랫폼으로 통합합니다. 초당 37,000건 이상의 데이터를 실시간 처리하며, Data Quality 100/100 자동 헬스체크로 데이터 신뢰성을 보장합니다.",
+    tags: ["실시간 연동", "데이터 정합성", "50+ 시스템 통합"],
   },
   {
     num: "02",
-    title: "인사이트허브",
-    desc: "실시간 대시보드 분석 및 AI 추천",
+    title: "인사이트 허브",
+    desc: "실시간 대시보드 & AI Critical Alert",
     image: "/images/services/insight-hub.png",
-    panelTitle: "데이터에서 인사이트로",
+    panelTitle: "수천 개 지표 대신, 지금 당장 해야 할 것만",
     panelDesc:
-      "통합된 데이터를 AI가 분석하여 실시간 대시보드로 시각화합니다. 매출 트렌드, 고객 동선 패턴, 재고 예측 등 핵심 지표를 한눈에 파악하고 AI 기반 추천을 받을 수 있습니다.",
-    tags: ["실시간 대시보드", "AI 추천", "예측 분석"],
+      "통합된 데이터를 AI가 분석하여 즉시 실행 가능한 인사이트로 시각화합니다. 매출 트렌드, 고객 동선 패턴, 상품 실적 등 핵심 지표를 한눈에 파악하고, AI가 감지한 Critical Alert만 우선 확인 — 불필요한 데이터 노이즈를 제거합니다.",
+    tags: ["실시간 대시보드", "AI 추천", "Critical Alert"],
   },
   {
     num: "03",
-    title: "디지털트윈스튜디오",
-    desc: "매장 레이아웃 변경 & 상품 배치 최적화를 사전 시뮬레이션",
+    title: "디지털 트윈 스튜디오",
+    desc: "3D 시뮬레이션으로 실패 비용 제로",
     image: "/images/services/digital-twin-studio.png",
-    panelTitle: "실제 적용 전에 검증",
+    panelTitle: "실패는 가상에서, 현실엔 성공만",
     panelDesc:
-      "매장의 3D 디지털 트윈을 생성하여 레이아웃 변경, 상품 재배치, 동선 최적화를 사전에 시뮬레이션합니다. 변경이 매출에 미치는 영향을 미리 예측하여 리스크를 최소화합니다.",
-    tags: ["3D 시뮬레이션", "레이아웃 최적화", "사전 검증"],
+      "실제 매장을 3D 디지털 트윈으로 정밀하게 복제하여 레이아웃 변경, 상품 재배치, 동선 최적화를 사전에 시뮬레이션합니다. AI가 예측한 매출 효과를 확인하고, 94% 정확도로 검증된 전략만 현실에 적용하세요.",
+    tags: ["3D 시뮬레이션", "AI 레이아웃 최적화", "94% 예측 정확도"],
   },
   {
     num: "04",
     title: "ROI 측정",
-    desc: "시뮬레이션 적용 결과를 추적 분석",
+    desc: "예측 vs 실측, 실시간 비교 분석",
     image: "/images/services/roi-measurement.png",
-    panelTitle: "성과를 숫자로 증명",
+    panelTitle: "AI 제안의 가치, 숫자로 증명합니다",
     panelDesc:
-      "시뮬레이션 결과를 실제 매장에 적용한 후, 변경 전후의 성과를 자동으로 비교 분석합니다. 매출 변화, 고객 체류 시간, 동선 효율성 등 주요 KPI를 실시간으로 추적합니다.",
-    tags: ["A/B 비교", "KPI 추적", "자동 리포트"],
+      "디지털 트윈에서 검증된 시나리오를 실제 매장에 적용한 후, 예측치(Forecast)와 실측치(Actual)를 실시간으로 비교 분석합니다. 매출, 전환율, 체류 시간 등 주요 KPI를 자동 추적하여 ROI 1,700%, 전환율 +8.3% 같은 검증된 결과를 만들어냅니다.",
+    tags: ["A/B 비교", "실시간 KPI 추적", "ROI 1,700%"],
   },
   {
     num: "05",
     title: "설정 & 관리",
-    desc: "시스템 설정, 매장 관리, 사용자 권한",
+    desc: "엔터프라이즈급 거버넌스 & 글로벌 확장성",
     image: "/images/services/settings-management.png",
-    panelTitle: "유연한 시스템 관리",
+    panelTitle: "클릭 한 번으로 전 세계 매장 관리",
     panelDesc:
-      "다중 매장 관리, 사용자 권한 설정, 알림 규칙, 데이터 연동 설정 등 플랫폼의 모든 설정을 직관적인 인터페이스로 관리합니다. 역할 기반 접근 제어(RBAC)를 지원합니다.",
-    tags: ["멀티매장", "권한 관리", "RBAC"],
+      "다중 매장 관리, 사용자 권한 설정, 알림 규칙, 데이터 연동 설정 등 플랫폼의 모든 설정을 직관적인 인터페이스로 관리합니다. 역할 기반 접근 제어(RBAC)와 ISO 27001 & GDPR 준수로 글로벌 확장에도 안심하고 사용하세요.",
+    tags: ["멀티매장", "RBAC", "ISO 27001"],
   },
 ];
 
@@ -195,8 +195,8 @@ const About = () => {
             리테일의 미래를<br />만듭니다
           </h1>
           <p className="page-hero-desc">
-            NEURALTWIN은 오프라인 매장을 디지털 트윈으로 구현하여
-            실시간으로 운영 상황을 모니터링하고 최적화하는 AI 플랫폼입니다.
+            NEURALTWIN은 오프라인 매장의 모든 데이터를 하나로 통합하고,
+            AI 기반 시뮬레이션으로 <strong>실패 없는 의사결정</strong>을 지원하는 리테일 인텔리전스 OS입니다.
           </p>
         </section>
 
@@ -205,30 +205,29 @@ const About = () => {
           <div className="about-left reveal">
             <div className="about-label">About</div>
             <h2 className="about-title">
-              리테일의<br />미래를<br />만듭니다
+              리테일 비즈니스를<br />위한 가장<br />강력한 솔루션
             </h2>
           </div>
           <div className="about-right reveal">
             <p>
-              NEURALTWIN은 오프라인 매장을 디지털 트윈으로 구현하여
-              실시간으로 운영 상황을 모니터링하고 최적화합니다.
+              NEURALTWIN은 POS, 센서, CRM, ERP 등 흩어진 모든 데이터를 하나로 통합하고,
+              AI 기반 분석으로 고객 동선, 상품 배치, 인력 운영을 자동으로 최적화합니다.
             </p>
             <p>
-              AI 기반 분석으로 고객 동선, 상품 배치, 재고 관리를
-              자동으로 최적화하여 매출을 극대화합니다.
+              실패는 가상에서, 현실엔 성공만 — 디지털 트윈으로 리스크 없이 검증하세요.
             </p>
             <div className="about-stat-row">
               <div className="about-stat">
                 <div className="number">-70%</div>
-                <div className="label">시간 단축</div>
+                <div className="label">의사결정 시간</div>
               </div>
               <div className="about-stat">
                 <div className="number">+20%</div>
-                <div className="label">매출 성장</div>
+                <div className="label">매출 향상</div>
               </div>
               <div className="about-stat">
                 <div className="number">-30%</div>
-                <div className="label">비용 감소</div>
+                <div className="label">운영 비용</div>
               </div>
             </div>
           </div>
@@ -291,8 +290,8 @@ const About = () => {
               <div className="process-step-num">01</div>
               <div className="process-step-title">데이터 연결</div>
               <div className="process-step-desc">
-                POS, IoT 센서, CCTV 등 기존 시스템의 데이터를 NEURALTWIN에 연결합니다.
-                별도 하드웨어 설치 없이 시작할 수 있습니다.
+                POS, IoT 센서, CCTV 등 기존 시스템의 데이터를 그대로 연결합니다.
+                별도 하드웨어 없이도 시작 가능하며, NEURALSENSE 센서 추가 시 더 정밀한 분석이 가능합니다.
               </div>
               <div className="process-connector"></div>
             </div>
@@ -300,8 +299,8 @@ const About = () => {
               <div className="process-step-num">02</div>
               <div className="process-step-title">디지털 트윈 생성</div>
               <div className="process-step-desc">
-                실제 매장의 디지털 트윈을 자동으로 생성합니다. 레이아웃, 상품 배치,
-                고객 동선이 실시간으로 반영됩니다.
+                실제 매장을 3D로 자동 복제합니다. 레이아웃, 상품 배치,
+                고객 동선이 실시간으로 동기화됩니다.
               </div>
               <div className="process-connector"></div>
             </div>
@@ -309,8 +308,8 @@ const About = () => {
               <div className="process-step-num">03</div>
               <div className="process-step-title">AI 분석 &amp; 시뮬레이션</div>
               <div className="process-step-desc">
-                AI가 패턴을 분석하고 최적화 방안을 제안합니다. 변경 사항을
-                실제 적용 전에 시뮬레이션으로 검증할 수 있습니다.
+                AI가 패턴을 분석하고 최적화 방안을 자동 제안합니다. 변경이 매출에 미치는 영향을
+                사전에 예측하고 검증하세요.
               </div>
               <div className="process-connector"></div>
             </div>
@@ -318,8 +317,8 @@ const About = () => {
               <div className="process-step-num">04</div>
               <div className="process-step-title">실행 &amp; 측정</div>
               <div className="process-step-desc">
-                검증된 최적화 방안을 실제 매장에 적용하고, ROI를 실시간으로 추적합니다.
-                지속적인 개선 사이클을 구축합니다.
+                검증된 최적화를 원클릭으로 적용하고, ROI를 실시간 추적합니다.
+                데이터 기반 지속 개선 사이클이 자동으로 구축됩니다.
               </div>
             </div>
           </div>
