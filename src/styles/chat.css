@@ -634,8 +634,10 @@
     .hero-nav { padding: 16px 20px; }
     .hero-nav-links { display: none; }
     .mobile-menu-btn { display: flex; }
-    .hero-brand h1 { font-size: 30px; }
+    .hero-brand { display: none; }
     .hero-content { padding: 24px 20px; }
+    .chat-container { max-height: none; }
+    .chat-messages { max-height: 40vh; }
     .footer-cols { flex-direction: column; gap: 32px; }
     .footer-bottom { flex-direction: column; gap: 8px; }
     .chat-footer { padding: 32px 20px; }
@@ -1180,7 +1182,7 @@
     }
 
     .chat-messages {
-        max-height: 250px;
+        max-height: 40vh;
     }
 
     .chat-message {
