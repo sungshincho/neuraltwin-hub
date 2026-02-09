@@ -1733,7 +1733,166 @@
 
 /* ===================== END PHASE J ===================== */
 
-/* 전체화면: Suggestions 칩 — 축소모드(.chat-suggestions)와 동일 */
+/* ===================== TURN LIMIT MODAL ===================== */
+
+.turn-limit-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+    animation: fadeIn 0.2s ease;
+}
+
+.turn-limit-modal {
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    animation: slideInUp 0.3s ease;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+
+.turn-limit-icon {
+    color: var(--gray-500);
+    margin-bottom: 20px;
+}
+
+.turn-limit-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 12px;
+}
+
+.turn-limit-desc {
+    font-size: 13px;
+    color: var(--gray-300);
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+
+.turn-limit-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 28px;
+    font-size: 14px;
+}
+
+.turn-limit-count {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--white);
+}
+
+.turn-limit-max {
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.turn-limit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.turn-limit-reset-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--white);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.turn-limit-reset-btn:hover {
+    background: var(--gray-100);
+    transform: translateY(-1px);
+}
+
+.turn-limit-close-btn {
+    width: 100%;
+    padding: 12px 24px;
+    background: transparent;
+    color: var(--gray-500);
+    border: 1px solid var(--gray-700);
+    border-radius: 10px;
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.turn-limit-close-btn:hover {
+    border-color: var(--gray-500);
+    color: var(--gray-300);
+}
+
+/* Turn counter bar (input area 위) */
+.turn-counter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px;
+    margin-bottom: 8px;
+}
+
+.turn-counter-bar.limit-reached .turn-counter-text {
+    color: #ef4444;
+}
+
+.turn-counter-text {
+    font-size: 11px;
+    color: var(--gray-500);
+    letter-spacing: 0.5px;
+}
+
+.turn-counter-reset {
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid var(--gray-700);
+    border-radius: 6px;
+    color: var(--gray-300);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.turn-counter-reset:hover {
+    border-color: var(--gray-500);
+    color: var(--white);
+}
+
+/* Disabled input box (턴 제한 도달 시) */
+.chat-input-box.disabled,
+.chat-fs-input-box.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* ===================== END TURN LIMIT ===================== */
+
+/* 전체화면: Suggestions 칩 */
 .chat-fs-suggestions {
     display: flex;
     flex-wrap: wrap;

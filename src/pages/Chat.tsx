@@ -47,6 +47,7 @@ const TIMELINE_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 
 // 인라인 채팅에서 최근 N턴만 표시, 나머지는 접기
 const VISIBLE_TURNS = 3;
+const MAX_GUEST_TURNS = 10;
 
 // 세션 ID 관리
 const getOrCreateSessionId = (): string => {
@@ -105,6 +106,9 @@ const Chat = () => {
 
   // PHASE J: 복사 알림
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  // 비회원 턴 제한 모달
+  const [showTurnLimitModal, setShowTurnLimitModal] = useState(false);
 
   // 플레이스홀더 로테이션
   const PLACEHOLDERS = [
@@ -167,8 +171,23 @@ const Chat = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // 비회원 턴 카운트 (user 메시지 수 = 턴 수)
+  const turnCount = messages.filter(m => m.role === 'user').length;
+  const isGuestLimitReached = turnCount >= MAX_GUEST_TURNS;
+
+  // 비회원 턴 제한 도달 시 모달 자동 표시
+  useEffect(() => {
+    if (isGuestLimitReached && !isLoading) {
+      setShowTurnLimitModal(true);
+    }
+  }, [isGuestLimitReached, isLoading]);
+
   // 메시지 전송 (비스트리밍 모드)
   const handleSendMessage = async () => {
+    if (isGuestLimitReached) {
+      setShowTurnLimitModal(true);
+      return;
+    }
     if (!inputValue.trim() || isLoading) return;
 
     // 파일 첨부 정보를 메시지에 포함
@@ -289,6 +308,10 @@ const Chat = () => {
 
   // TASK 9: Suggestion 클릭 핸들러 — 현재 모드에 맞는 input state 업데이트
   const handleSuggestionClick = (suggestion: string) => {
+    if (isGuestLimitReached) {
+      setShowTurnLimitModal(true);
+      return;
+    }
     if (isFullscreen) {
       setFsInputValue(suggestion);
     } else {
@@ -341,6 +364,23 @@ const Chat = () => {
   const handleLeadFormClose = () => {
     setShowLeadForm(false);
   };
+
+  // 비회원 세션 초기화 (턴 제한 후 새 대화)
+  const handleResetSession = useCallback(() => {
+    const key = "neuraltwin_chat_session_id";
+    localStorage.setItem(key, crypto.randomUUID());
+    setMessages([]);
+    setConversationId(null);
+    setSuggestions([]);
+    setShowLeadForm(false);
+    setVizDirective(null);
+    setShowTurnLimitModal(false);
+    setInputValue("");
+    setFsInputValue("");
+    setPendingFiles([]);
+    setExpandedOldMessages(false);
+    setLeadSubmitted(false);
+  }, []);
 
   // ═══════════════════════════════════════════
   // PHASE J: 메시지 리액션 핸들러 (Copy / Like / Dislike)
@@ -574,6 +614,10 @@ const Chat = () => {
 
   // 전체화면 전용 메시지 전송
   const handleFsSendMessage = async () => {
+    if (isGuestLimitReached) {
+      setShowTurnLimitModal(true);
+      return;
+    }
     if (!fsInputValue.trim() || isLoading) return;
 
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
@@ -841,6 +885,37 @@ const Chat = () => {
 
   return (
     <div className="chat-page">
+      {/* ==================== TURN LIMIT MODAL ==================== */}
+      {showTurnLimitModal && (
+        <div className="turn-limit-overlay" onClick={() => setShowTurnLimitModal(false)}>
+          <div className="turn-limit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="turn-limit-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </div>
+            <h3 className="turn-limit-title">대화 횟수를 모두 사용했습니다</h3>
+            <p className="turn-limit-desc">
+              비회원 모드에서는 세션당 최대 {MAX_GUEST_TURNS}회까지 대화할 수 있습니다.<br />
+              새로운 대화를 시작하시거나, 회원가입 후 무제한으로 이용해보세요.
+            </p>
+            <div className="turn-limit-counter">
+              <span className="turn-limit-count">{turnCount}</span>
+              <span className="turn-limit-max">/ {MAX_GUEST_TURNS} 턴 사용</span>
+            </div>
+            <div className="turn-limit-actions">
+              <button className="turn-limit-reset-btn" onClick={handleResetSession}>
+                새 대화 시작
+              </button>
+              <button className="turn-limit-close-btn" onClick={() => setShowTurnLimitModal(false)}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ==================== FULLSCREEN CHAT OVERLAY ==================== */}
       {/* 조건부 렌더링: isFullscreen일 때만 DOM에 마운트 (CSS display:none FOUC 방지) */}
       {isFullscreen && (
@@ -903,7 +978,7 @@ const Chat = () => {
               )}
 
               {/* 전체화면: Suggestions 칩 */}
-              {!isLoading && suggestions.length > 0 && (
+              {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
                 <div className="chat-fs-suggestions">
                   {suggestions.map((suggestion, index) => (
                     <button
@@ -997,7 +1072,15 @@ const Chat = () => {
 
         <div className="chat-fs-footer">
           <div className="chat-fs-input-wrapper">
-            <div className="chat-fs-input-box">
+            {turnCount > 0 && (
+              <div className={`turn-counter-bar${isGuestLimitReached ? ' limit-reached' : ''}`}>
+                <span className="turn-counter-text">{turnCount} / {MAX_GUEST_TURNS} 턴 사용</span>
+                {isGuestLimitReached && (
+                  <button className="turn-counter-reset" onClick={handleResetSession}>새 대화 시작</button>
+                )}
+              </div>
+            )}
+            <div className={`chat-fs-input-box${isGuestLimitReached ? ' disabled' : ''}`}>
               {/* 첨부 파일 미리보기 (풀스크린) */}
               {pendingFiles.length > 0 && (
                 <div className="chat-pending-files">
@@ -1027,11 +1110,12 @@ const Chat = () => {
                 <textarea
                   ref={fsInputRef}
                   className="chat-fs-input"
-                  placeholder={PLACEHOLDERS[placeholderIndex]}
+                  placeholder={isGuestLimitReached ? "대화 횟수를 모두 사용했습니다" : PLACEHOLDERS[placeholderIndex]}
                   value={fsInputValue}
                   onChange={(e) => setFsInputValue(e.target.value)}
                   onKeyDown={handleFsKeyDown}
                   rows={1}
+                  disabled={isGuestLimitReached}
                 />
               </div>
               <div className="chat-fs-input-actions">
@@ -1056,7 +1140,7 @@ const Chat = () => {
                 <button
                   className="chat-send-btn"
                   onClick={handleFsSendMessage}
-                  disabled={!fsInputValue.trim() || isLoading}
+                  disabled={!fsInputValue.trim() || isLoading || isGuestLimitReached}
                 >
                   <svg
                     className="chat-send-icon"
@@ -1165,7 +1249,7 @@ const Chat = () => {
                 )}
 
                 {/* TASK 9: Suggestions 칩 */}
-                {!isLoading && suggestions.length > 0 && (
+                {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
                   <div className="chat-suggestions">
                     {suggestions.map((suggestion, index) => (
                       <button
@@ -1239,8 +1323,16 @@ const Chat = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* 입력 박스 */}
-              <div className="chat-input-box">
+              {/* 턴 카운터 + 입력 박스 */}
+              {turnCount > 0 && (
+                <div className={`turn-counter-bar${isGuestLimitReached ? ' limit-reached' : ''}`}>
+                  <span className="turn-counter-text">{turnCount} / {MAX_GUEST_TURNS} 턴 사용</span>
+                  {isGuestLimitReached && (
+                    <button className="turn-counter-reset" onClick={handleResetSession}>새 대화 시작</button>
+                  )}
+                </div>
+              )}
+              <div className={`chat-input-box${isGuestLimitReached ? ' disabled' : ''}`}>
                 {/* 첨부 파일 미리보기 */}
                 {pendingFiles.length > 0 && (
                   <div className="chat-pending-files">
@@ -1271,11 +1363,12 @@ const Chat = () => {
                   <textarea
                     ref={inputRef}
                     className="chat-input"
-                    placeholder={PLACEHOLDERS[placeholderIndex]}
+                    placeholder={isGuestLimitReached ? "대화 횟수를 모두 사용했습니다" : PLACEHOLDERS[placeholderIndex]}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     rows={1}
+                    disabled={isGuestLimitReached}
                   />
                 </div>
                 <div className="chat-input-actions">
@@ -1328,7 +1421,7 @@ const Chat = () => {
                   <button
                     className="chat-send-btn"
                     onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isLoading}
+                    disabled={!inputValue.trim() || isLoading || isGuestLimitReached}
                   >
                     <svg
                       className="chat-send-icon"
