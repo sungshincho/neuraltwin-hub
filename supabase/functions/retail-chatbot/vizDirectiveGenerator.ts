@@ -26,6 +26,13 @@ export interface VizKPI {
   highlight?: boolean;
 }
 
+export interface ZoneScale {
+  [zoneId: string]: {
+    scaleX?: number;
+    scaleZ?: number;
+  };
+}
+
 export interface VizDirective {
   vizState: VizState;
   highlights: string[];
@@ -33,6 +40,7 @@ export interface VizDirective {
   flowPath?: boolean;
   kpis?: VizKPI[];
   stage?: CustomerStage;
+  zoneScale?: ZoneScale;
 }
 
 // ═══════════════════════════════════════════
@@ -84,7 +92,15 @@ export function generateVizDirective(
           { label: '매장 면적', value: '400㎡', sub: '표준' },
           { label: '존 구성', value: '6개', sub: '권장' },
           { label: '동선 효율', value: '78%', sub: '목표 85%' }
-        ]
+        ],
+        zoneScale: {
+          decompression: { scaleX: 1.15, scaleZ: 1.15 },
+          powerWall: { scaleX: 1.15, scaleZ: 1.15 },
+          clothingMain: { scaleX: 1.1, scaleZ: 1.1 },
+          fittingRoom: { scaleX: 1.15, scaleZ: 1.15 },
+          checkout: { scaleX: 1.15, scaleZ: 1.15 },
+          accessory: { scaleX: 1.15, scaleZ: 1.15 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -102,7 +118,15 @@ export function generateVizDirective(
         kpis: [
           { label: '시선 포착률', value: '3초+', sub: 'VP 기준' },
           { label: 'Golden Zone', value: '120-170cm', sub: '눈높이' }
-        ]
+        ],
+        zoneScale: {
+          powerWall: { scaleX: 1.5, scaleZ: 1.4 },
+          decompression: { scaleX: 1.4, scaleZ: 1.3 },
+          clothingMain: { scaleX: 0.8, scaleZ: 0.8 },
+          fittingRoom: { scaleX: 0.7, scaleZ: 0.7 },
+          checkout: { scaleX: 0.7, scaleZ: 0.7 },
+          accessory: { scaleX: 0.8, scaleZ: 0.8 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -128,7 +152,15 @@ export function generateVizDirective(
           { label: 'SPLH', value: '$125', sub: '목표 $150' },
           { label: '인건비율', value: '12%', sub: '목표 10%' },
           { label: '커버리지', value: '85%', sub: '적정' }
-        ]
+        ],
+        zoneScale: {
+          checkout: { scaleX: 1.4, scaleZ: 1.4 },
+          fittingRoom: { scaleX: 1.3, scaleZ: 1.3 },
+          clothingMain: { scaleX: 1.2, scaleZ: 1.1 },
+          decompression: { scaleX: 0.8, scaleZ: 0.8 },
+          powerWall: { scaleX: 0.8, scaleZ: 0.8 },
+          accessory: { scaleX: 0.8, scaleZ: 0.8 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -144,7 +176,15 @@ export function generateVizDirective(
           { label: '마크다운율', value: '25%', sub: '적정' },
           { label: 'UPT', value: '2.3', sub: '목표 2.8' }
         ],
-        stage: 'purchase'
+        stage: 'purchase',
+        zoneScale: {
+          checkout: { scaleX: 1.5, scaleZ: 1.5 },
+          clothingMain: { scaleX: 1.2, scaleZ: 1.1 },
+          decompression: { scaleX: 0.7, scaleZ: 0.7 },
+          powerWall: { scaleX: 0.8, scaleZ: 0.8 },
+          fittingRoom: { scaleX: 0.8, scaleZ: 0.8 },
+          accessory: { scaleX: 0.8, scaleZ: 0.8 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -159,7 +199,15 @@ export function generateVizDirective(
           { label: '재고회전율', value: '8회/년', sub: '패션 평균' },
           { label: '품절률', value: '5%', sub: '목표 3%', alert: true },
           { label: 'Sell-Through', value: '72%', sub: '적정' }
-        ]
+        ],
+        zoneScale: {
+          clothingMain: { scaleX: 1.4, scaleZ: 1.3 },
+          accessory: { scaleX: 1.3, scaleZ: 1.3 },
+          powerWall: { scaleX: 1.2, scaleZ: 1.2 },
+          decompression: { scaleX: 0.7, scaleZ: 0.7 },
+          checkout: { scaleX: 0.8, scaleZ: 0.8 },
+          fittingRoom: { scaleX: 0.8, scaleZ: 0.8 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -174,7 +222,15 @@ export function generateVizDirective(
           { label: '전환율', value: '18%', sub: '패션 평균' },
           { label: '객단가', value: '₩85,000', sub: '목표 ₩100K' },
           { label: '체류시간', value: '12분', sub: '목표 15분' }
-        ]
+        ],
+        zoneScale: {
+          checkout: { scaleX: 1.3, scaleZ: 1.3 },
+          decompression: { scaleX: 1.2, scaleZ: 1.2 },
+          fittingRoom: { scaleX: 1.2, scaleZ: 1.2 },
+          clothingMain: { scaleX: 1.1, scaleZ: 1.1 },
+          powerWall: { scaleX: 0.9, scaleZ: 0.9 },
+          accessory: { scaleX: 0.9, scaleZ: 0.9 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -191,7 +247,15 @@ export function generateVizDirective(
         kpis: [
           { label: '시뮬레이션', value: '가능', sub: '레이아웃' },
           { label: '예상 효과', value: '8-12%', sub: '매출 증가' }
-        ]
+        ],
+        zoneScale: {
+          clothingMain: { scaleX: 1.5, scaleZ: 1.4 },
+          powerWall: { scaleX: 1.2, scaleZ: 1.2 },
+          fittingRoom: { scaleX: 1.3, scaleZ: 1.2 },
+          decompression: { scaleX: 0.8, scaleZ: 0.8 },
+          checkout: { scaleX: 0.8, scaleZ: 0.8 },
+          accessory: { scaleX: 0.9, scaleZ: 0.9 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -205,7 +269,15 @@ export function generateVizDirective(
         kpis: [
           { label: 'RFID 정확도', value: '95%+', sub: '재고' },
           { label: '디지털 사이니지', value: '29%↑', sub: '매출 효과' }
-        ]
+        ],
+        zoneScale: {
+          checkout: { scaleX: 1.4, scaleZ: 1.3 },
+          clothingMain: { scaleX: 1.3, scaleZ: 1.2 },
+          decompression: { scaleX: 0.8, scaleZ: 0.8 },
+          powerWall: { scaleX: 0.9, scaleZ: 0.9 },
+          fittingRoom: { scaleX: 0.8, scaleZ: 0.8 },
+          accessory: { scaleX: 0.9, scaleZ: 0.9 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -223,7 +295,15 @@ export function generateVizDirective(
           { label: '매출 증가', value: '8-12%', sub: '기대 효과', highlight: true },
           { label: '인건비 절감', value: '5-10%', sub: '최적화' },
           { label: '리스크 절감', value: '70-80%', sub: '시뮬레이션' }
-        ]
+        ],
+        zoneScale: {
+          clothingMain: { scaleX: 1.3, scaleZ: 1.3 },
+          decompression: { scaleX: 1.2, scaleZ: 1.2 },
+          powerWall: { scaleX: 1.2, scaleZ: 1.2 },
+          fittingRoom: { scaleX: 1.2, scaleZ: 1.2 },
+          checkout: { scaleX: 1.2, scaleZ: 1.2 },
+          accessory: { scaleX: 1.1, scaleZ: 1.1 }
+        }
       };
 
     // ─────────────────────────────────────────
@@ -251,7 +331,7 @@ export function generateVizDirective(
 // ═══════════════════════════════════════════
 
 function getConversionVizDirective(turnCount: number): VizDirective {
-  // 첫 1-2턴: 전체 개요
+  // 첫 1-2턴: 전체 개요 (균일 배율)
   if (turnCount <= 1) {
     return {
       vizState: 'overview',
@@ -261,11 +341,19 @@ function getConversionVizDirective(turnCount: number): VizDirective {
         { label: '평균 전환율', value: '18%', sub: '패션 리테일' },
         { label: '목표 전환율', value: '25%', sub: '우수 매장' },
         { label: '객단가', value: '₩85,000', sub: '업계 평균' }
-      ]
+      ],
+      zoneScale: {
+        decompression: { scaleX: 1.1, scaleZ: 1.1 },
+        powerWall: { scaleX: 1.1, scaleZ: 1.1 },
+        clothingMain: { scaleX: 1.05, scaleZ: 1.05 },
+        fittingRoom: { scaleX: 1.05, scaleZ: 1.05 },
+        checkout: { scaleX: 1.05, scaleZ: 1.05 },
+        accessory: { scaleX: 1.0, scaleZ: 1.0 }
+      }
     };
   }
 
-  // 2-3턴: 진입 단계 상세
+  // 2-3턴: 진입 단계 — 입구/파워월 강조
   if (turnCount <= 3) {
     return {
       vizState: 'entry',
@@ -280,11 +368,19 @@ function getConversionVizDirective(turnCount: number): VizDirective {
         { label: '감압구간', value: '1.2m', sub: '최소 1.5m 필요', alert: true },
         { label: '우회전율', value: '87%', sub: '정상 범위' }
       ],
-      stage: 'entry'
+      stage: 'entry',
+      zoneScale: {
+        decompression: { scaleX: 1.4, scaleZ: 1.3 },
+        powerWall: { scaleX: 1.5, scaleZ: 1.4 },
+        clothingMain: { scaleX: 0.8, scaleZ: 0.8 },
+        fittingRoom: { scaleX: 0.7, scaleZ: 0.7 },
+        checkout: { scaleX: 0.7, scaleZ: 0.7 },
+        accessory: { scaleX: 0.8, scaleZ: 0.8 }
+      }
     };
   }
 
-  // 4-5턴: 탐색 단계
+  // 4-5턴: 탐색 단계 — 피팅룸/메인/액세서리 강조
   if (turnCount <= 5) {
     return {
       vizState: 'exploration',
@@ -299,11 +395,19 @@ function getConversionVizDirective(turnCount: number): VizDirective {
         { label: '체류시간', value: '8분', sub: '목표 12분' },
         { label: '접객률', value: '45%', sub: '목표 70%' }
       ],
-      stage: 'exploration'
+      stage: 'exploration',
+      zoneScale: {
+        fittingRoom: { scaleX: 1.5, scaleZ: 1.4 },
+        clothingMain: { scaleX: 1.3, scaleZ: 1.2 },
+        accessory: { scaleX: 1.2, scaleZ: 1.2 },
+        decompression: { scaleX: 0.7, scaleZ: 0.7 },
+        powerWall: { scaleX: 0.8, scaleZ: 0.8 },
+        checkout: { scaleX: 0.8, scaleZ: 0.8 }
+      }
     };
   }
 
-  // 6턴+: 구매 단계
+  // 6턴+: 구매 단계 — 계산대 강조
   return {
     vizState: 'purchase',
     highlights: ['checkout'],
@@ -316,7 +420,15 @@ function getConversionVizDirective(turnCount: number): VizDirective {
       { label: 'UPT', value: '2.1', sub: '목표 2.5' },
       { label: '추가구매율', value: '15%', sub: '목표 25%' }
     ],
-    stage: 'purchase'
+    stage: 'purchase',
+    zoneScale: {
+      checkout: { scaleX: 1.6, scaleZ: 1.5 },
+      clothingMain: { scaleX: 0.8, scaleZ: 0.8 },
+      decompression: { scaleX: 0.7, scaleZ: 0.7 },
+      powerWall: { scaleX: 0.7, scaleZ: 0.7 },
+      fittingRoom: { scaleX: 0.8, scaleZ: 0.8 },
+      accessory: { scaleX: 0.7, scaleZ: 0.7 }
+    }
   };
 }
 
@@ -325,6 +437,7 @@ function getConversionVizDirective(turnCount: number): VizDirective {
 // ═══════════════════════════════════════════
 
 function getCustomerExperienceVizDirective(turnCount: number): VizDirective {
+  // 초기: 진입 경험 — 감압구간/파워월 강조
   if (turnCount <= 2) {
     return {
       vizState: 'entry',
@@ -334,10 +447,19 @@ function getCustomerExperienceVizDirective(turnCount: number): VizDirective {
         { label: '첫인상', value: '3초', sub: '결정 시간' },
         { label: 'NPS', value: '45', sub: '목표 60' }
       ],
-      stage: 'entry'
+      stage: 'entry',
+      zoneScale: {
+        decompression: { scaleX: 1.4, scaleZ: 1.3 },
+        powerWall: { scaleX: 1.4, scaleZ: 1.3 },
+        clothingMain: { scaleX: 0.8, scaleZ: 0.8 },
+        fittingRoom: { scaleX: 0.7, scaleZ: 0.7 },
+        checkout: { scaleX: 0.7, scaleZ: 0.7 },
+        accessory: { scaleX: 0.8, scaleZ: 0.8 }
+      }
     };
   }
 
+  // 중반: 탐색 경험 — 메인/피팅룸/액세서리 강조
   if (turnCount <= 4) {
     return {
       vizState: 'exploration',
@@ -347,10 +469,19 @@ function getCustomerExperienceVizDirective(turnCount: number): VizDirective {
         { label: '탐색 만족도', value: '3.8/5', sub: '개선 필요' },
         { label: '직원 응대', value: '4.2/5', sub: '양호' }
       ],
-      stage: 'exploration'
+      stage: 'exploration',
+      zoneScale: {
+        clothingMain: { scaleX: 1.3, scaleZ: 1.3 },
+        fittingRoom: { scaleX: 1.4, scaleZ: 1.3 },
+        accessory: { scaleX: 1.2, scaleZ: 1.2 },
+        decompression: { scaleX: 0.7, scaleZ: 0.7 },
+        powerWall: { scaleX: 0.8, scaleZ: 0.8 },
+        checkout: { scaleX: 0.8, scaleZ: 0.8 }
+      }
     };
   }
 
+  // 후반: 결제 경험 — 계산대 강조
   return {
     vizState: 'purchase',
     highlights: ['checkout'],
@@ -359,6 +490,14 @@ function getCustomerExperienceVizDirective(turnCount: number): VizDirective {
       { label: '결제 경험', value: '4.0/5', sub: '양호' },
       { label: '재방문 의향', value: '65%', sub: '목표 80%' }
     ],
-    stage: 'purchase'
+    stage: 'purchase',
+    zoneScale: {
+      checkout: { scaleX: 1.5, scaleZ: 1.5 },
+      clothingMain: { scaleX: 0.8, scaleZ: 0.8 },
+      decompression: { scaleX: 0.7, scaleZ: 0.7 },
+      powerWall: { scaleX: 0.7, scaleZ: 0.7 },
+      fittingRoom: { scaleX: 0.8, scaleZ: 0.8 },
+      accessory: { scaleX: 0.7, scaleZ: 0.7 }
+    }
   };
 }
