@@ -1114,9 +1114,9 @@ const Chat = () => {
 
           {/* Nav */}
           <nav className="hero-nav">
-            <Link to="/" onClick={() => { if (location.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+            <a href="/" onClick={(e) => { if (location.pathname === "/") { e.preventDefault(); window.location.reload(); } }}>
               <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
-            </Link>
+            </a>
             <div className="hero-nav-links">
               <Link to="/about">제품 &amp; 회사소개</Link>
               <Link to="/contact">문의하기</Link>
