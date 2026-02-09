@@ -61,6 +61,7 @@ const SERVICES = [
 
 
 const About = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // 인트로 애니메이션 상태
   const [introComplete, setIntroComplete] = useState(false);
   const [curtainsOpen, setCurtainsOpen] = useState(false);
@@ -186,7 +187,16 @@ const About = () => {
             <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
             <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
           </div>
+          <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <span className="mobile-menu-icon">{mobileMenuOpen ? "✕" : "☰"}</span>
+          </button>
         </nav>
+        {mobileMenuOpen && (
+          <div className="mobile-menu-dropdown">
+            <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
+            <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
+          </div>
+        )}
 
         {/* ==================== PAGE HERO ==================== */}
         <section className="page-hero">

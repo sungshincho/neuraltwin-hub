@@ -622,13 +622,74 @@
 }
 
 @media (max-width: 768px) {
+    .contact-page .page-nav { padding: 16px 20px; }
     .contact-page .page-nav-links { display: none; }
-    .contact-page .contact-info { padding: 60px 24px 40px; }
-    .contact-page .contact-form-wrapper { padding: 40px 24px 60px; }
+    .contact-page .mobile-menu-btn { display: flex; }
+    .contact-page .contact-info { padding: 40px 20px 32px; }
+    .contact-page .contact-form-wrapper { padding: 32px 20px 40px; }
     .contact-page .contact-title { font-size: 28px; }
     .contact-page .form-row { grid-template-columns: 1fr; }
     .contact-page .footer-cols { flex-direction: column; gap: 32px; }
     .contact-page .footer-bottom { flex-direction: column; gap: 8px; }
+    .contact-page .contact-footer { padding: 32px 20px; }
+}
+
+/* ===================== MOBILE HAMBURGER MENU ===================== */
+.contact-page .mobile-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.contact-page .mobile-menu-icon {
+    color: var(--gray-300);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.contact-page .mobile-menu-dropdown {
+    display: flex;
+    flex-direction: column;
+    background: var(--gray-900);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px 16px;
+    position: relative;
+    z-index: 10;
+}
+
+.contact-page .mobile-menu-dropdown a {
+    color: var(--gray-300);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+}
+
+.contact-page .mobile-menu-dropdown a:last-child {
+    border-bottom: none;
+}
+
+.contact-page .mobile-menu-dropdown a:hover {
+    color: var(--white);
+}
+
+/* ===================== 480px BREAKPOINT ===================== */
+@media (max-width: 480px) {
+    .contact-page .page-nav { padding: 14px 16px; }
+    .contact-page .contact-info { padding: 32px 16px 24px; }
+    .contact-page .contact-form-wrapper { padding: 24px 16px 32px; }
+    .contact-page .contact-footer { padding: 24px 16px; }
+    .contact-page .footer-bottom { padding: 16px; }
+    .contact-page .mobile-menu-dropdown { padding: 8px 16px 16px; }
 }
 
 /* ===================== HIDDEN ===================== */
