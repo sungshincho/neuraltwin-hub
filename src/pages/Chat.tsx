@@ -4,7 +4,7 @@
 // PHASE J: 파일 업로드, 메시지 리액션, Export 기능
 // UI 통합: collapsible messages, 타임라인 minor ticks, fullscreen UX 개선
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "@/styles/chat.css";
 
 // 3D Visualizer 컴포넌트
@@ -60,6 +60,7 @@ const getOrCreateSessionId = (): string => {
 };
 
 const Chat = () => {
+  const location = useLocation();
   const [introComplete, setIntroComplete] = useState(false);
   const [curtainsOpen, setCurtainsOpen] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
@@ -1113,7 +1114,7 @@ const Chat = () => {
 
           {/* Nav */}
           <nav className="hero-nav">
-            <Link to="/">
+            <Link to="/" onClick={() => { if (location.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" }); }}>
               <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
             </Link>
             <div className="hero-nav-links">
