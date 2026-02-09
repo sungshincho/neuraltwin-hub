@@ -151,9 +151,9 @@ export default function StoreVisualizer({
       const borderMat = border.material as THREE.LineBasicMaterial;
 
       if (plane.userData.highlighted) {
-        // 하이라이트: pulse 애니메이션
-        mat.opacity = 0.12 + Math.sin(time * 2) * 0.08;
-        borderMat.opacity = 0.5 + Math.sin(time * 2) * 0.2;
+        // 하이라이트: pulse 애니메이션 (선명도 강화)
+        mat.opacity = 0.20 + Math.sin(time * 2) * 0.10;
+        borderMat.opacity = 0.75 + Math.sin(time * 2) * 0.20;
       } else {
         // 비활성: 서서히 페이드아웃
         mat.opacity = Math.max(0, mat.opacity - 0.02);
@@ -164,12 +164,12 @@ export default function StoreVisualizer({
     // 3. 동선 표시
     const flowMat = flowLine.material as THREE.LineBasicMaterial;
     if (flowLine.userData.showFlow) {
-      flowMat.opacity = Math.min(0.6, flowMat.opacity + 0.02);
+      flowMat.opacity = Math.min(0.85, flowMat.opacity + 0.02);
 
       // 점들 이동
       flowDots.forEach((dot) => {
         const dotMat = dot.material as THREE.MeshBasicMaterial;
-        dotMat.opacity = Math.min(0.8, dotMat.opacity + 0.02);
+        dotMat.opacity = Math.min(1.0, dotMat.opacity + 0.02);
 
         const progress = ((time * 0.15 + dot.userData.offset) % 1);
         const point = flowCurve.getPointAt(progress);

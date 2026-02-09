@@ -203,7 +203,8 @@ function createZoneBorder(
   const material = new THREE.LineBasicMaterial({
     color,
     transparent: true,
-    opacity: 0
+    opacity: 0,
+    linewidth: 2
   });
   const border = new THREE.LineSegments(edges, material);
   border.rotation.x = -Math.PI / 2;
@@ -273,7 +274,8 @@ export function buildScene(
   const wallMaterial = new THREE.LineBasicMaterial({
     color: COLORS.walls,
     transparent: true,
-    opacity: 0.3
+    opacity: 0.65,
+    linewidth: 2
   });
 
   const storeWalls = createWireBox(
@@ -291,7 +293,8 @@ export function buildScene(
   const entranceMaterial = new THREE.LineBasicMaterial({
     color: COLORS.entrance,
     transparent: true,
-    opacity: 0.8
+    opacity: 1.0,
+    linewidth: 2
   });
 
   // 입구 게이트 (바닥) - 매장 크기에 비례
@@ -309,7 +312,8 @@ export function buildScene(
   const furnitureMaterial = new THREE.LineBasicMaterial({
     color: COLORS.furniture,
     transparent: true,
-    opacity: 0.3
+    opacity: 0.55,
+    linewidth: 2
   });
 
   const furnitureObjects: THREE.LineSegments[] = [];
@@ -371,9 +375,10 @@ export function buildScene(
   const flowPoints = flowCurve.getPoints(80);
   const flowLineGeometry = new THREE.BufferGeometry().setFromPoints(flowPoints);
   const flowLineMaterial = new THREE.LineBasicMaterial({
-    color: 0x0ea5e9,
+    color: 0x00d4ff,
     transparent: true,
-    opacity: 0
+    opacity: 0,
+    linewidth: 2
   });
   const flowLine = new THREE.Line(flowLineGeometry, flowLineMaterial);
   scene.add(flowLine);
@@ -382,7 +387,7 @@ export function buildScene(
   const flowDots: THREE.Mesh[] = [];
   const dotGeometry = new THREE.SphereGeometry(0.15, 8, 8);
   const dotMaterial = new THREE.MeshBasicMaterial({
-    color: 0x0ea5e9,
+    color: 0x00d4ff,
     transparent: true,
     opacity: 0
   });
