@@ -71,7 +71,7 @@ export const Header = () => {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" onClick={() => { if (location.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" }); }} className="flex items-center">
             <img src={neuraltwinLogo} alt="NEURALTWIN" className="h-5 sm:h-6 w-auto" />
           </Link>
 
