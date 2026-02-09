@@ -153,8 +153,10 @@ const Contact = () => {
             <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
             <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
           </div>
-          <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <span className="mobile-menu-icon">{mobileMenuOpen ? "✕" : "☰"}</span>
+          <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
+            <span className="mobile-menu-bar"></span>
+            <span className="mobile-menu-bar"></span>
+            <span className="mobile-menu-bar"></span>
           </button>
         </nav>
         {mobileMenuOpen && (
