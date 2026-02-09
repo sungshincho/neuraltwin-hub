@@ -642,14 +642,14 @@
     width: 40px;
     height: 40px;
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid var(--gray-500);
     border-radius: 8px;
     cursor: pointer;
     padding: 0;
 }
 
 .contact-page .mobile-menu-icon {
-    color: var(--gray-300);
+    color: var(--white);
     font-size: 18px;
     line-height: 1;
 }
