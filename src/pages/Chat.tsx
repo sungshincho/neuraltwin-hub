@@ -311,7 +311,11 @@ const Chat = () => {
       setShowTurnLimitModal(true);
       return;
     }
-    setInputValue(suggestion);
+    if (isFullscreen) {
+      setFsInputValue(suggestion);
+    } else {
+      setInputValue(suggestion);
+    }
     setSuggestions([]);
   };
 
