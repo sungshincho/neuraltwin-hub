@@ -1119,6 +1119,8 @@ const Chat = () => {
             <div className="hero-nav-links">
               <Link to="/about">제품 &amp; 회사소개</Link>
               <Link to="/contact">문의하기</Link>
+              <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
+              <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
             </div>
           </nav>
 
