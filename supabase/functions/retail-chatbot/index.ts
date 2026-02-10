@@ -206,11 +206,21 @@ function cleanResponseText(response: string): string {
 //  타입 정의
 // ═══════════════════════════════════════════
 
+// 파일 첨부 데이터
+interface FileAttachmentData {
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+  textContent?: string;
+}
+
 interface WebChatRequest {
   message?: string;
   sessionId?: string;         // 비회원용 세션 ID
   conversationId?: string;    // 기존 대화 이어가기
   history?: ChatMessage[];    // 클라이언트 측 히스토리 (선택적)
+  attachments?: FileAttachmentData[];  // 첨부 파일 데이터
   // TASK 9: Action 분기
   action?: 'chat' | 'capture_lead' | 'handover_session';
   lead?: LeadFormData;
@@ -706,7 +716,7 @@ serve(async (request: Request) => {
   try {
     // 1. 요청 파싱
     const body: WebChatRequest = await request.json();
-    const { message, sessionId, conversationId, history, action } = body;
+    const { message, sessionId, conversationId, history, action, attachments } = body;
 
     // 2. 인증 확인 (v2.1)
     const auth = await extractUserFromJWT(request);
@@ -780,20 +790,41 @@ serve(async (request: Request) => {
       console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
     }
 
-    // 7. 메시지 히스토리 구성
-    const chatMessages: ChatMessage[] = history || [];
-    chatMessages.push({ role: 'user', content: message });
+    // 7. 첨부 파일 컨텍스트 구성
+    let fileContext = '';
+    if (attachments && attachments.length > 0) {
+      const parts: string[] = [];
+      for (const file of attachments) {
+        if (file.textContent) {
+          parts.push(`[파일: ${file.name}]\n${file.textContent}`);
+        } else {
+          parts.push(`[첨부 파일: ${file.name} (${file.type}, ${Math.round(file.size / 1024)}KB)]`);
+        }
+      }
+      fileContext = '\n\n' + parts.join('\n\n');
+      console.log(`[Attachments] ${attachments.length}개 파일, 텍스트 ${parts.filter((_, i) => attachments[i].textContent).length}개`);
+    }
 
-    // 8. 사용자 메시지 로깅
+    // 8. 메시지 히스토리 구성
+    const chatMessages: ChatMessage[] = history || [];
+    chatMessages.push({ role: 'user', content: message + fileContext });
+
+    // 9. 사용자 메시지 로깅 (첨부 파일 메타데이터 포함)
     if (conversation) {
       await logMessage(supabase, conversation.id, 'user', message, {
         topic: classification.primaryTopic,
         confidence: classification.confidence,
-        keywords: classification.detectedKeywords
+        keywords: classification.detectedKeywords,
+        attachments: attachments?.map(f => ({
+          name: f.name,
+          type: f.type,
+          size: f.size,
+          url: f.url,
+        })),
       });
     }
 
-    // 9. Lovable Gateway 호출 (비스트리밍 모드)
+    // 10. Lovable Gateway 호출 (비스트리밍 모드)
     const upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
 
     // 10. JSON 응답 파싱

@@ -14,6 +14,9 @@ import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, Stor
 // Export 유틸리티
 import { exportAsMarkdown, exportAsPDF, exportAsDocx } from "@/shared/chat/utils/exportConversation";
 
+// 파일 업로드 유틸리티
+import { uploadChatFiles, type UploadedFile } from "@/shared/chat/utils/fileUpload";
+
 // 메시지 타입 정의
 interface Message {
   id: string;
@@ -101,6 +104,7 @@ const Chat = () => {
 
   // PHASE J: 파일 업로드 상태
   const [pendingFiles, setPendingFiles] = useState<FileAttachment[]>([]);
+  const pendingFileDataRef = useRef<Map<string, File>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fsFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -190,22 +194,26 @@ const Chat = () => {
     }
     if (!inputValue.trim() || isLoading) return;
 
-    // 파일 첨부 정보를 메시지에 포함
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
-    const fileContext = currentFiles
-      ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
-      : '';
+    const currentFileData: File[] = [];
+    if (currentFiles) {
+      for (const f of currentFiles) {
+        const fileObj = pendingFileDataRef.current.get(f.id);
+        if (fileObj) currentFileData.push(fileObj);
+      }
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue.trim() + fileContext,
+      content: inputValue.trim(),
       attachments: currentFiles,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setPendingFiles([]);
+    pendingFileDataRef.current.clear();
     setIsLoading(true);
 
     // AbortController 생성
@@ -215,11 +223,32 @@ const Chat = () => {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const sessionId = getOrCreateSessionId();
 
+      // 파일 업로드 (Supabase Storage)
+      let uploadedFiles: UploadedFile[] = [];
+      if (currentFileData.length > 0) {
+        try {
+          uploadedFiles = await uploadChatFiles(currentFileData, sessionId);
+        } catch (err) {
+          console.error('[FileUpload] Upload error:', err);
+        }
+      }
+
       // 히스토리 구성 (최근 10턴)
       const history = messages.slice(-20).map((m) => ({
         role: m.role,
         content: m.content,
       }));
+
+      // 첨부 파일 정보 구성
+      const attachments = uploadedFiles.length > 0
+        ? uploadedFiles.map(f => ({
+            name: f.name,
+            type: f.type,
+            size: f.size,
+            url: f.url,
+            textContent: f.textContent,
+          }))
+        : undefined;
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
         method: "POST",
@@ -231,6 +260,7 @@ const Chat = () => {
           sessionId,
           conversationId,
           history,
+          attachments,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -496,8 +526,13 @@ const Chat = () => {
         ? URL.createObjectURL(file)
         : undefined;
 
+      const attachmentId = crypto.randomUUID();
+
+      // 실제 File 객체 저장 (업로드용)
+      pendingFileDataRef.current.set(attachmentId, file);
+
       newAttachments.push({
-        id: crypto.randomUUID(),
+        id: attachmentId,
         name: file.name,
         size: file.size,
         type: file.type,
@@ -514,6 +549,7 @@ const Chat = () => {
   }, []);
 
   const handleRemoveFile = useCallback((fileId: string) => {
+    pendingFileDataRef.current.delete(fileId);
     setPendingFiles((prev) => {
       const file = prev.find((f) => f.id === fileId);
       if (file?.previewUrl) {
@@ -621,17 +657,22 @@ const Chat = () => {
     if (!fsInputValue.trim() || isLoading) return;
 
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
-    const fileContext = currentFiles
-      ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
-      : '';
+    const currentFileData: File[] = [];
+    if (currentFiles) {
+      for (const f of currentFiles) {
+        const fileObj = pendingFileDataRef.current.get(f.id);
+        if (fileObj) currentFileData.push(fileObj);
+      }
+    }
 
     setInputValue(fsInputValue);
     setFsInputValue("");
     setPendingFiles([]);
+    pendingFileDataRef.current.clear();
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: fsInputValue.trim() + fileContext,
+      content: fsInputValue.trim(),
       attachments: currentFiles,
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -641,10 +682,31 @@ const Chat = () => {
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const sessionId = getOrCreateSessionId();
+
+      // 파일 업로드 (Supabase Storage)
+      let uploadedFiles: UploadedFile[] = [];
+      if (currentFileData.length > 0) {
+        try {
+          uploadedFiles = await uploadChatFiles(currentFileData, sessionId);
+        } catch (err) {
+          console.error('[FileUpload] Upload error:', err);
+        }
+      }
+
       const history = messages.slice(-20).map((m) => ({
         role: m.role,
         content: m.content,
       }));
+
+      const attachments = uploadedFiles.length > 0
+        ? uploadedFiles.map(f => ({
+            name: f.name,
+            type: f.type,
+            size: f.size,
+            url: f.url,
+            textContent: f.textContent,
+          }))
+        : undefined;
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
         method: "POST",
@@ -654,6 +716,7 @@ const Chat = () => {
           sessionId,
           conversationId,
           history,
+          attachments,
         }),
         signal: abortControllerRef.current.signal,
       });
