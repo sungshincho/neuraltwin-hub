@@ -36,8 +36,8 @@ export default function KPIBar({ kpis }: KPIBarProps) {
         return (
           <div
             key={`${kpi.label}-${index}`}
-            className={`flex-shrink-0 px-4 py-2.5 rounded-lg border ${bgColor} ${borderColor}
-                        backdrop-blur-sm min-w-[110px]`}
+            className={`flex-shrink-0 px-3 py-2 rounded-lg border ${bgColor} ${borderColor}
+                        backdrop-blur-sm min-w-[90px] sm:px-4 sm:py-2.5 sm:min-w-[110px]`}
           >
             {/* 라벨 */}
             <div
@@ -49,7 +49,7 @@ export default function KPIBar({ kpis }: KPIBarProps) {
 
             {/* 값 — 숫자+한글 혼합 대응 (예: "< 7개") */}
             <div
-              className={`text-xl font-bold ${valueColor}`}
+              className={`text-base font-bold sm:text-xl ${valueColor}`}
               style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
             >
               {kpi.value}

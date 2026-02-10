@@ -409,7 +409,7 @@ export default function StoreVisualizer({
         ann.visible ? (
           <div
             key={`${ann.zone}-${index}`}
-            className="absolute pointer-events-none animate-fade-in-up"
+            className="absolute pointer-events-none animate-fade-in-up viz-annotation"
             style={{
               left: ann.x,
               top: ann.y,
@@ -436,7 +436,7 @@ export default function StoreVisualizer({
 
       {/* 상단: KPI Bar 오버레이 (3D 캔버스 위에 떠있음) */}
       {kpis && kpis.length > 0 && (
-        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-auto">
           <KPIBar kpis={kpis} />
         </div>
       )}
@@ -444,10 +444,10 @@ export default function StoreVisualizer({
       {/* 우상단: RESET VIEW 버튼 — KPI 바로 아래 여백 없이 배치 */}
       <button
         onClick={resetCamera}
-        className="absolute px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
+        className="absolute px-2 py-1 sm:px-3 sm:py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
         style={{
-          right: 12,
-          top: kpis && kpis.length > 0 ? 12 : 12,
+          right: 8,
+          top: kpis && kpis.length > 0 ? 56 : 8,
           fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
         }}
       >
@@ -456,9 +456,9 @@ export default function StoreVisualizer({
 
       {/* 좌하단: 현재 뷰 상태 */}
       <div
-        className={`absolute left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
-                    border border-[#1e293b] text-[11px] text-[#94a3b8]
-                    backdrop-blur-sm truncate max-w-[280px] z-10
+        className={`absolute left-2 sm:left-3 px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-[#0a0a0acc]
+                    border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8]
+                    backdrop-blur-sm truncate max-w-[160px] sm:max-w-[280px] z-10
                     ${stage ? 'bottom-14' : 'bottom-3'}`}
         style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
       >
@@ -466,11 +466,11 @@ export default function StoreVisualizer({
         {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
       </div>
 
-      {/* 우하단: 조작 힌트 */}
+      {/* 우하단: 조작 힌트 (모바일에서 숨김) */}
       <div
         className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
                     border border-[#1e293b] text-[10px] text-[#64748b]
-                    backdrop-blur-sm flex items-center gap-2.5 z-10
+                    backdrop-blur-sm hidden sm:flex items-center gap-2.5 z-10
                     ${stage ? 'bottom-14' : 'bottom-3'}`}
         style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
       >
@@ -491,24 +491,24 @@ export default function StoreVisualizer({
       {/* 우하단: 범례 (하이라이트 활성 시) — 조작힌트/Stage 위쪽 */}
       {highlights.length > 0 && (
         <div
-          className="absolute px-3.5 py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
-          style={{ right: 12, bottom: stage ? 100 : 56 }}
+          className="absolute px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
+          style={{ right: 8, bottom: stage ? 56 : 40 }}
         >
           <div
-            className="text-[10px] text-[#94a3b8] mb-2 font-semibold tracking-wider"
+            className="text-[9px] sm:text-[10px] text-[#94a3b8] mb-1.5 sm:mb-2 font-semibold tracking-wider"
             style={{ fontFamily: "'Fira Code', monospace" }}
           >
             ZONES
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1 sm:gap-1.5">
             {highlights.map((zoneId) => (
-              <div key={zoneId} className="flex items-center gap-2">
+              <div key={zoneId} className="flex items-center gap-1.5 sm:gap-2">
                 <div
-                  className="w-2.5 h-2.5 rounded-full"
+                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
                   style={{ backgroundColor: getZoneColorHex(zoneId) }}
                 />
                 <span
-                  className="text-[12px] text-[#cbd5e1]"
+                  className="text-[10px] sm:text-[12px] text-[#cbd5e1]"
                   style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
                 >
                   {ZONE_LABELS_KO[zoneId] || zoneId}
