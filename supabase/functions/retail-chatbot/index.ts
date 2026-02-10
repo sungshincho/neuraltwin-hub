@@ -66,12 +66,83 @@ const VALID_ZONES = ['decompression', 'powerWall', 'clothingMain', 'fittingRoom'
 const VALID_STAGES = ['entry', 'exploration', 'purchase'];
 
 /**
+ * 잘린 JSON 문자열 복구 시도
+ * max_tokens truncation으로 JSON이 불완전할 때 기본 구조만 살려냄
+ */
+function repairTruncatedJson(partial: string): string | null {
+  // 최소한 vizState와 highlights가 있어야 복구 가능
+  if (!partial.includes('"vizState"') || !partial.includes('"highlights"')) {
+    return null;
+  }
+
+  let json = partial;
+
+  // 열린 문자열 닫기: 마지막 열린 따옴표 찾기
+  const lastQuote = json.lastIndexOf('"');
+  const beforeLastQuote = json.substring(0, lastQuote);
+  const quoteCount = (beforeLastQuote.match(/(?<!\\)"/g) || []).length;
+  if (quoteCount % 2 !== 0) {
+    // 홀수개 따옴표 = 열린 문자열이 있음 → 닫기
+    json = json.substring(0, lastQuote + 1);
+  }
+
+  // 열린 배열/객체 닫기
+  const openBrackets: string[] = [];
+  let inString = false;
+  let prevChar = '';
+  for (const char of json) {
+    if (char === '"' && prevChar !== '\\') {
+      inString = !inString;
+    } else if (!inString) {
+      if (char === '{') openBrackets.push('}');
+      else if (char === '[') openBrackets.push(']');
+      else if (char === '}' || char === ']') openBrackets.pop();
+    }
+    prevChar = char;
+  }
+
+  // 마지막 불완전 value 제거 (trailing comma + 잘린 key/value)
+  json = json.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"]*$/, '');
+  json = json.replace(/,\s*\{[^}]*$/, '');
+  json = json.replace(/,\s*$/, '');
+
+  // 열린 괄호 닫기
+  while (openBrackets.length > 0) {
+    json += openBrackets.pop();
+  }
+
+  try {
+    JSON.parse(json);
+    return json;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * AI 응답에서 ```viz 블록을 추출하고 VizDirective로 파싱
  * PHASE G: kpis, stage 필드 지원 추가
  */
 function extractVizDirectiveFromResponse(response: string): VizDirective | null {
   // ```viz ... ``` 블록 찾기
-  const match = response.match(/```viz\s*\n?([\s\S]*?)\n?```/);
+  let match = response.match(/```viz\s*\n?([\s\S]*?)\n?```/);
+
+  // 잘린 viz 블록 복구 시도 (max_tokens로 인한 truncation)
+  if (!match) {
+    const truncatedMatch = response.match(/```viz\s*\n?([\s\S]+)$/);
+    if (truncatedMatch) {
+      console.log('[VizDirective] Detected truncated viz block, attempting recovery...');
+      const partial = truncatedMatch[1].trim();
+      const repaired = repairTruncatedJson(partial);
+      if (repaired) {
+        match = [truncatedMatch[0], repaired] as RegExpMatchArray;
+        console.log('[VizDirective] Successfully recovered truncated viz block');
+      } else {
+        console.warn('[VizDirective] Could not recover truncated viz block');
+      }
+    }
+  }
+
   if (!match) return null;
 
   try {
@@ -199,8 +270,9 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
  */
 function cleanResponseText(response: string): string {
   return response
-    .replace(/```viz[\s\S]*?```/g, '')
-    .replace(/\n{3,}/g, '\n\n')  // 연속 빈 줄 정리
+    .replace(/```viz[\s\S]*?```/g, '')       // 완전한 viz 블록 제거
+    .replace(/```viz[\s\S]*$/g, '')           // 잘린 viz 블록도 제거
+    .replace(/\n{3,}/g, '\n\n')              // 연속 빈 줄 정리
     .trim();
 }
 
@@ -461,7 +533,7 @@ async function callLovableGateway(
         ...messages
       ],
       temperature: 0.7,
-      max_tokens: 4096,
+      max_tokens: 8192,
       stream,
     }),
   });
