@@ -92,6 +92,7 @@ const Chat = () => {
 
   // 전체화면 상태
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isClosingFs, setIsClosingFs] = useState(false);  // 축소 애니메이션 진행 중
   const [fsInputValue, setFsInputValue] = useState("");
 
   // 이전 대화 접기/펼치기 상태
@@ -523,8 +524,13 @@ const Chat = () => {
 
   const closeFullscreen = () => {
     setInputValue(fsInputValue);
-    setIsFullscreen(false);
-    document.body.style.overflow = "";
+    // 축소 애니메이션 재생 후 언마운트 (280ms = fsClose 애니메이션 길이)
+    setIsClosingFs(true);
+    setTimeout(() => {
+      setIsClosingFs(false);
+      setIsFullscreen(false);
+      document.body.style.overflow = "";
+    }, 280);
   };
 
   // 전체화면 전용 메시지 전송 (messageOverride: 축소모드에서 전환 시 직접 전달)
@@ -833,9 +839,9 @@ const Chat = () => {
       )}
 
       {/* ==================== FULLSCREEN CHAT OVERLAY ==================== */}
-      {/* 조건부 렌더링: isFullscreen일 때만 DOM에 마운트 (CSS display:none FOUC 방지) */}
-      {isFullscreen && (
-      <div className="chat-fullscreen open">
+      {/* 조건부 렌더링: isFullscreen 또는 closing 애니메이션 중일 때 DOM 유지 */}
+      {(isFullscreen || isClosingFs) && (
+      <div className={`chat-fullscreen ${isClosingFs ? "closing" : "open"}`}>
         <div className="chat-fs-header">
           <span className="chat-fs-brand">NEURALTWIN CHAT</span>
           <div className="chat-fs-header-actions">
