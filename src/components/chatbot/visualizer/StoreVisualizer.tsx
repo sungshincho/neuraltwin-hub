@@ -166,13 +166,13 @@ export default function StoreVisualizer({
       const borderMat = border.material as THREE.LineBasicMaterial;
 
       if (plane.userData.highlighted) {
-        // 하이라이트: pulse 애니메이션 (선명도 강화)
-        mat.opacity = 0.20 + Math.sin(time * 2) * 0.10;
-        borderMat.opacity = 0.75 + Math.sin(time * 2) * 0.20;
+        // 하이라이트: pulse 애니메이션 (더 선명하게)
+        mat.opacity = 0.25 + Math.sin(time * 2) * 0.12;
+        borderMat.opacity = 0.85 + Math.sin(time * 2) * 0.15;
       } else {
-        // 비활성: 서서히 페이드아웃
-        mat.opacity = Math.max(0, mat.opacity - 0.02);
-        borderMat.opacity = Math.max(0, borderMat.opacity - 0.02);
+        // 비활성: 존 경계는 약하게 유지 (완전히 안 보이면 공간감 상실)
+        mat.opacity = Math.max(0.04, mat.opacity - 0.02);
+        borderMat.opacity = Math.max(0.18, borderMat.opacity - 0.02);
       }
     });
 
