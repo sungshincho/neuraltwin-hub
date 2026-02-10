@@ -14,6 +14,8 @@ import { buildEnrichedPrompt, formatClassification } from './topicRouter.ts';
 import { extractPainPoints, type PainPointResult } from './painPointExtractor.ts';
 import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } from './salesBridge.ts';
 import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
+import { routeQuery } from './queryRouter.ts';
+import { searchWeb, buildSearchQuery } from './webSearch.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -783,14 +785,33 @@ serve(async (request: Request) => {
     // 6. 토픽 분류 & 시스템 프롬프트 빌드 (+ VizDirective)
     const historyTexts = history?.map(h => h.content) || [];
     const turnCount = conversation?.message_count || historyTexts.length;
-    const { systemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
+    let { systemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
 
     console.log(`[Topic] ${formatClassification(classification)}`);
     if (vizDirective) {
       console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
     }
 
-    // 7. 첨부 파일 컨텍스트 구성
+    // 7. 웹 검색 (queryRouter가 필요하다고 판단한 경우)
+    const queryRoute = routeQuery(message, historyTexts);
+    let searchContext = '';
+
+    if (queryRoute.augmentation === 'web_search') {
+      console.log(`[QueryRouter] Web search triggered: ${queryRoute.searchReason}`);
+      const searchQuery = buildSearchQuery(message, queryRoute.detectedEntities);
+      const searchResult = await searchWeb(searchQuery);
+
+      if (searchResult.context) {
+        searchContext = '\n\n' + searchResult.context;
+        // 시스템 프롬프트에 검색 결과 주입
+        systemPrompt += searchContext;
+        console.log(`[WebSearch] Injected ${searchResult.results.length} results into context`);
+      }
+    } else {
+      console.log(`[QueryRouter] No search needed`);
+    }
+
+    // 8. 첨부 파일 컨텍스트 구성
     let fileContext = '';
     if (attachments && attachments.length > 0) {
       const parts: string[] = [];
@@ -805,16 +826,19 @@ serve(async (request: Request) => {
       console.log(`[Attachments] ${attachments.length}개 파일, 텍스트 ${parts.filter((_, i) => attachments[i].textContent).length}개`);
     }
 
-    // 8. 메시지 히스토리 구성
+    // 9. 메시지 히스토리 구성
     const chatMessages: ChatMessage[] = history || [];
     chatMessages.push({ role: 'user', content: message + fileContext });
 
-    // 9. 사용자 메시지 로깅 (첨부 파일 메타데이터 포함)
+    // 10. 사용자 메시지 로깅 (첨부 파일 메타데이터 + 검색 정보 포함)
     if (conversation) {
       await logMessage(supabase, conversation.id, 'user', message, {
         topic: classification.primaryTopic,
         confidence: classification.confidence,
         keywords: classification.detectedKeywords,
+        webSearchUsed: queryRoute.augmentation === 'web_search',
+        searchReason: queryRoute.searchReason,
+        detectedEntities: queryRoute.detectedEntities,
         attachments: attachments?.map(f => ({
           name: f.name,
           type: f.type,
@@ -824,7 +848,7 @@ serve(async (request: Request) => {
       });
     }
 
-    // 10. Lovable Gateway 호출 (비스트리밍 모드)
+    // 11. Lovable Gateway 호출 (비스트리밍 모드)
     const upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
 
     // 10. JSON 응답 파싱
