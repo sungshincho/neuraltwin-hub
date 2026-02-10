@@ -16,19 +16,26 @@ export default function KPIBar({ kpis }: KPIBarProps) {
   }
 
   return (
-    <div className="flex gap-2 p-3 overflow-x-auto">
+    <div
+      className="flex flex-wrap sm:flex-nowrap min-w-0"
+      style={{
+        background: 'linear-gradient(to bottom, rgba(3,7,18,0.92) 60%, transparent 100%)',
+        gap: 'clamp(4px, 0.8vw, 12px)',
+        padding: 'clamp(6px, 1.2vw, 12px) clamp(6px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px)',
+      }}
+    >
       {kpis.map((kpi, index) => {
         // 스타일 결정
-        let bgColor = 'bg-[#0a1628]';
+        let bgColor = 'bg-[#0a1628cc]';
         let borderColor = 'border-[#15243d]';
         let valueColor = 'text-white';
 
         if (kpi.alert) {
-          bgColor = 'bg-[#ef444411]';
+          bgColor = 'bg-[#ef444418]';
           borderColor = 'border-[#ef444433]';
           valueColor = 'text-[#ef4444]';
         } else if (kpi.highlight) {
-          bgColor = 'bg-[#8b5cf611]';
+          bgColor = 'bg-[#8b5cf618]';
           borderColor = 'border-[#8b5cf633]';
           valueColor = 'text-[#8b5cf6]';
         }
@@ -36,29 +43,39 @@ export default function KPIBar({ kpis }: KPIBarProps) {
         return (
           <div
             key={`${kpi.label}-${index}`}
-            className={`flex-shrink-0 px-4 py-2.5 rounded-lg border ${bgColor} ${borderColor}
-                        backdrop-blur-sm min-w-[110px]`}
+            className={`w-[calc(50%-3px)] sm:w-auto sm:flex-1 min-w-0 rounded-lg border ${bgColor} ${borderColor}
+                        backdrop-blur-md`}
+            style={{ padding: 'clamp(4px, 0.8vw, 10px) clamp(6px, 1vw, 16px)' }}
           >
             {/* 라벨 */}
             <div
-              className="text-[11px] text-[#94a3b8] mb-0.5 truncate"
-              style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+              className="text-[#94a3b8] mb-0.5 truncate"
+              style={{
+                fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                fontSize: 'clamp(8px, 1.5vw, 11px)',
+              }}
             >
               {kpi.label}
             </div>
 
-            {/* 값 — 숫자+한글 혼합 대응 (예: "< 7개") */}
+            {/* 값 */}
             <div
-              className={`text-xl font-bold ${valueColor}`}
-              style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+              className={`font-bold leading-tight ${valueColor}`}
+              style={{
+                fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+                fontSize: 'clamp(12px, 2.5vw, 18px)',
+              }}
             >
               {kpi.value}
             </div>
 
             {/* 서브텍스트 */}
             <div
-              className="text-[10px] text-[#64748b] truncate"
-              style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+              className="text-[#64748b] truncate mt-0.5"
+              style={{
+                fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                fontSize: 'clamp(7px, 1.3vw, 10px)',
+              }}
             >
               {kpi.sub}
             </div>

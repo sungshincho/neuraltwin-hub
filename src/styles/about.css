@@ -831,15 +831,102 @@
     .about-page .section-process { padding: 100px 32px; }
 }
 
+/* ===================== MOBILE HAMBURGER MENU ===================== */
+.about-page .mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.about-page .mobile-menu-bar {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--white);
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+.about-page .mobile-menu-btn.open .mobile-menu-bar:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+.about-page .mobile-menu-btn.open .mobile-menu-bar:nth-child(2) {
+    opacity: 0;
+}
+.about-page .mobile-menu-btn.open .mobile-menu-bar:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+.about-page .mobile-menu-dropdown {
+    display: flex;
+    flex-direction: column;
+    background: var(--gray-800);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px 16px;
+    position: relative;
+    z-index: 20;
+}
+
+.about-page .mobile-menu-dropdown a {
+    color: var(--gray-300);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+}
+
+.about-page .mobile-menu-dropdown a:last-child {
+    border-bottom: none;
+}
+
+.about-page .mobile-menu-dropdown a:hover {
+    color: var(--white);
+}
+
 @media (max-width: 768px) {
+    .about-page .page-nav { padding: 16px 20px; }
     .about-page .page-nav-links { display: none; }
+    .about-page .mobile-menu-btn { display: flex; }
+    .about-page .page-hero { padding: 60px 20px 40px; }
     .about-page .page-hero-title { font-size: 28px; }
-    .about-page .service-row { grid-template-columns: 40px 1fr; padding-right: 50px; }
+    .about-page .service-row { grid-template-columns: 40px 1fr; padding: 20px 20px; padding-right: 50px; }
+    .about-page .service-arrow { right: 20px; top: 20px; }
+    .about-page .service-panel-inner { padding: 0 20px 20px; padding-left: 20px; }
+    .about-page .section-cta { padding: 80px 20px; }
+    .about-page .section-process { padding: 60px 20px; }
+    .about-page .section-about { padding: 60px 20px; }
     .about-page .about-stat-row { grid-template-columns: 1fr; gap: 32px; }
     .about-page .footer-cols { flex-direction: column; gap: 32px; }
     .about-page .footer-bottom { flex-direction: column; gap: 8px; }
+    .about-page .about-footer { padding: 32px 20px; }
     .about-page .cta-buttons { flex-direction: column; align-items: center; }
     .about-page .process-grid { grid-template-columns: 1fr; }
     .about-page .process-step { border-top: 1px solid var(--border); border-left: none; }
     .about-page .process-step:first-child { border-top: none; }
+}
+/* ===================== 480px BREAKPOINT ===================== */
+@media (max-width: 480px) {
+    .about-page .page-nav { padding: 14px 16px; }
+    .about-page .page-hero { padding: 40px 16px 32px; }
+    .about-page .section-about { padding: 40px 16px; }
+    .about-page .service-row { padding: 16px; padding-right: 44px; }
+    .about-page .service-arrow { right: 16px; top: 16px; }
+    .about-page .service-panel-inner { padding: 0 16px 16px; padding-left: 16px; }
+    .about-page .section-cta { padding: 60px 16px; }
+    .about-page .section-process { padding: 40px 16px; }
+    .about-page .about-footer { padding: 24px 16px; }
+    .about-page .footer-bottom { padding: 16px; }
+    .about-page .mobile-menu-dropdown { padding: 8px 16px 16px; }
 }

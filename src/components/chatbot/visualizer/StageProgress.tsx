@@ -40,23 +40,28 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
   const currentIndex = STAGE_ORDER[activeStage];
 
   return (
-    <div className="flex items-center justify-center gap-0 px-4 py-2">
-      {STAGES.map((stage, index) => {
+    <div
+      className="flex items-center justify-center gap-0"
+      style={{
+        background: 'linear-gradient(to top, rgba(3,7,18,0.92) 60%, transparent 100%)',
+        padding: 'clamp(8px, 1.2vw, 12px) clamp(8px, 2vw, 16px)',
+      }}
+    >
+      {STAGES.map((stageItem, index) => {
         const isCompleted = index < currentIndex;
         const isCurrent = index === currentIndex;
-        const isFuture = index > currentIndex;
 
         // 스타일 결정
-        let bgColor = 'bg-[#060b15]';
+        let bgColor = 'bg-[#060b15cc]';
         let borderColor = 'border-[#1e293b]';
         let textColor = 'text-[#475569]';
 
         if (isCurrent) {
-          bgColor = 'bg-[#0ea5e915]';
+          bgColor = 'bg-[#0ea5e918]';
           borderColor = 'border-[#0ea5e944]';
           textColor = 'text-[#0ea5e9]';
         } else if (isCompleted) {
-          bgColor = 'bg-[#22c55e08]';
+          bgColor = 'bg-[#22c55e10]';
           borderColor = 'border-[#22c55e33]';
           textColor = 'text-[#22c55e]';
         }
@@ -65,24 +70,37 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
         const lineColor = isCompleted ? 'bg-[#22c55e44]' : 'bg-[#1e293b]';
 
         return (
-          <div key={stage.id} className="flex items-center">
+          <div key={stageItem.id} className="flex items-center">
             {/* 단계 카드 */}
             <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border
-                          ${bgColor} ${borderColor} transition-all duration-300`}
+              className={`flex items-center rounded-full border
+                          backdrop-blur-md ${bgColor} ${borderColor} transition-all duration-300`}
+              style={{
+                gap: 'clamp(4px, 0.8vw, 8px)',
+                padding: 'clamp(4px, 0.8vw, 8px) clamp(8px, 1.5vw, 16px)',
+              }}
             >
-              <span className="text-base">{stage.icon}</span>
+              <span style={{ fontSize: 'clamp(12px, 2vw, 16px)' }}>{stageItem.icon}</span>
               <span
-                className={`text-[12px] font-medium ${textColor}`}
-                style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+                className={`font-medium ${textColor}`}
+                style={{
+                  fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+                  fontSize: 'clamp(10px, 1.8vw, 12px)',
+                }}
               >
-                {stage.number} {stage.label}
+                {stageItem.number} {stageItem.label}
               </span>
             </div>
 
             {/* 연결선 (마지막 단계 제외) */}
             {index < STAGES.length - 1 && (
-              <div className={`w-6 h-[2px] ${lineColor} mx-1 transition-colors duration-300`} />
+              <div
+                className={`h-[2px] ${lineColor} transition-colors duration-300`}
+                style={{
+                  width: 'clamp(10px, 2vw, 24px)',
+                  margin: '0 clamp(1px, 0.4vw, 4px)',
+                }}
+              />
             )}
           </div>
         );

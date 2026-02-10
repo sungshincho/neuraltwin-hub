@@ -351,17 +351,6 @@ export default function StoreVisualizer({
   }, [vizState]);
 
   // ─────────────────────────────────────────
-  // 카메라 리셋 함수
-  // ─────────────────────────────────────────
-  const resetCamera = useCallback(() => {
-    const preset = CAMERA_PRESETS[vizState];
-    if (preset && controlsRef.current) {
-      cameraTargetPos.current = new THREE.Vector3(...preset.pos);
-      cameraTargetLookAt.current = new THREE.Vector3(...preset.target);
-      cameraTargetFov.current = preset.fov;
-      controlsRef.current.target.copy(cameraTargetLookAt.current);
-    }
-  }, [vizState]);
 
   // ─────────────────────────────────────────
   // highlights 변경 시 존 하이라이트 업데이트
@@ -409,7 +398,7 @@ export default function StoreVisualizer({
         ann.visible ? (
           <div
             key={`${ann.zone}-${index}`}
-            className="absolute pointer-events-none animate-fade-in-up"
+            className="absolute pointer-events-none animate-fade-in-up viz-annotation"
             style={{
               left: ann.x,
               top: ann.y,
@@ -434,82 +423,51 @@ export default function StoreVisualizer({
         ) : null
       )}
 
-      {/* 상단: KPI Bar 오버레이 (3D 캔버스 위에 떠있음) */}
+      {/* ── 상단 영역: KPI Bar ── */}
       {kpis && kpis.length > 0 && (
-        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-auto">
           <KPIBar kpis={kpis} />
         </div>
       )}
 
-      {/* 우상단: RESET VIEW 버튼 — KPI 바로 아래 여백 없이 배치 */}
-      <button
-        onClick={resetCamera}
-        className="absolute px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
-        style={{
-          right: 12,
-          top: kpis && kpis.length > 0 ? 12 : 12,
-          fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
-        }}
-      >
-        RESET VIEW
-      </button>
-
-      {/* 좌하단: 현재 뷰 상태 */}
-      <div
-        className={`absolute left-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
-                    border border-[#1e293b] text-[11px] text-[#94a3b8]
-                    backdrop-blur-sm truncate max-w-[280px] z-10
-                    ${stage ? 'bottom-14' : 'bottom-3'}`}
-        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
-      >
-        VIEW: {vizState.toUpperCase()}
-        {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
-      </div>
-
-      {/* 우하단: 조작 힌트 */}
-      <div
-        className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
-                    border border-[#1e293b] text-[10px] text-[#64748b]
-                    backdrop-blur-sm flex items-center gap-2.5 z-10
-                    ${stage ? 'bottom-14' : 'bottom-3'}`}
-        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
-      >
-        <span>SCROLL 줌</span>
-        <span className="text-[#334155]">·</span>
-        <span>L-DRAG 회전</span>
-        <span className="text-[#334155]">·</span>
-        <span>R-DRAG 이동</span>
-      </div>
-
-      {/* 하단: Stage Progress 오버레이 (3D 캔버스 위에 떠있음) */}
-      {stage && (
-        <div className="absolute bottom-3 left-0 right-0 z-10 pointer-events-none">
-          <StageProgress stage={stage} />
-        </div>
-      )}
-
-      {/* 우하단: 범례 (하이라이트 활성 시) — 조작힌트/Stage 위쪽 */}
+      {/* ── 우측 중앙: ZONES 범례 (하이라이트 활성 시) ── */}
       {highlights.length > 0 && (
         <div
-          className="absolute px-3.5 py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
-          style={{ right: 12, bottom: stage ? 100 : 56 }}
+          className="absolute rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
+          style={{
+            top: '50%',
+            transform: 'translateY(-50%)',
+            right: 'clamp(6px, 1vw, 12px)',
+            padding: 'clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 14px)',
+          }}
         >
           <div
-            className="text-[10px] text-[#94a3b8] mb-2 font-semibold tracking-wider"
-            style={{ fontFamily: "'Fira Code', monospace" }}
+            className="text-[#94a3b8] font-semibold tracking-wider"
+            style={{
+              fontFamily: "'Fira Code', monospace",
+              fontSize: 'clamp(8px, 1.4vw, 10px)',
+              marginBottom: 'clamp(4px, 0.6vw, 8px)',
+            }}
           >
             ZONES
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col" style={{ gap: 'clamp(3px, 0.5vw, 6px)' }}>
             {highlights.map((zoneId) => (
-              <div key={zoneId} className="flex items-center gap-2">
+              <div key={zoneId} className="flex items-center" style={{ gap: 'clamp(4px, 0.6vw, 8px)' }}>
                 <div
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: getZoneColorHex(zoneId) }}
+                  className="rounded-full"
+                  style={{
+                    backgroundColor: getZoneColorHex(zoneId),
+                    width: 'clamp(6px, 1vw, 10px)',
+                    height: 'clamp(6px, 1vw, 10px)',
+                  }}
                 />
                 <span
-                  className="text-[12px] text-[#cbd5e1]"
-                  style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+                  className="text-[#cbd5e1]"
+                  style={{
+                    fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                    fontSize: 'clamp(9px, 1.6vw, 12px)',
+                  }}
                 >
                   {ZONE_LABELS_KO[zoneId] || zoneId}
                 </span>
@@ -518,6 +476,56 @@ export default function StoreVisualizer({
           </div>
         </div>
       )}
+
+      {/* ── 하단 영역: VIEW 라벨 + 조작힌트 → StageProgress 순서 ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+        {/* VIEW 라벨 + 조작 힌트 (Stage 위쪽 행) */}
+        <div
+          className="flex items-center justify-between mb-1"
+          style={{ padding: '0 clamp(6px, 1vw, 12px)' }}
+        >
+          {/* 좌: 현재 뷰 상태 */}
+          <div
+            className="pointer-events-auto rounded bg-[#0a0a0acc]
+                        border border-[#1e293b] text-[#94a3b8]
+                        backdrop-blur-sm truncate sm:max-w-[280px]"
+            style={{
+              fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+              fontSize: 'clamp(8px, 1.5vw, 11px)',
+              padding: 'clamp(3px, 0.5vw, 6px) clamp(6px, 1vw, 12px)',
+            }}
+          >
+            VIEW: {vizState.toUpperCase()}
+            {highlights.length > 0 && (
+              <span className="hidden sm:inline"> · {highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}</span>
+            )}
+          </div>
+
+          {/* 우: 조작 힌트 (모바일 숨김) */}
+          <div
+            className="pointer-events-auto rounded bg-[#0a0a0acc]
+                        border border-[#1e293b] text-[#64748b]
+                        backdrop-blur-sm hidden sm:flex items-center"
+            style={{
+              fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+              fontSize: 'clamp(9px, 1.4vw, 10px)',
+              padding: 'clamp(3px, 0.5vw, 6px) clamp(8px, 1vw, 12px)',
+              gap: 'clamp(6px, 1vw, 10px)',
+            }}
+          >
+            <span>SCROLL 줌</span>
+            <span className="text-[#334155]">·</span>
+            <span>L-DRAG 회전</span>
+            <span className="text-[#334155]">·</span>
+            <span>R-DRAG 이동</span>
+          </div>
+        </div>
+
+        {/* Stage Progress 바 (최하단) */}
+        {stage && (
+          <StageProgress stage={stage} />
+        )}
+      </div>
     </div>
   );
 }

@@ -551,6 +551,73 @@
     transform: translateY(0);
 }
 
+/* ===================== MOBILE HAMBURGER MENU ===================== */
+.mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.mobile-menu-bar {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--white);
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-btn.open .mobile-menu-bar:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-btn.open .mobile-menu-bar:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-btn.open .mobile-menu-bar:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+.mobile-menu-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--gray-800);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px 16px;
+    position: relative;
+    z-index: 20;
+}
+
+.mobile-menu-dropdown a {
+    color: var(--gray-300);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+}
+
+.mobile-menu-dropdown a:last-child {
+    border-bottom: none;
+}
+
+.mobile-menu-dropdown a:hover {
+    color: var(--white);
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 1024px) {
     .hero-content {
@@ -564,14 +631,69 @@
 }
 
 @media (max-width: 768px) {
+    .hero {
+        display: flex;
+        flex-direction: column;
+    }
+    .hero-nav { padding: 16px 20px; }
     .hero-nav-links { display: none; }
-    .hero-brand h1 { font-size: 30px; }
+    .mobile-menu-btn { display: flex; }
+    .hero-brand { display: none; }
+    .hero-content {
+        padding: 24px 20px;
+        flex: 1;
+        align-items: stretch;
+    }
+    .chat-container {
+        max-height: none;
+        justify-content: flex-start;
+    }
+    .chat-messages { max-height: 40vh; }
     .footer-cols { flex-direction: column; gap: 32px; }
     .footer-bottom { flex-direction: column; gap: 8px; }
+    .chat-footer { padding: 32px 20px; }
     .chat-fs-header { padding: 14px 16px; }
     .chat-fs-body { padding: 20px 16px; }
     .chat-fs-footer { padding: 12px 16px 20px; }
+    .chat-fs-input-box { padding: 12px 14px; }
+    .chat-fs-message { max-width: 95%; font-size: 13px; }
+
+    /* 전체화면 with-viz: 탭 전환 방식 (모바일) */
+    .chat-fs-viz-tabs {
+        display: flex;
+        flex-shrink: 0;
+    }
+    .chat-fs-body-wrapper.with-viz {
+        flex-direction: column;
+    }
+    .chat-fs-body-wrapper.with-viz .chat-fs-body {
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-bottom: none;
+    }
+    .chat-fs-viz {
+        width: 100%;
+        flex: 1;
+    }
+    .chat-fs-viz.mobile-tab-hidden,
+    .chat-fs-body.mobile-tab-hidden {
+        display: none !important;
+    }
     .chat-title-row { gap: 10px; }
+    .msg-action-btn { width: 40px; height: 40px; }
+    .msg-actions, .fs-msg-actions { flex-wrap: wrap; }
+}
+
+/* ===================== 데스크톱 전용 인라인 채팅 (모바일 숨김) ===================== */
+.chat-inline-desktop {
+    width: 100%;
+}
+
+@media (max-width: 767px) {
+    .chat-inline-desktop {
+        display: none !important;
+    }
 }
 
 /* ===================== CHAT UI ===================== */
@@ -680,7 +802,7 @@
     outline: none;
     color: var(--white);
     font-family: 'Fira Code', 'Noto Sans KR', monospace;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     resize: none;
     min-height: 24px;
@@ -1074,14 +1196,89 @@
 }
 
 /* ===================== TASK C: 3D VISUALIZER ===================== */
+.chat-container.with-viz {
+    width: 45%;
+    transition: width 0.5s ease;
+}
+
 .visualizer-container {
-    animation: fadeIn 0.5s ease;
+    width: 55%;
+    height: 600px;
     min-height: 500px;
-    height: 100%;
+    position: relative;
+    background-color: rgba(3, 7, 18, 0.9);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.5s ease;
 }
 
 .visualizer-container canvas {
     border-radius: 8px;
+}
+
+/* ===================== FULLSCREEN VIZ TABS (모바일 전용 탭 전환) ===================== */
+.chat-fs-viz-tabs {
+    display: none;
+}
+
+.chat-fs-viz-tab {
+    flex: 1;
+    padding: 10px 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gray-300);
+    font-family: 'Fira Code', 'Noto Sans KR', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chat-fs-viz-tab:first-child {
+    border-radius: 0;
+    border-right: none;
+}
+
+.chat-fs-viz-tab:last-child {
+    border-radius: 0;
+}
+
+.chat-fs-viz-tab.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--white);
+    border-bottom-color: var(--white);
+}
+
+/* ===================== MOBILE VIZ TABS ===================== */
+.mobile-viz-tabs {
+    display: none;
+}
+
+.mobile-viz-tab {
+    flex: 1;
+    padding: 10px 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gray-300);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mobile-viz-tab:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.mobile-viz-tab:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.mobile-viz-tab.active {
+    background: var(--white);
+    color: var(--bg);
+    border-color: var(--white);
 }
 
 /* 반응형 */
@@ -1090,7 +1287,8 @@
         flex-direction: column !important;
     }
 
-    .chat-container {
+    .chat-container,
+    .chat-container.with-viz {
         width: 100% !important;
         max-width: none;
     }
@@ -1102,12 +1300,24 @@
 }
 
 @media (max-width: 768px) {
+    .mobile-viz-tabs {
+        display: flex;
+        padding: 0 20px;
+        gap: 0;
+        position: relative;
+        z-index: 5;
+    }
+
+    .mobile-tab-hidden {
+        display: none !important;
+    }
+
     .chat-container {
         padding: 0 16px;
     }
 
     .chat-messages {
-        max-height: 250px;
+        max-height: 40vh;
     }
 
     .chat-message {
@@ -1132,7 +1342,55 @@
     }
 
     .visualizer-container {
-        height: 300px;
+        width: 100% !important;
+        height: 65vh;
+        min-height: 350px;
+    }
+
+    /* 3D Annotation 라벨 모바일 축소 */
+    .viz-annotation {
+        font-size: 9px !important;
+        padding: 3px 6px !important;
+        max-width: 100px !important;
+        line-height: 1.3 !important;
+    }
+
+    /* 탭 버튼 컴팩트화 */
+    .mobile-viz-tab {
+        padding: 6px 0;
+        font-size: 12px;
+    }
+    .mobile-viz-tab.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--white);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* 채팅 타이틀 축소 */
+    .chat-title {
+        font-size: 18px !important;
+        margin-bottom: 16px;
+    }
+
+    /* 전송 버튼 축소 */
+    .chat-send-btn {
+        width: 32px;
+        height: 32px;
+    }
+    .chat-send-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* 전체화면 버튼 컴팩트 */
+    .chat-expand-fullscreen-btn {
+        padding: 4px 10px;
+        font-size: 10px;
+    }
+
+    /* 타임라인 룰러 숨김 */
+    .hero-ruler {
+        display: none;
     }
 }
 
@@ -1176,7 +1434,7 @@
     background: rgba(255,255,255,0.1);
 }
 
-/* 전체화면 채팅 오버레이 — React 조건부 렌더링으로 마운트 제어 */
+/* 전체화면 채팅 오버레이 — 펼침/축소 애니메이션 */
 .chat-fullscreen {
     position: fixed;
     top: 0;
@@ -1187,6 +1445,38 @@
     background: var(--bg);
     display: flex;
     flex-direction: column;
+}
+
+/* 전체화면 열기 애니메이션 */
+.chat-fullscreen.open {
+    animation: fsOpen 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 전체화면 닫기 애니메이션 */
+.chat-fullscreen.closing {
+    animation: fsClose 0.28s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+@keyframes fsOpen {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fsClose {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+    }
 }
 
 /* 전체화면 헤더 */
@@ -1363,7 +1653,7 @@
     outline: none;
     color: var(--white);
     font-family: 'Fira Code', 'Noto Sans KR', monospace;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
     resize: none;
     min-height: 28px;
@@ -2045,7 +2335,13 @@
         align-items: center;
     }
 
-    /* 모바일에서는 분할 레이아웃을 세로로 전환 */
+    /* 전체화면 탭 표시 (모바일) */
+    .chat-fs-viz-tabs {
+        display: flex;
+        flex-shrink: 0;
+    }
+
+    /* 모바일: 탭 전환 방식 — 선택된 패널만 풀사이즈 표시 */
     .chat-fs-body-wrapper.with-viz {
         flex-direction: column;
     }
@@ -2054,13 +2350,19 @@
         width: 100%;
         flex: 1;
         border-right: none;
-        border-bottom: 1px solid var(--border);
+        border-bottom: none;
     }
 
     .chat-fs-viz {
         width: 100%;
-        height: 300px;
+        flex: 1;
         position: relative;
+    }
+
+    /* 모바일 탭 숨김 (전체화면에서도 동작) */
+    .chat-fs-viz.mobile-tab-hidden,
+    .chat-fs-body.mobile-tab-hidden {
+        display: none !important;
     }
 
     /* PHASE J: 모바일 반응형 */
@@ -2084,4 +2386,14 @@
     .export-menu-dropdown {
         min-width: 150px;
     }
+}
+/* ===================== 480px BREAKPOINT ===================== */
+@media (max-width: 480px) {
+    .hero-nav { padding: 14px 16px; }
+    .hero-content { padding: 16px; }
+    .chat-container { padding: 0 12px; }
+    .chat-title { font-size: 20px; margin-bottom: 20px; }
+    .chat-footer { padding: 24px 16px; }
+    .footer-bottom { padding: 16px; }
+    .mobile-menu-dropdown { padding: 8px 16px 16px; }
 }

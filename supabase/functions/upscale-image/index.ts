@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    // ── Authentication ──
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { imageUrl } = await req.json();
     
     if (!imageUrl) {
@@ -47,7 +71,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Starting image upscaling with image type:', imageUrl.substring(0, 20));
+    console.log('Starting image upscaling for user:', user.id);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -116,7 +140,7 @@ serve(async (req) => {
     const upscaledImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     
     if (!upscaledImageUrl) {
-      console.error('No image in response:', JSON.stringify(data));
+      console.error('No image in response');
       return new Response(
         JSON.stringify({ error: 'No upscaled image returned' }),
         { 
@@ -139,10 +163,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('Error in upscale-image function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error', 
-        details: error.message 
-      }),
+      JSON.stringify({ error: 'Internal server error' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

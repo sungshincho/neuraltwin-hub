@@ -65,6 +65,7 @@ const getOrCreateSessionId = (): string => {
 
 const Chat = () => {
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [curtainsOpen, setCurtainsOpen] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
@@ -82,6 +83,8 @@ const Chat = () => {
 
   // TASK C: VizDirective 상태 (3D Visualizer)
   const [vizDirective, setVizDirective] = useState<VizDirective | null>(null);
+  // 모바일 탭 토글 (채팅 ↔ 3D뷰)
+  const [mobileActiveTab, setMobileActiveTab] = useState<"chat" | "viz">("chat");
   const [leadFormData, setLeadFormData] = useState<LeadFormData>({
     email: "",
     company: "",
@@ -92,6 +95,7 @@ const Chat = () => {
 
   // 전체화면 상태
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isClosingFs, setIsClosingFs] = useState(false);  // 축소 애니메이션 진행 중
   const [fsInputValue, setFsInputValue] = useState("");
 
   // 이전 대화 접기/펼치기 상태
@@ -186,7 +190,9 @@ const Chat = () => {
     }
   }, [isGuestLimitReached, isLoading]);
 
-  // 메시지 전송 (비스트리밍 모드)
+  // 메시지 전송 — 데스크톱: 인라인 전송 / 모바일: 전체화면 전환 후 자동 전송
+  const pendingMessageRef = useRef<string | null>(null);
+
   const handleSendMessage = async () => {
     if (isGuestLimitReached) {
       setShowTurnLimitModal(true);
@@ -299,32 +305,18 @@ const Chat = () => {
         setVizDirective(data.vizDirective);
       }
 
-      // 어시스턴트 응답 추가
-      if (data.content) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.content,
-          suggestions: data.suggestions,
-          showLeadForm: data.showLeadForm,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        console.log("Request aborted");
-      } else {
-        console.error("Chat error:", error);
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
+    if (isMobile) {
+      // 모바일: 전체화면 전환 후 자동 전송
+      pendingMessageRef.current = inputValue.trim();
+      setFsInputValue(inputValue);
+      setInputValue("");
+      setIsFullscreen(true);
+      document.body.style.overflow = "hidden";
+    } else {
+      // 데스크톱: 인라인에서 직접 전송
+      const msg = inputValue.trim();
+      setInputValue("");
+      await handleFsSendMessage(msg);
     }
   };
 
@@ -636,6 +628,15 @@ const Chat = () => {
   };
 
   // 전체화면 열기/닫기 — 모드 전환 시 입력값 동기화
+  // 축소모드 입력 → 전체화면 전환 후 자동 전송
+  useEffect(() => {
+    if (isFullscreen && pendingMessageRef.current) {
+      const msg = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      handleFsSendMessage(msg);
+    }
+  }, [isFullscreen]);
+
   const openFullscreen = () => {
     setFsInputValue(inputValue);
     setIsFullscreen(true);
@@ -644,17 +645,23 @@ const Chat = () => {
 
   const closeFullscreen = () => {
     setInputValue(fsInputValue);
-    setIsFullscreen(false);
-    document.body.style.overflow = "";
+    // 축소 애니메이션 재생 후 언마운트 (280ms = fsClose 애니메이션 길이)
+    setIsClosingFs(true);
+    setTimeout(() => {
+      setIsClosingFs(false);
+      setIsFullscreen(false);
+      document.body.style.overflow = "";
+    }, 280);
   };
 
-  // 전체화면 전용 메시지 전송
-  const handleFsSendMessage = async () => {
+  // 전체화면 전용 메시지 전송 (messageOverride: 축소모드에서 전환 시 직접 전달)
+  const handleFsSendMessage = async (messageOverride?: string) => {
     if (isGuestLimitReached) {
       setShowTurnLimitModal(true);
       return;
     }
-    if (!fsInputValue.trim() || isLoading) return;
+    const msgText = messageOverride || fsInputValue.trim();
+    if (!msgText || isLoading) return;
 
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
     const currentFileData: File[] = [];
@@ -665,7 +672,6 @@ const Chat = () => {
       }
     }
 
-    setInputValue(fsInputValue);
     setFsInputValue("");
     setPendingFiles([]);
     pendingFileDataRef.current.clear();
@@ -980,9 +986,9 @@ const Chat = () => {
       )}
 
       {/* ==================== FULLSCREEN CHAT OVERLAY ==================== */}
-      {/* 조건부 렌더링: isFullscreen일 때만 DOM에 마운트 (CSS display:none FOUC 방지) */}
-      {isFullscreen && (
-      <div className="chat-fullscreen open">
+      {/* 조건부 렌더링: isFullscreen 또는 closing 애니메이션 중일 때 DOM 유지 */}
+      {(isFullscreen || isClosingFs) && (
+      <div className={`chat-fullscreen ${isClosingFs ? "closing" : "open"}`}>
         <div className="chat-fs-header">
           <span className="chat-fs-brand">NEURALTWIN CHAT</span>
           <div className="chat-fs-header-actions">
@@ -1022,10 +1028,31 @@ const Chat = () => {
           </div>
         </div>
 
+        {/* 전체화면 모바일 탭 (vizDirective 있을 때만, 768px 이하에서만 표시) */}
+        {vizDirective && (
+          <div className="chat-fs-viz-tabs">
+            <button
+              className={`chat-fs-viz-tab${mobileActiveTab === "chat" ? " active" : ""}`}
+              onClick={() => setMobileActiveTab("chat")}
+            >
+              채팅
+            </button>
+            <button
+              className={`chat-fs-viz-tab${mobileActiveTab === "viz" ? " active" : ""}`}
+              onClick={() => setMobileActiveTab("viz")}
+            >
+              3D 뷰
+            </button>
+          </div>
+        )}
+
         {/* body 영역: vizDirective 유무에 따라 분할 */}
         <div className={`chat-fs-body-wrapper${vizDirective ? " with-viz" : ""}`}>
-          {/* 좌측: 채팅 메시지 */}
-          <div className="chat-fs-body" id="chat-fs-body">
+          {/* 좌측: 채팅 메시지 — 모바일에서 3D 뷰 탭 선택 시 숨김 */}
+          <div
+            className={`chat-fs-body${vizDirective && mobileActiveTab !== "chat" ? " mobile-tab-hidden" : ""}`}
+            id="chat-fs-body"
+          >
             <div className="chat-fs-inner">
               {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 (Phase J 통합) */}
               {renderFsCollapsibleMessages()}
@@ -1116,9 +1143,9 @@ const Chat = () => {
             </div>
           </div>
 
-          {/* 우측: 3D Visualizer (vizDirective 있을 때만 표시) */}
+          {/* 우측: 3D Visualizer — 모바일에서 채팅 탭 선택 시 숨김 */}
           {vizDirective && (
-            <div className="chat-fs-viz">
+            <div className={`chat-fs-viz${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}>
               <StoreVisualizer
                 vizState={vizDirective.vizState}
                 highlights={vizDirective.highlights || []}
@@ -1202,7 +1229,7 @@ const Chat = () => {
                 </div>
                 <button
                   className="chat-send-btn"
-                  onClick={handleFsSendMessage}
+                  onClick={() => handleFsSendMessage()}
                   disabled={!fsInputValue.trim() || isLoading || isGuestLimitReached}
                 >
                   <svg
@@ -1270,7 +1297,18 @@ const Chat = () => {
               <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
               <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
             </div>
+            <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
+              <span className="mobile-menu-bar"></span>
+              <span className="mobile-menu-bar"></span>
+              <span className="mobile-menu-bar"></span>
+            </button>
           </nav>
+          {mobileMenuOpen && (
+            <div className="mobile-menu-dropdown">
+              <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
+              <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
+            </div>
+          )}
 
           {/* Chat UI + Visualizer Split Layout */}
           <div
@@ -1279,8 +1317,7 @@ const Chat = () => {
           >
             {/* 채팅 영역 */}
             <div
-              className="chat-container"
-              style={{ width: vizDirective ? "45%" : "100%", transition: "width 0.5s ease" }}
+              className={`chat-container${vizDirective ? " with-viz" : ""}${vizDirective && mobileActiveTab !== "chat" ? " mobile-tab-hidden" : ""}`}
             >
               {/* 타이틀 + 전체화면 버튼 */}
               <div className="chat-title-row">
@@ -1295,23 +1332,32 @@ const Chat = () => {
                 </button>
               </div>
 
-              {/* 채팅 기록 (collapsible turns) */}
-              <div className="chat-messages">
-                {renderCollapsibleMessages()}
-
-                {/* 로딩 인디케이터 */}
-                {isLoading && (
-                  <div className="chat-message assistant">
-                    <div className="chat-loading">
-                      <span className="chat-loading-text">NEURALTWIN 생각 중</span>
-                      <div className="chat-loading-dot"></div>
-                      <div className="chat-loading-dot"></div>
-                      <div className="chat-loading-dot"></div>
-                    </div>
+              {/* 데스크톱 전용: 인라인 채팅 기록 (모바일에서는 숨김 → 전체화면에서만 표시) */}
+              <div className="chat-inline-desktop">
+                {turnCount > 0 && (
+                  <div className={`turn-counter-bar${isGuestLimitReached ? ' limit-reached' : ''}`}>
+                    <span className="turn-counter-text">{turnCount} / {MAX_GUEST_TURNS} 턴 사용</span>
+                    {isGuestLimitReached && (
+                      <button className="turn-counter-reset" onClick={handleResetSession}>새 대화 시작</button>
+                    )}
                   </div>
                 )}
 
-                {/* TASK 9: Suggestions 칩 */}
+                <div className="chat-messages">
+                  {renderCollapsibleMessages()}
+                  {isLoading && (
+                    <div className="chat-message assistant">
+                      <div className="chat-loading">
+                        <span className="chat-loading-text">NEURALTWIN 생각 중</span>
+                        <div className="chat-loading-dot"></div>
+                        <div className="chat-loading-dot"></div>
+                        <div className="chat-loading-dot"></div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
                 {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
                   <div className="chat-suggestions">
                     {suggestions.map((suggestion, index) => (
@@ -1326,75 +1372,28 @@ const Chat = () => {
                   </div>
                 )}
 
-                {/* TASK 9: Lead Capture Form */}
                 {showLeadForm && !leadSubmitted && (
                   <div className="chat-lead-form-container">
                     <div className="chat-lead-form">
                       <div className="chat-lead-form-header">
                         <h4>더 자세한 상담을 원하시나요?</h4>
-                        <button
-                          className="chat-lead-form-close"
-                          onClick={handleLeadFormClose}
-                        >
-                          ✕
-                        </button>
+                        <button className="chat-lead-form-close" onClick={handleLeadFormClose}>✕</button>
                       </div>
-                      <p className="chat-lead-form-desc">
-                        연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.
-                      </p>
+                      <p className="chat-lead-form-desc">연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.</p>
                       <form onSubmit={handleLeadSubmit}>
-                        <input
-                          type="email"
-                          className="chat-lead-input"
-                          placeholder="이메일 *"
-                          value={leadFormData.email}
-                          onChange={(e) =>
-                            setLeadFormData({ ...leadFormData, email: e.target.value })
-                          }
-                          required
-                        />
-                        <input
-                          type="text"
-                          className="chat-lead-input"
-                          placeholder="회사명"
-                          value={leadFormData.company}
-                          onChange={(e) =>
-                            setLeadFormData({ ...leadFormData, company: e.target.value })
-                          }
-                        />
-                        <input
-                          type="text"
-                          className="chat-lead-input"
-                          placeholder="직책/역할"
-                          value={leadFormData.role}
-                          onChange={(e) =>
-                            setLeadFormData({ ...leadFormData, role: e.target.value })
-                          }
-                        />
-                        <button
-                          type="submit"
-                          className="chat-lead-submit"
-                          disabled={isSubmittingLead || !leadFormData.email.trim()}
-                        >
+                        <input type="email" className="chat-lead-input" placeholder="이메일 *" value={leadFormData.email} onChange={(e) => setLeadFormData({ ...leadFormData, email: e.target.value })} required />
+                        <input type="text" className="chat-lead-input" placeholder="회사명" value={leadFormData.company} onChange={(e) => setLeadFormData({ ...leadFormData, company: e.target.value })} />
+                        <input type="text" className="chat-lead-input" placeholder="직책/역할" value={leadFormData.role} onChange={(e) => setLeadFormData({ ...leadFormData, role: e.target.value })} />
+                        <button type="submit" className="chat-lead-submit" disabled={isSubmittingLead || !leadFormData.email.trim()}>
                           {isSubmittingLead ? "제출 중..." : "상담 요청"}
                         </button>
                       </form>
                     </div>
                   </div>
                 )}
-
-                <div ref={messagesEndRef} />
               </div>
 
-              {/* 턴 카운터 + 입력 박스 */}
-              {turnCount > 0 && (
-                <div className={`turn-counter-bar${isGuestLimitReached ? ' limit-reached' : ''}`}>
-                  <span className="turn-counter-text">{turnCount} / {MAX_GUEST_TURNS} 턴 사용</span>
-                  {isGuestLimitReached && (
-                    <button className="turn-counter-reset" onClick={handleResetSession}>새 대화 시작</button>
-                  )}
-                </div>
-              )}
+              {/* 입력 영역 (모바일+데스크톱 공통) */}
               <div className={`chat-input-box${isGuestLimitReached ? ' disabled' : ''}`}>
                 {/* 첨부 파일 미리보기 */}
                 {pendingFiles.length > 0 && (
@@ -1505,18 +1504,7 @@ const Chat = () => {
             {/* 우측: 3D Visualizer (55%) - vizDirective가 있을 때만 표시 */}
             {vizDirective && (
               <div
-                className="visualizer-container"
-                style={{
-                  width: "55%",
-                  height: "600px",
-                  minHeight: "500px",
-                  position: "relative",
-                  backgroundColor: "rgba(3, 7, 18, 0.9)",
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  animation: "fadeIn 0.5s ease"
-                }}
+                className={`visualizer-container${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}
               >
                 {/* 3D Store Visualizer — KPI/Stage는 내부 오버레이로 렌더링 */}
                 <StoreVisualizer
