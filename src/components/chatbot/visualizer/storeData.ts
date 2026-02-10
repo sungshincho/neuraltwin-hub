@@ -198,7 +198,7 @@ export const COLORS = {
   },
   walls: 0x5a5a5a,         // 외벽 선명도 대폭 향상
   entrance: 0x00d4ff,      // 입구 시안 더 밝게
-  furniture: 0x4a4a4a,     // 가구 선명도 향상
+  furniture: 0x5e5e5e,     // 가구 선명도 추가 향상
   particle: 0x555555,      // 파티클 밝게
   fog: 0x0a0a0a
 };

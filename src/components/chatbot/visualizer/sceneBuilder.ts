@@ -138,37 +138,37 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
     const zd = Math.max(2, Math.min(15, zone.d));
     const seed = zone.id.length * 7 + zone.x * 13 + zone.z * 17;
 
-    // 존 크기에 따라 집기 개수 결정 (작은 존 2개, 큰 존 4개)
+    // 존 크기에 따라 집기 개수 결정 (넉넉하게: 작은 존 3개, 큰 존 5개)
     const area = zw * zd;
-    const count = area < 12 ? 2 : area < 25 ? 3 : 4;
+    const count = area < 10 ? 3 : area < 20 ? 4 : 5;
 
     for (let i = 0; i < count; i++) {
       const s = seed + i * 31;
       // 존 내부 랜덤 위치 (테두리에서 안쪽으로 margin 유지)
-      const marginX = zw * 0.2;
-      const marginZ = zd * 0.2;
+      const marginX = zw * 0.15;
+      const marginZ = zd * 0.15;
       const fx = zone.x + (seededRandom(s) - 0.5) * (zw - marginX * 2);
       const fz = zone.z + (seededRandom(s + 1) - 0.5) * (zd - marginZ * 2);
 
-      // 크기 변화 (카운터/테이블/선반 느낌)
+      // 크기 변화 (카운터/테이블/선반 느낌) — 전체적으로 크기 증가
       const sizeVariant = seededRandom(s + 2);
       let fw: number, fh: number, fd: number;
 
       if (sizeVariant < 0.3) {
-        // 낮은 테이블/카운터
-        fw = 1.0 + seededRandom(s + 3) * 1.5;
-        fh = 0.8 + seededRandom(s + 4) * 0.4;
-        fd = 0.6 + seededRandom(s + 5) * 0.8;
+        // 낮은 테이블/카운터 (넓고 낮음)
+        fw = 1.5 + seededRandom(s + 3) * 1.5;
+        fh = 0.8 + seededRandom(s + 4) * 0.5;
+        fd = 0.8 + seededRandom(s + 5) * 1.0;
       } else if (sizeVariant < 0.6) {
-        // 높은 선반/진열대
-        fw = 0.5 + seededRandom(s + 3) * 1.0;
-        fh = 1.4 + seededRandom(s + 4) * 0.8;
-        fd = 0.4 + seededRandom(s + 5) * 0.6;
+        // 높은 선반/진열대 (좁고 높음)
+        fw = 0.8 + seededRandom(s + 3) * 1.2;
+        fh = 1.6 + seededRandom(s + 4) * 0.8;
+        fd = 0.6 + seededRandom(s + 5) * 0.8;
       } else {
         // 중간 크기 집기
-        fw = 0.8 + seededRandom(s + 3) * 1.2;
-        fh = 1.0 + seededRandom(s + 4) * 0.6;
-        fd = 0.5 + seededRandom(s + 5) * 0.7;
+        fw = 1.0 + seededRandom(s + 3) * 1.5;
+        fh = 1.0 + seededRandom(s + 4) * 0.8;
+        fd = 0.7 + seededRandom(s + 5) * 1.0;
       }
 
       furniture.push({
@@ -297,7 +297,7 @@ function createZonePlane(
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
-    opacity: 0, // 초기에는 보이지 않음
+    opacity: 0.06, // 비하이라이트 상태에서도 약간 보이게 (완전 투명 → 미세 표시)
     side: THREE.DoubleSide,
     depthWrite: false
   });
@@ -322,7 +322,7 @@ function createZoneBorder(
   const material = new THREE.LineBasicMaterial({
     color,
     transparent: true,
-    opacity: 0,
+    opacity: 0.25, // 비하이라이트에서도 존 경계 약하게 표시
     linewidth: 2
   });
   const border = new THREE.LineSegments(edges, material);
@@ -431,7 +431,7 @@ export function buildScene(
   const furnitureMaterial = new THREE.LineBasicMaterial({
     color: COLORS.furniture,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.7,
     linewidth: 2
   });
 

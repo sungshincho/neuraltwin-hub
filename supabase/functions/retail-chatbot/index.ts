@@ -166,6 +166,31 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
     }
 
     // 동적 존 유효성 검증
+    // 영문 zone ID → 한국어 라벨 자동 매핑 (AI가 한국어 라벨을 생략했을 때 보정)
+    const ZONE_LABEL_FALLBACK: Record<string, string> = {
+      entrance: '입구', entry: '입구', display: '진열대', showcase: '쇼케이스',
+      counter: '카운터', checkout: '계산대', main: '메인 구역', main_floor: '메인 매장',
+      fitting_room: '피팅룸', power_wall: '파워 월', accessory: '액세서리',
+      tasting: '시식 코너', seating: '좌석 구역', kitchen: '주방',
+      takeout: '테이크아웃', experience: '체험존', limited: '한정판 구역',
+      tester_bar: '테스터 바', skincare: '스킨케어', makeup: '메이크업',
+      consultation: '컨설팅', demo: '체험 존', service: 'AS/상담',
+      produce: '신선식품', deli: '델리', grocery: '식료품', beverage: '음료',
+      photo_zone: '포토존', packaging: '포장 구역', waiting: '대기 구역',
+      menu_board: '메뉴판', bar: '바 카운터', lounge: '라운지',
+      popup: '팝업 존', event: '이벤트 존', vip: 'VIP 구역',
+    };
+
+    // 라벨이 영어 ID와 동일하거나, ASCII만으로 구성된 경우 → 한국어 fallback 적용
+    function enrichLabel(id: string, label: string): string {
+      const lc = label.toLowerCase().trim();
+      // 라벨이 ID와 같거나, 순수 영어+숫자+공백이면 한국어로 보정
+      if (lc === id.toLowerCase() || /^[a-z0-9_ /]+$/.test(lc)) {
+        return ZONE_LABEL_FALLBACK[id.toLowerCase()] || ZONE_LABEL_FALLBACK[lc.replace(/\s+/g, '_')] || label;
+      }
+      return label;
+    }
+
     let validatedZones: DynamicZone[] | undefined;
     if (parsed.zones && Array.isArray(parsed.zones)) {
       validatedZones = parsed.zones
@@ -173,7 +198,7 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
         .slice(0, 10) // 최대 10개 존
         .map((z: DynamicZone) => ({
           id: String(z.id),
-          label: String(z.label).slice(0, 30),
+          label: enrichLabel(String(z.id), String(z.label)).slice(0, 30),
           x: Math.min(10, Math.max(-10, z.x)),
           z: Math.min(10, Math.max(-10, z.z)),
           w: Math.min(15, Math.max(2, z.w || 4)),
@@ -261,7 +286,9 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       validatedZoneScale = {};
 
       for (const [zoneId, scale] of Object.entries(parsed.zoneScale)) {
-        if (VALID_ZONES.includes(zoneId) && typeof scale === 'object' && scale !== null) {
+        // 동적 존 ID 또는 기존 존 ID 모두 허용
+        const isValidZone = validZoneIds ? validZoneIds.has(zoneId) : true;
+        if (isValidZone && typeof scale === 'object' && scale !== null) {
           const typedScale = scale as { scaleX?: number; scaleZ?: number };
           const validScale: { scaleX?: number; scaleZ?: number } = {};
 
