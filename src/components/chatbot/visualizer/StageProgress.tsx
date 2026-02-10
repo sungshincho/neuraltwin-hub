@@ -40,23 +40,27 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
   const currentIndex = STAGE_ORDER[activeStage];
 
   return (
-    <div className="flex items-center justify-center gap-0 px-4 py-2">
-      {STAGES.map((stage, index) => {
+    <div
+      className="flex items-center justify-center gap-0 px-4 py-3"
+      style={{
+        background: 'linear-gradient(to top, rgba(3,7,18,0.92) 60%, transparent 100%)',
+      }}
+    >
+      {STAGES.map((stageItem, index) => {
         const isCompleted = index < currentIndex;
         const isCurrent = index === currentIndex;
-        const isFuture = index > currentIndex;
 
         // 스타일 결정
-        let bgColor = 'bg-[#060b15]';
+        let bgColor = 'bg-[#060b15cc]';
         let borderColor = 'border-[#1e293b]';
         let textColor = 'text-[#475569]';
 
         if (isCurrent) {
-          bgColor = 'bg-[#0ea5e915]';
+          bgColor = 'bg-[#0ea5e918]';
           borderColor = 'border-[#0ea5e944]';
           textColor = 'text-[#0ea5e9]';
         } else if (isCompleted) {
-          bgColor = 'bg-[#22c55e08]';
+          bgColor = 'bg-[#22c55e10]';
           borderColor = 'border-[#22c55e33]';
           textColor = 'text-[#22c55e]';
         }
@@ -65,24 +69,24 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
         const lineColor = isCompleted ? 'bg-[#22c55e44]' : 'bg-[#1e293b]';
 
         return (
-          <div key={stage.id} className="flex items-center">
+          <div key={stageItem.id} className="flex items-center">
             {/* 단계 카드 */}
             <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border
-                          ${bgColor} ${borderColor} transition-all duration-300`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 sm:gap-2 sm:px-4 sm:py-2 rounded-full border
+                          backdrop-blur-md ${bgColor} ${borderColor} transition-all duration-300`}
             >
-              <span className="text-base">{stage.icon}</span>
+              <span className="text-sm sm:text-base">{stageItem.icon}</span>
               <span
-                className={`text-[12px] font-medium ${textColor}`}
+                className={`text-[11px] sm:text-[12px] font-medium ${textColor}`}
                 style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
               >
-                {stage.number} {stage.label}
+                {stageItem.number} {stageItem.label}
               </span>
             </div>
 
             {/* 연결선 (마지막 단계 제외) */}
             {index < STAGES.length - 1 && (
-              <div className={`w-6 h-[2px] ${lineColor} mx-1 transition-colors duration-300`} />
+              <div className={`w-4 sm:w-6 h-[2px] ${lineColor} mx-0.5 sm:mx-1 transition-colors duration-300`} />
             )}
           </div>
         );

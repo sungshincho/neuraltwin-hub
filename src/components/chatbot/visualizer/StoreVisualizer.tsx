@@ -434,65 +434,32 @@ export default function StoreVisualizer({
         ) : null
       )}
 
-      {/* 상단: KPI Bar 오버레이 (3D 캔버스 위에 떠있음) */}
-      {kpis && kpis.length > 0 && (
-        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-auto">
-          <KPIBar kpis={kpis} />
-        </div>
-      )}
-
-      {/* 우상단: RESET VIEW 버튼 — KPI 바로 아래 여백 없이 배치 */}
-      <button
-        onClick={resetCamera}
-        className="absolute px-2 py-1 sm:px-3 sm:py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer z-20"
-        style={{
-          right: 8,
-          top: kpis && kpis.length > 0 ? 56 : 8,
-          fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
-        }}
-      >
-        RESET VIEW
-      </button>
-
-      {/* 좌하단: 현재 뷰 상태 */}
-      <div
-        className={`absolute left-2 sm:left-3 px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-[#0a0a0acc]
-                    border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8]
-                    backdrop-blur-sm truncate max-w-[160px] sm:max-w-[280px] z-10
-                    ${stage ? 'bottom-14' : 'bottom-3'}`}
-        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
-      >
-        VIEW: {vizState.toUpperCase()}
-        {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
+      {/* ── 상단 영역: KPI Bar + RESET VIEW ── */}
+      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+        {kpis && kpis.length > 0 && (
+          <div className="pointer-events-auto">
+            <KPIBar kpis={kpis} />
+          </div>
+        )}
+        {/* RESET VIEW 버튼 — KPI 유무 상관없이 상단 우측 고정 */}
+        <button
+          onClick={resetCamera}
+          className="absolute pointer-events-auto px-2 py-1 sm:px-3 sm:py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer"
+          style={{
+            right: 8,
+            top: kpis && kpis.length > 0 ? 64 : 8,
+            fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
+          }}
+        >
+          RESET VIEW
+        </button>
       </div>
 
-      {/* 우하단: 조작 힌트 (모바일에서 숨김) */}
-      <div
-        className={`absolute right-3 px-3 py-1.5 rounded bg-[#0a0a0acc]
-                    border border-[#1e293b] text-[10px] text-[#64748b]
-                    backdrop-blur-sm hidden sm:flex items-center gap-2.5 z-10
-                    ${stage ? 'bottom-14' : 'bottom-3'}`}
-        style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
-      >
-        <span>SCROLL 줌</span>
-        <span className="text-[#334155]">·</span>
-        <span>L-DRAG 회전</span>
-        <span className="text-[#334155]">·</span>
-        <span>R-DRAG 이동</span>
-      </div>
-
-      {/* 하단: Stage Progress 오버레이 (3D 캔버스 위에 떠있음) */}
-      {stage && (
-        <div className="absolute bottom-3 left-0 right-0 z-10 pointer-events-none">
-          <StageProgress stage={stage} />
-        </div>
-      )}
-
-      {/* 우하단: 범례 (하이라이트 활성 시) — 조작힌트/Stage 위쪽 */}
+      {/* ── 우측 중앙: ZONES 범례 (하이라이트 활성 시) ── */}
       {highlights.length > 0 && (
         <div
-          className="absolute px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
-          style={{ right: 8, bottom: stage ? 56 : 40 }}
+          className="absolute right-2 sm:right-3 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
+          style={{ top: '50%', transform: 'translateY(-50%)' }}
         >
           <div
             className="text-[9px] sm:text-[10px] text-[#94a3b8] mb-1.5 sm:mb-2 font-semibold tracking-wider"
@@ -518,6 +485,42 @@ export default function StoreVisualizer({
           </div>
         </div>
       )}
+
+      {/* ── 하단 영역: VIEW 라벨 + 조작힌트 → StageProgress 순서 ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+        {/* VIEW 라벨 + 조작 힌트 (Stage 위쪽 행) */}
+        <div className="flex items-center justify-between px-2 sm:px-3 mb-1">
+          {/* 좌: 현재 뷰 상태 */}
+          <div
+            className="pointer-events-auto px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-[#0a0a0acc]
+                        border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8]
+                        backdrop-blur-sm truncate max-w-[160px] sm:max-w-[280px]"
+            style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+          >
+            VIEW: {vizState.toUpperCase()}
+            {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
+          </div>
+
+          {/* 우: 조작 힌트 (모바일 숨김) */}
+          <div
+            className="pointer-events-auto px-3 py-1.5 rounded bg-[#0a0a0acc]
+                        border border-[#1e293b] text-[10px] text-[#64748b]
+                        backdrop-blur-sm hidden sm:flex items-center gap-2.5"
+            style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+          >
+            <span>SCROLL 줌</span>
+            <span className="text-[#334155]">·</span>
+            <span>L-DRAG 회전</span>
+            <span className="text-[#334155]">·</span>
+            <span>R-DRAG 이동</span>
+          </div>
+        </div>
+
+        {/* Stage Progress 바 (최하단) */}
+        {stage && (
+          <StageProgress stage={stage} />
+        )}
+      </div>
     </div>
   );
 }
