@@ -458,25 +458,41 @@ export default function StoreVisualizer({
       {/* ── 우측 중앙: ZONES 범례 (하이라이트 활성 시) ── */}
       {highlights.length > 0 && (
         <div
-          className="absolute right-2 sm:right-3 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
-          style={{ top: '50%', transform: 'translateY(-50%)' }}
+          className="absolute rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
+          style={{
+            top: '50%',
+            transform: 'translateY(-50%)',
+            right: 'clamp(6px, 1vw, 12px)',
+            padding: 'clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 14px)',
+          }}
         >
           <div
-            className="text-[9px] sm:text-[10px] text-[#94a3b8] mb-1.5 sm:mb-2 font-semibold tracking-wider"
-            style={{ fontFamily: "'Fira Code', monospace" }}
+            className="text-[#94a3b8] font-semibold tracking-wider"
+            style={{
+              fontFamily: "'Fira Code', monospace",
+              fontSize: 'clamp(8px, 1.4vw, 10px)',
+              marginBottom: 'clamp(4px, 0.6vw, 8px)',
+            }}
           >
             ZONES
           </div>
-          <div className="flex flex-col gap-1 sm:gap-1.5">
+          <div className="flex flex-col" style={{ gap: 'clamp(3px, 0.5vw, 6px)' }}>
             {highlights.map((zoneId) => (
-              <div key={zoneId} className="flex items-center gap-1.5 sm:gap-2">
+              <div key={zoneId} className="flex items-center" style={{ gap: 'clamp(4px, 0.6vw, 8px)' }}>
                 <div
-                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
-                  style={{ backgroundColor: getZoneColorHex(zoneId) }}
+                  className="rounded-full"
+                  style={{
+                    backgroundColor: getZoneColorHex(zoneId),
+                    width: 'clamp(6px, 1vw, 10px)',
+                    height: 'clamp(6px, 1vw, 10px)',
+                  }}
                 />
                 <span
-                  className="text-[10px] sm:text-[12px] text-[#cbd5e1]"
-                  style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+                  className="text-[#cbd5e1]"
+                  style={{
+                    fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                    fontSize: 'clamp(9px, 1.6vw, 12px)',
+                  }}
                 >
                   {ZONE_LABELS_KO[zoneId] || zoneId}
                 </span>
@@ -489,13 +505,20 @@ export default function StoreVisualizer({
       {/* ── 하단 영역: VIEW 라벨 + 조작힌트 → StageProgress 순서 ── */}
       <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
         {/* VIEW 라벨 + 조작 힌트 (Stage 위쪽 행) */}
-        <div className="flex items-center justify-between px-2 sm:px-3 mb-1">
-          {/* 좌: 현재 뷰 상태 — 모바일에서는 뷰 이름만, 데스크탑에서는 존 이름 포함 */}
+        <div
+          className="flex items-center justify-between mb-1"
+          style={{ padding: '0 clamp(6px, 1vw, 12px)' }}
+        >
+          {/* 좌: 현재 뷰 상태 */}
           <div
-            className="pointer-events-auto px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-[#0a0a0acc]
-                        border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8]
+            className="pointer-events-auto rounded bg-[#0a0a0acc]
+                        border border-[#1e293b] text-[#94a3b8]
                         backdrop-blur-sm truncate sm:max-w-[280px]"
-            style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+            style={{
+              fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+              fontSize: 'clamp(8px, 1.5vw, 11px)',
+              padding: 'clamp(3px, 0.5vw, 6px) clamp(6px, 1vw, 12px)',
+            }}
           >
             VIEW: {vizState.toUpperCase()}
             {highlights.length > 0 && (
@@ -505,10 +528,15 @@ export default function StoreVisualizer({
 
           {/* 우: 조작 힌트 (모바일 숨김) */}
           <div
-            className="pointer-events-auto px-3 py-1.5 rounded bg-[#0a0a0acc]
-                        border border-[#1e293b] text-[10px] text-[#64748b]
-                        backdrop-blur-sm hidden sm:flex items-center gap-2.5"
-            style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+            className="pointer-events-auto rounded bg-[#0a0a0acc]
+                        border border-[#1e293b] text-[#64748b]
+                        backdrop-blur-sm hidden sm:flex items-center"
+            style={{
+              fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+              fontSize: 'clamp(9px, 1.4vw, 10px)',
+              padding: 'clamp(3px, 0.5vw, 6px) clamp(8px, 1vw, 12px)',
+              gap: 'clamp(6px, 1vw, 10px)',
+            }}
           >
             <span>SCROLL 줌</span>
             <span className="text-[#334155]">·</span>

@@ -17,9 +17,11 @@ export default function KPIBar({ kpis }: KPIBarProps) {
 
   return (
     <div
-      className="flex flex-wrap gap-1.5 px-2 pt-2 pb-3 sm:flex-nowrap sm:gap-3 sm:px-4 sm:pt-3 sm:pb-4"
+      className="flex flex-wrap sm:flex-nowrap min-w-0"
       style={{
         background: 'linear-gradient(to bottom, rgba(3,7,18,0.92) 60%, transparent 100%)',
+        gap: 'clamp(4px, 0.8vw, 12px)',
+        padding: 'clamp(6px, 1.2vw, 12px) clamp(6px, 1.5vw, 16px) clamp(10px, 1.5vw, 16px)',
       }}
     >
       {kpis.map((kpi, index) => {
@@ -41,29 +43,39 @@ export default function KPIBar({ kpis }: KPIBarProps) {
         return (
           <div
             key={`${kpi.label}-${index}`}
-            className={`w-[calc(50%-3px)] sm:w-auto sm:flex-1 min-w-0 px-2 py-1.5 rounded-lg border ${bgColor} ${borderColor}
-                        backdrop-blur-md sm:px-4 sm:py-2.5`}
+            className={`w-[calc(50%-3px)] sm:w-auto sm:flex-1 min-w-0 rounded-lg border ${bgColor} ${borderColor}
+                        backdrop-blur-md`}
+            style={{ padding: 'clamp(4px, 0.8vw, 10px) clamp(6px, 1vw, 16px)' }}
           >
             {/* 라벨 */}
             <div
-              className="text-[9px] sm:text-[11px] text-[#94a3b8] mb-0.5 truncate"
-              style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+              className="text-[#94a3b8] mb-0.5 truncate"
+              style={{
+                fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                fontSize: 'clamp(8px, 1.5vw, 11px)',
+              }}
             >
               {kpi.label}
             </div>
 
             {/* 값 */}
             <div
-              className={`text-xs font-bold sm:text-lg leading-tight ${valueColor}`}
-              style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+              className={`font-bold leading-tight ${valueColor}`}
+              style={{
+                fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+                fontSize: 'clamp(12px, 2.5vw, 18px)',
+              }}
             >
               {kpi.value}
             </div>
 
             {/* 서브텍스트 */}
             <div
-              className="text-[8px] sm:text-[10px] text-[#64748b] truncate mt-0.5"
-              style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
+              className="text-[#64748b] truncate mt-0.5"
+              style={{
+                fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                fontSize: 'clamp(7px, 1.3vw, 10px)',
+              }}
             >
               {kpi.sub}
             </div>
