@@ -15,6 +15,7 @@ export type {
   VizAnnotation,
   VizKPI,
   VizDirective,
+  DynamicZone,
   CustomerStage,
   StoreParams,   // PHASE H
   ZoneScale      // PHASE H

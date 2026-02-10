@@ -1179,6 +1179,7 @@ const Chat = () => {
                 highlights={vizDirective.highlights || []}
                 annotations={vizDirective.annotations || []}
                 showFlow={vizDirective.flowPath || false}
+                zones={vizDirective.zones}
                 kpis={vizDirective.kpis}
                 stage={vizDirective.stage}
                 storeParams={vizDirective.storeParams}

@@ -50,9 +50,21 @@ interface ZoneScale {
   };
 }
 
+// 동적 존 정의 (AI가 대화 맥락에 맞게 생성)
+interface DynamicZone {
+  id: string;
+  label: string;
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+  color: string;
+}
+
 interface VizDirective {
   vizState: 'overview' | 'entry' | 'exploration' | 'purchase' | 'topdown';
   highlights: string[];
+  zones?: DynamicZone[];    // AI 동적 생성 존
   annotations?: VizAnnotation[];
   flowPath?: boolean;
   kpis?: VizKPI[];
@@ -62,7 +74,6 @@ interface VizDirective {
 }
 
 const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
-const VALID_ZONES = ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'];
 const VALID_STAGES = ['entry', 'exploration', 'purchase'];
 
 /**
@@ -154,16 +165,41 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       return null;
     }
 
+    // 동적 존 유효성 검증
+    let validatedZones: DynamicZone[] | undefined;
+    if (parsed.zones && Array.isArray(parsed.zones)) {
+      validatedZones = parsed.zones
+        .filter((z: DynamicZone) => z.id && z.label && typeof z.x === 'number' && typeof z.z === 'number')
+        .slice(0, 10) // 최대 10개 존
+        .map((z: DynamicZone) => ({
+          id: String(z.id),
+          label: String(z.label).slice(0, 30),
+          x: Math.min(10, Math.max(-10, z.x)),
+          z: Math.min(10, Math.max(-10, z.z)),
+          w: Math.min(15, Math.max(2, z.w || 4)),
+          d: Math.min(15, Math.max(2, z.d || 4)),
+          color: typeof z.color === 'string' && z.color.startsWith('#') ? z.color : '#64748b'
+        }));
+      if (validatedZones.length === 0) validatedZones = undefined;
+    }
+
+    // 동적 존이 있으면 해당 ID 집합으로 highlights/annotations 검증
+    const validZoneIds = validatedZones
+      ? new Set(validatedZones.map(z => z.id))
+      : null;
+
     // highlights 유효성 검증
     if (!Array.isArray(parsed.highlights)) {
       parsed.highlights = [];
     }
-    parsed.highlights = parsed.highlights.filter((z: string) => VALID_ZONES.includes(z));
+    parsed.highlights = parsed.highlights.filter((z: string) =>
+      typeof z === 'string' && (!validZoneIds || validZoneIds.has(z))
+    );
 
     // annotations 유효성 검증
     if (parsed.annotations && Array.isArray(parsed.annotations)) {
       parsed.annotations = parsed.annotations
-        .filter((a: VizAnnotation) => a.zone && a.text && VALID_ZONES.includes(a.zone))
+        .filter((a: VizAnnotation) => a.zone && a.text && (!validZoneIds || validZoneIds.has(a.zone)))
         .slice(0, 3); // 최대 3개
     }
 
@@ -249,7 +285,7 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       }
     }
 
-    return {
+    const result: VizDirective = {
       vizState: parsed.vizState,
       highlights: parsed.highlights,
       annotations: parsed.annotations?.length ? parsed.annotations : undefined,
@@ -259,6 +295,14 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       storeParams: validatedStoreParams,
       zoneScale: validatedZoneScale
     };
+
+    // 동적 존이 있으면 포함
+    if (validatedZones) {
+      result.zones = validatedZones;
+      console.log(`[VizDirective] Dynamic zones: ${validatedZones.length}개 (${validatedZones.map(z => z.id).join(', ')})`);
+    }
+
+    return result;
   } catch (err) {
     console.warn('[VizDirective] JSON parse error:', err);
     return null;

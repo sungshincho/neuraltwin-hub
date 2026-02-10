@@ -26,6 +26,16 @@ export interface VizKPI {
   highlight?: boolean;
 }
 
+export interface DynamicZone {
+  id: string;
+  label: string;
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+  color: string;
+}
+
 export interface ZoneScale {
   [zoneId: string]: {
     scaleX?: number;
@@ -36,12 +46,23 @@ export interface ZoneScale {
 export interface VizDirective {
   vizState: VizState;
   highlights: string[];
+  zones?: DynamicZone[];
   annotations?: VizAnnotation[];
   flowPath?: boolean;
   kpis?: VizKPI[];
   stage?: CustomerStage;
   zoneScale?: ZoneScale;
 }
+
+// 기본 패션 매장 존 (토픽 기반 fallback에서 사용)
+const DEFAULT_FASHION_ZONES: DynamicZone[] = [
+  { id: 'decompression', label: '감압 구간', x: 0, z: 8, w: 8, d: 3, color: '#ff6b00' },
+  { id: 'powerWall', label: '파워 월', x: 7, z: 5, w: 4, d: 5, color: '#22c55e' },
+  { id: 'clothingMain', label: '의류 메인', x: 0, z: 0, w: 10, d: 8, color: '#0ea5e9' },
+  { id: 'fittingRoom', label: '피팅룸', x: -6, z: -4, w: 5, d: 4, color: '#8b5cf6' },
+  { id: 'checkout', label: '계산대', x: 6, z: 7, w: 4, d: 3, color: '#ef4444' },
+  { id: 'accessory', label: '액세서리', x: -6, z: 4, w: 4, d: 4, color: '#f59e0b' },
+];
 
 // ═══════════════════════════════════════════
 //  토픽→VizDirective 매핑
@@ -72,7 +93,21 @@ export function generateVizDirective(
     return null;
   }
 
-  // 토픽별 매핑 (retailKnowledge.ts의 ID와 일치해야 함)
+  const result = generateTopicVizDirective(primaryTopic, turnCount);
+
+  // 모든 토픽 기반 fallback에 기본 패션 존 포함
+  if (result && !result.zones) {
+    result.zones = DEFAULT_FASHION_ZONES;
+  }
+
+  return result;
+}
+
+function generateTopicVizDirective(
+  primaryTopic: string,
+  turnCount: number
+): VizDirective | null {
+  // 토픽별 매핑 — zones 포함하여 반환 (AI가 동적 생성하지 않은 경우 fallback)
   switch (primaryTopic) {
     // ─────────────────────────────────────────
     // 전환율 최적화 (대화 진행에 따라 단계 변화)
