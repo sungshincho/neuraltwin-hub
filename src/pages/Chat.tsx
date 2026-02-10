@@ -186,8 +186,7 @@ const Chat = () => {
     }
   }, [isGuestLimitReached, isLoading]);
 
-  // 메시지 전송 (비스트리밍 모드)
-  // 축소모드: 입력 시 전체화면 전환 후 자동 전송
+  // 메시지 전송 — 데스크톱: 인라인 전송 / 모바일: 전체화면 전환 후 자동 전송
   const pendingMessageRef = useRef<string | null>(null);
 
   const handleSendMessage = async () => {
@@ -197,12 +196,21 @@ const Chat = () => {
     }
     if (!inputValue.trim() || isLoading) return;
 
-    // 메시지를 ref에 저장 후 전체화면 전환
-    pendingMessageRef.current = inputValue.trim();
-    setFsInputValue(inputValue);
-    setInputValue("");
-    setIsFullscreen(true);
-    document.body.style.overflow = "hidden";
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+      // 모바일: 전체화면 전환 후 자동 전송
+      pendingMessageRef.current = inputValue.trim();
+      setFsInputValue(inputValue);
+      setInputValue("");
+      setIsFullscreen(true);
+      document.body.style.overflow = "hidden";
+    } else {
+      // 데스크톱: 인라인에서 직접 전송
+      const msg = inputValue.trim();
+      setInputValue("");
+      await handleFsSendMessage(msg);
+    }
   };
 
   // Enter 키 처리
@@ -547,7 +555,6 @@ const Chat = () => {
       ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
       : '';
 
-    setInputValue(msgText);
     setFsInputValue("");
     setPendingFiles([]);
     const userMessage: Message = {
@@ -1203,7 +1210,68 @@ const Chat = () => {
                 </button>
               </div>
 
-              {/* 축소모드: 입력창만 표시 (채팅 기록은 전체화면에서만) */}
+              {/* 데스크톱 전용: 인라인 채팅 기록 (모바일에서는 숨김 → 전체화면에서만 표시) */}
+              <div className="chat-inline-desktop">
+                {turnCount > 0 && (
+                  <div className={`turn-counter-bar${isGuestLimitReached ? ' limit-reached' : ''}`}>
+                    <span className="turn-counter-text">{turnCount} / {MAX_GUEST_TURNS} 턴 사용</span>
+                    {isGuestLimitReached && (
+                      <button className="turn-counter-reset" onClick={handleResetSession}>새 대화 시작</button>
+                    )}
+                  </div>
+                )}
+
+                <div className="chat-messages">
+                  {renderCollapsibleMessages()}
+                  {isLoading && (
+                    <div className="chat-message assistant">
+                      <div className="chat-loading">
+                        <span className="chat-loading-text">NEURALTWIN 생각 중</span>
+                        <div className="chat-loading-dot"></div>
+                        <div className="chat-loading-dot"></div>
+                        <div className="chat-loading-dot"></div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
+                  <div className="chat-suggestions">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        className="chat-suggestion-chip"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {showLeadForm && !leadSubmitted && (
+                  <div className="chat-lead-form-container">
+                    <div className="chat-lead-form">
+                      <div className="chat-lead-form-header">
+                        <h4>더 자세한 상담을 원하시나요?</h4>
+                        <button className="chat-lead-form-close" onClick={handleLeadFormClose}>✕</button>
+                      </div>
+                      <p className="chat-lead-form-desc">연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.</p>
+                      <form onSubmit={handleLeadSubmit}>
+                        <input type="email" className="chat-lead-input" placeholder="이메일 *" value={leadFormData.email} onChange={(e) => setLeadFormData({ ...leadFormData, email: e.target.value })} required />
+                        <input type="text" className="chat-lead-input" placeholder="회사명" value={leadFormData.company} onChange={(e) => setLeadFormData({ ...leadFormData, company: e.target.value })} />
+                        <input type="text" className="chat-lead-input" placeholder="직책/역할" value={leadFormData.role} onChange={(e) => setLeadFormData({ ...leadFormData, role: e.target.value })} />
+                        <button type="submit" className="chat-lead-submit" disabled={isSubmittingLead || !leadFormData.email.trim()}>
+                          {isSubmittingLead ? "제출 중..." : "상담 요청"}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 입력 영역 (모바일+데스크톱 공통) */}
               <div className={`chat-input-box${isGuestLimitReached ? ' disabled' : ''}`}>
                 {/* 첨부 파일 미리보기 */}
                 {pendingFiles.length > 0 && (

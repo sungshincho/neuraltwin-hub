@@ -685,6 +685,13 @@
     .msg-actions, .fs-msg-actions { flex-wrap: wrap; }
 }
 
+/* ===================== 데스크톱 전용 인라인 채팅 (모바일 숨김) ===================== */
+@media (max-width: 767px) {
+    .chat-inline-desktop {
+        display: none !important;
+    }
+}
+
 /* ===================== CHAT UI ===================== */
 .chat-container {
     display: flex;

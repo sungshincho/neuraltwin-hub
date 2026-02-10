@@ -351,17 +351,6 @@ export default function StoreVisualizer({
   }, [vizState]);
 
   // ─────────────────────────────────────────
-  // 카메라 리셋 함수
-  // ─────────────────────────────────────────
-  const resetCamera = useCallback(() => {
-    const preset = CAMERA_PRESETS[vizState];
-    if (preset && controlsRef.current) {
-      cameraTargetPos.current = new THREE.Vector3(...preset.pos);
-      cameraTargetLookAt.current = new THREE.Vector3(...preset.target);
-      cameraTargetFov.current = preset.fov;
-      controlsRef.current.target.copy(cameraTargetLookAt.current);
-    }
-  }, [vizState]);
 
   // ─────────────────────────────────────────
   // highlights 변경 시 존 하이라이트 업데이트
@@ -434,26 +423,12 @@ export default function StoreVisualizer({
         ) : null
       )}
 
-      {/* ── 상단 영역: KPI Bar + RESET VIEW ── */}
-      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
-        {kpis && kpis.length > 0 && (
-          <div className="pointer-events-auto">
-            <KPIBar kpis={kpis} />
-          </div>
-        )}
-        {/* RESET VIEW 버튼 — 모바일 숨김, 데스크탑만 표시 */}
-        <button
-          onClick={resetCamera}
-          className="absolute pointer-events-auto hidden sm:block px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer"
-          style={{
-            right: 8,
-            top: kpis && kpis.length > 0 ? 64 : 8,
-            fontFamily: "'Fira Code', 'Noto Sans KR', monospace"
-          }}
-        >
-          RESET VIEW
-        </button>
-      </div>
+      {/* ── 상단 영역: KPI Bar ── */}
+      {kpis && kpis.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-10 pointer-events-auto">
+          <KPIBar kpis={kpis} />
+        </div>
+      )}
 
       {/* ── 우측 중앙: ZONES 범례 (하이라이트 활성 시) ── */}
       {highlights.length > 0 && (
