@@ -441,10 +441,10 @@ export default function StoreVisualizer({
             <KPIBar kpis={kpis} />
           </div>
         )}
-        {/* RESET VIEW 버튼 — KPI 유무 상관없이 상단 우측 고정 */}
+        {/* RESET VIEW 버튼 — 모바일 숨김, 데스크탑만 표시 */}
         <button
           onClick={resetCamera}
-          className="absolute pointer-events-auto px-2 py-1 sm:px-3 sm:py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer"
+          className="absolute pointer-events-auto hidden sm:block px-3 py-1.5 rounded bg-[#0a0a0acc] border border-[#1e293b] text-[11px] text-[#94a3b8] backdrop-blur-sm hover:text-[#0ea5e9] hover:border-[#0ea5e9] transition-colors cursor-pointer"
           style={{
             right: 8,
             top: kpis && kpis.length > 0 ? 64 : 8,
@@ -490,15 +490,17 @@ export default function StoreVisualizer({
       <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
         {/* VIEW 라벨 + 조작 힌트 (Stage 위쪽 행) */}
         <div className="flex items-center justify-between px-2 sm:px-3 mb-1">
-          {/* 좌: 현재 뷰 상태 */}
+          {/* 좌: 현재 뷰 상태 — 모바일에서는 뷰 이름만, 데스크탑에서는 존 이름 포함 */}
           <div
             className="pointer-events-auto px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-[#0a0a0acc]
                         border border-[#1e293b] text-[9px] sm:text-[11px] text-[#94a3b8]
-                        backdrop-blur-sm truncate max-w-[160px] sm:max-w-[280px]"
+                        backdrop-blur-sm truncate sm:max-w-[280px]"
             style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
           >
             VIEW: {vizState.toUpperCase()}
-            {highlights.length > 0 && ` · ${highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}`}
+            {highlights.length > 0 && (
+              <span className="hidden sm:inline"> · {highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}</span>
+            )}
           </div>
 
           {/* 우: 조작 힌트 (모바일 숨김) */}

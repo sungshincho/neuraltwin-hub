@@ -17,7 +17,7 @@ export default function KPIBar({ kpis }: KPIBarProps) {
 
   return (
     <div
-      className="flex gap-2 px-3 pt-3 pb-4 sm:gap-3 sm:px-4"
+      className="flex flex-wrap gap-1.5 px-2 pt-2 pb-3 sm:flex-nowrap sm:gap-3 sm:px-4 sm:pt-3 sm:pb-4"
       style={{
         background: 'linear-gradient(to bottom, rgba(3,7,18,0.92) 60%, transparent 100%)',
       }}
@@ -41,12 +41,12 @@ export default function KPIBar({ kpis }: KPIBarProps) {
         return (
           <div
             key={`${kpi.label}-${index}`}
-            className={`flex-1 min-w-0 px-2.5 py-2 rounded-lg border ${bgColor} ${borderColor}
+            className={`w-[calc(50%-3px)] sm:w-auto sm:flex-1 min-w-0 px-2 py-1.5 rounded-lg border ${bgColor} ${borderColor}
                         backdrop-blur-md sm:px-4 sm:py-2.5`}
           >
             {/* 라벨 */}
             <div
-              className="text-[10px] sm:text-[11px] text-[#94a3b8] mb-0.5 truncate"
+              className="text-[9px] sm:text-[11px] text-[#94a3b8] mb-0.5 truncate"
               style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
             >
               {kpi.label}
@@ -54,7 +54,7 @@ export default function KPIBar({ kpis }: KPIBarProps) {
 
             {/* 값 */}
             <div
-              className={`text-sm font-bold sm:text-lg leading-tight ${valueColor}`}
+              className={`text-xs font-bold sm:text-lg leading-tight ${valueColor}`}
               style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
             >
               {kpi.value}
@@ -62,7 +62,7 @@ export default function KPIBar({ kpis }: KPIBarProps) {
 
             {/* 서브텍스트 */}
             <div
-              className="text-[9px] sm:text-[10px] text-[#64748b] truncate mt-0.5"
+              className="text-[8px] sm:text-[10px] text-[#64748b] truncate mt-0.5"
               style={{ fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif" }}
             >
               {kpi.sub}
