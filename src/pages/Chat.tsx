@@ -962,10 +962,31 @@ const Chat = () => {
           </div>
         </div>
 
+        {/* 전체화면 모바일 탭 (vizDirective 있을 때만, 768px 이하에서만 표시) */}
+        {vizDirective && (
+          <div className="chat-fs-viz-tabs">
+            <button
+              className={`chat-fs-viz-tab${mobileActiveTab === "chat" ? " active" : ""}`}
+              onClick={() => setMobileActiveTab("chat")}
+            >
+              채팅
+            </button>
+            <button
+              className={`chat-fs-viz-tab${mobileActiveTab === "viz" ? " active" : ""}`}
+              onClick={() => setMobileActiveTab("viz")}
+            >
+              3D 뷰
+            </button>
+          </div>
+        )}
+
         {/* body 영역: vizDirective 유무에 따라 분할 */}
         <div className={`chat-fs-body-wrapper${vizDirective ? " with-viz" : ""}`}>
-          {/* 좌측: 채팅 메시지 */}
-          <div className="chat-fs-body" id="chat-fs-body">
+          {/* 좌측: 채팅 메시지 — 모바일에서 3D 뷰 탭 선택 시 숨김 */}
+          <div
+            className={`chat-fs-body${vizDirective && mobileActiveTab !== "chat" ? " mobile-tab-hidden" : ""}`}
+            id="chat-fs-body"
+          >
             <div className="chat-fs-inner">
               {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 (Phase J 통합) */}
               {renderFsCollapsibleMessages()}
@@ -1056,9 +1077,9 @@ const Chat = () => {
             </div>
           </div>
 
-          {/* 우측: 3D Visualizer (vizDirective 있을 때만 표시) */}
+          {/* 우측: 3D Visualizer — 모바일에서 채팅 탭 선택 시 숨김 */}
           {vizDirective && (
-            <div className="chat-fs-viz">
+            <div className={`chat-fs-viz${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}>
               <StoreVisualizer
                 vizState={vizDirective.vizState}
                 highlights={vizDirective.highlights || []}
