@@ -121,6 +121,71 @@ function generateFlowFromZones(zones: DynamicZone[]): [number, number, number][]
 }
 
 /**
+ * 동적 존 내부에 자동 와이어프레임 집기(fixture) 생성
+ * 각 존에 2~4개의 박스를 배치하여 시각적 밀도 확보
+ */
+function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
+  const furniture: FurnitureConfig[] = [];
+
+  // 시드 기반 의사 난수 (같은 존에 항상 같은 배치)
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+
+  for (const zone of zones) {
+    const zw = Math.max(2, Math.min(15, zone.w));
+    const zd = Math.max(2, Math.min(15, zone.d));
+    const seed = zone.id.length * 7 + zone.x * 13 + zone.z * 17;
+
+    // 존 크기에 따라 집기 개수 결정 (작은 존 2개, 큰 존 4개)
+    const area = zw * zd;
+    const count = area < 12 ? 2 : area < 25 ? 3 : 4;
+
+    for (let i = 0; i < count; i++) {
+      const s = seed + i * 31;
+      // 존 내부 랜덤 위치 (테두리에서 안쪽으로 margin 유지)
+      const marginX = zw * 0.2;
+      const marginZ = zd * 0.2;
+      const fx = zone.x + (seededRandom(s) - 0.5) * (zw - marginX * 2);
+      const fz = zone.z + (seededRandom(s + 1) - 0.5) * (zd - marginZ * 2);
+
+      // 크기 변화 (카운터/테이블/선반 느낌)
+      const sizeVariant = seededRandom(s + 2);
+      let fw: number, fh: number, fd: number;
+
+      if (sizeVariant < 0.3) {
+        // 낮은 테이블/카운터
+        fw = 1.0 + seededRandom(s + 3) * 1.5;
+        fh = 0.8 + seededRandom(s + 4) * 0.4;
+        fd = 0.6 + seededRandom(s + 5) * 0.8;
+      } else if (sizeVariant < 0.6) {
+        // 높은 선반/진열대
+        fw = 0.5 + seededRandom(s + 3) * 1.0;
+        fh = 1.4 + seededRandom(s + 4) * 0.8;
+        fd = 0.4 + seededRandom(s + 5) * 0.6;
+      } else {
+        // 중간 크기 집기
+        fw = 0.8 + seededRandom(s + 3) * 1.2;
+        fh = 1.0 + seededRandom(s + 4) * 0.6;
+        fd = 0.5 + seededRandom(s + 5) * 0.7;
+      }
+
+      furniture.push({
+        x: fx,
+        z: fz,
+        w: fw,
+        h: fh,
+        d: fd,
+        label: `${zone.label} 집기`
+      });
+    }
+  }
+
+  return furniture;
+}
+
+/**
  * storeParams + zoneScale + dynamicZones를 적용하여 SceneConfig 생성
  */
 export function applyParamsToConfig(
@@ -133,7 +198,7 @@ export function applyParamsToConfig(
   // 동적 존이 있으면 기존 존/가구/동선을 교체
   if (dynamicZones && dynamicZones.length > 0) {
     baseConfig.zones = dynamicZonesToRecord(dynamicZones);
-    baseConfig.furniture = []; // 동적 존 모드에서는 하드코딩 가구 사용 안 함
+    baseConfig.furniture = generateFurnitureForZones(dynamicZones);
     baseConfig.flowCurvePoints = generateFlowFromZones(dynamicZones);
   }
 
