@@ -190,6 +190,9 @@ const Chat = () => {
     }
   }, [isGuestLimitReached, isLoading]);
 
+  // 모바일 감지
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   // 메시지 전송 — 데스크톱: 인라인 전송 / 모바일: 전체화면 전환 후 자동 전송
   const pendingMessageRef = useRef<string | null>(null);
 
