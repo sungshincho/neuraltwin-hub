@@ -243,6 +243,8 @@ interface ConversationRecord {
 const ALLOWED_ORIGINS = [
   'https://neuraltwin.com',
   'https://www.neuraltwin.com',
+  'https://neuraltwin.website',
+  'https://www.neuraltwin.website',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:8080',
