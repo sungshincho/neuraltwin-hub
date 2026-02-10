@@ -186,6 +186,9 @@ const Chat = () => {
   }, [isGuestLimitReached, isLoading]);
 
   // 메시지 전송 (비스트리밍 모드)
+  // 축소모드: 입력 시 전체화면 전환 후 자동 전송
+  const pendingMessageRef = useRef<string | null>(null);
+
   const handleSendMessage = async () => {
     if (isGuestLimitReached) {
       setShowTurnLimitModal(true);
@@ -193,112 +196,12 @@ const Chat = () => {
     }
     if (!inputValue.trim() || isLoading) return;
 
-    // 파일 첨부 정보를 메시지에 포함
-    const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
-    const fileContext = currentFiles
-      ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
-      : '';
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputValue.trim() + fileContext,
-      attachments: currentFiles,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    // 메시지를 ref에 저장 후 전체화면 전환
+    pendingMessageRef.current = inputValue.trim();
+    setFsInputValue(inputValue);
     setInputValue("");
-    setPendingFiles([]);
-    setIsLoading(true);
-
-    // AbortController 생성
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const sessionId = getOrCreateSessionId();
-
-      // 히스토리 구성 (최근 10턴)
-      const history = messages.slice(-20).map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          sessionId,
-          conversationId,
-          history,
-        }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
-      }
-
-      // JSON 응답 파싱
-      const data = await response.json();
-
-      // DEBUG: API 응답 전체 로그
-      console.log('[Chat] API Response:', JSON.stringify(data, null, 2));
-      console.log('[Chat] vizDirective:', data.vizDirective);
-
-      // conversationId 저장
-      if (data.conversationId) {
-        setConversationId(data.conversationId);
-      }
-
-      // TASK 9: Suggestions 저장
-      if (data.suggestions && data.suggestions.length > 0) {
-        setSuggestions(data.suggestions);
-      } else {
-        setSuggestions([]);
-      }
-
-      // TASK 9: Lead Form 표시 여부
-      if (data.showLeadForm && !leadSubmitted) {
-        setShowLeadForm(true);
-      }
-
-      // TASK C: VizDirective 저장 (3D Visualizer)
-      if (data.vizDirective) {
-        setVizDirective(data.vizDirective);
-      }
-
-      // 어시스턴트 응답 추가
-      if (data.content) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.content,
-          suggestions: data.suggestions,
-          showLeadForm: data.showLeadForm,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        console.log("Request aborted");
-      } else {
-        console.error("Chat error:", error);
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
-    }
+    setIsFullscreen(true);
+    document.body.style.overflow = "hidden";
   };
 
   // Enter 키 처리
@@ -603,6 +506,15 @@ const Chat = () => {
   };
 
   // 전체화면 열기/닫기 — 모드 전환 시 입력값 동기화
+  // 축소모드 입력 → 전체화면 전환 후 자동 전송
+  useEffect(() => {
+    if (isFullscreen && pendingMessageRef.current) {
+      const msg = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      handleFsSendMessage(msg);
+    }
+  }, [isFullscreen]);
+
   const openFullscreen = () => {
     setFsInputValue(inputValue);
     setIsFullscreen(true);
@@ -615,26 +527,27 @@ const Chat = () => {
     document.body.style.overflow = "";
   };
 
-  // 전체화면 전용 메시지 전송
-  const handleFsSendMessage = async () => {
+  // 전체화면 전용 메시지 전송 (messageOverride: 축소모드에서 전환 시 직접 전달)
+  const handleFsSendMessage = async (messageOverride?: string) => {
     if (isGuestLimitReached) {
       setShowTurnLimitModal(true);
       return;
     }
-    if (!fsInputValue.trim() || isLoading) return;
+    const msgText = messageOverride || fsInputValue.trim();
+    if (!msgText || isLoading) return;
 
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
     const fileContext = currentFiles
       ? `\n\n[첨부 파일: ${currentFiles.map(f => f.name).join(', ')}]`
       : '';
 
-    setInputValue(fsInputValue);
+    setInputValue(msgText);
     setFsInputValue("");
     setPendingFiles([]);
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: fsInputValue.trim() + fileContext,
+      content: msgText + fileContext,
       attachments: currentFiles,
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -1284,106 +1197,7 @@ const Chat = () => {
                 </button>
               </div>
 
-              {/* 채팅 기록 (collapsible turns) */}
-              <div className="chat-messages">
-                {renderCollapsibleMessages()}
-
-                {/* 로딩 인디케이터 */}
-                {isLoading && (
-                  <div className="chat-message assistant">
-                    <div className="chat-loading">
-                      <span className="chat-loading-text">NEURALTWIN 생각 중</span>
-                      <div className="chat-loading-dot"></div>
-                      <div className="chat-loading-dot"></div>
-                      <div className="chat-loading-dot"></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* TASK 9: Suggestions 칩 */}
-                {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
-                  <div className="chat-suggestions">
-                    {suggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        className="chat-suggestion-chip"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* TASK 9: Lead Capture Form */}
-                {showLeadForm && !leadSubmitted && (
-                  <div className="chat-lead-form-container">
-                    <div className="chat-lead-form">
-                      <div className="chat-lead-form-header">
-                        <h4>더 자세한 상담을 원하시나요?</h4>
-                        <button
-                          className="chat-lead-form-close"
-                          onClick={handleLeadFormClose}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <p className="chat-lead-form-desc">
-                        연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.
-                      </p>
-                      <form onSubmit={handleLeadSubmit}>
-                        <input
-                          type="email"
-                          className="chat-lead-input"
-                          placeholder="이메일 *"
-                          value={leadFormData.email}
-                          onChange={(e) =>
-                            setLeadFormData({ ...leadFormData, email: e.target.value })
-                          }
-                          required
-                        />
-                        <input
-                          type="text"
-                          className="chat-lead-input"
-                          placeholder="회사명"
-                          value={leadFormData.company}
-                          onChange={(e) =>
-                            setLeadFormData({ ...leadFormData, company: e.target.value })
-                          }
-                        />
-                        <input
-                          type="text"
-                          className="chat-lead-input"
-                          placeholder="직책/역할"
-                          value={leadFormData.role}
-                          onChange={(e) =>
-                            setLeadFormData({ ...leadFormData, role: e.target.value })
-                          }
-                        />
-                        <button
-                          type="submit"
-                          className="chat-lead-submit"
-                          disabled={isSubmittingLead || !leadFormData.email.trim()}
-                        >
-                          {isSubmittingLead ? "제출 중..." : "상담 요청"}
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* 턴 카운터 + 입력 박스 */}
-              {turnCount > 0 && (
-                <div className={`turn-counter-bar${isGuestLimitReached ? ' limit-reached' : ''}`}>
-                  <span className="turn-counter-text">{turnCount} / {MAX_GUEST_TURNS} 턴 사용</span>
-                  {isGuestLimitReached && (
-                    <button className="turn-counter-reset" onClick={handleResetSession}>새 대화 시작</button>
-                  )}
-                </div>
-              )}
+              {/* 축소모드: 입력창만 표시 (채팅 기록은 전체화면에서만) */}
               <div className={`chat-input-box${isGuestLimitReached ? ' disabled' : ''}`}>
                 {/* 첨부 파일 미리보기 */}
                 {pendingFiles.length > 0 && (

@@ -41,9 +41,10 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
 
   return (
     <div
-      className="flex items-center justify-center gap-0 px-4 py-3"
+      className="flex items-center justify-center gap-0"
       style={{
         background: 'linear-gradient(to top, rgba(3,7,18,0.92) 60%, transparent 100%)',
+        padding: 'clamp(8px, 1.2vw, 12px) clamp(8px, 2vw, 16px)',
       }}
     >
       {STAGES.map((stageItem, index) => {
@@ -72,13 +73,20 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
           <div key={stageItem.id} className="flex items-center">
             {/* 단계 카드 */}
             <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 sm:gap-2 sm:px-4 sm:py-2 rounded-full border
+              className={`flex items-center rounded-full border
                           backdrop-blur-md ${bgColor} ${borderColor} transition-all duration-300`}
+              style={{
+                gap: 'clamp(4px, 0.8vw, 8px)',
+                padding: 'clamp(4px, 0.8vw, 8px) clamp(8px, 1.5vw, 16px)',
+              }}
             >
-              <span className="text-sm sm:text-base">{stageItem.icon}</span>
+              <span style={{ fontSize: 'clamp(12px, 2vw, 16px)' }}>{stageItem.icon}</span>
               <span
-                className={`text-[11px] sm:text-[12px] font-medium ${textColor}`}
-                style={{ fontFamily: "'Fira Code', 'Noto Sans KR', monospace" }}
+                className={`font-medium ${textColor}`}
+                style={{
+                  fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+                  fontSize: 'clamp(10px, 1.8vw, 12px)',
+                }}
               >
                 {stageItem.number} {stageItem.label}
               </span>
@@ -86,7 +94,13 @@ export default function StageProgress({ currentStage, stage }: StageProgressProp
 
             {/* 연결선 (마지막 단계 제외) */}
             {index < STAGES.length - 1 && (
-              <div className={`w-4 sm:w-6 h-[2px] ${lineColor} mx-0.5 sm:mx-1 transition-colors duration-300`} />
+              <div
+                className={`h-[2px] ${lineColor} transition-colors duration-300`}
+                style={{
+                  width: 'clamp(10px, 2vw, 24px)',
+                  margin: '0 clamp(1px, 0.4vw, 4px)',
+                }}
+              />
             )}
           </div>
         );
