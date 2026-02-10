@@ -1170,24 +1170,6 @@ const Chat = () => {
             </div>
           )}
 
-          {/* 모바일 탭 버튼 (vizDirective 있을 때만) */}
-          {vizDirective && (
-            <div className="mobile-viz-tabs">
-              <button
-                className={`mobile-viz-tab${mobileActiveTab === "chat" ? " active" : ""}`}
-                onClick={() => setMobileActiveTab("chat")}
-              >
-                채팅
-              </button>
-              <button
-                className={`mobile-viz-tab${mobileActiveTab === "viz" ? " active" : ""}`}
-                onClick={() => setMobileActiveTab("viz")}
-              >
-                3D 뷰
-              </button>
-            </div>
-          )}
-
           {/* Chat UI + Visualizer Split Layout */}
           <div
             className="hero-content"
