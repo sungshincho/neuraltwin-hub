@@ -1089,7 +1089,7 @@ const Chat = () => {
                 </div>
                 <button
                   className="chat-send-btn"
-                  onClick={handleFsSendMessage}
+                  onClick={() => handleFsSendMessage()}
                   disabled={!fsInputValue.trim() || isLoading || isGuestLimitReached}
                 >
                   <svg

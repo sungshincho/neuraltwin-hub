@@ -686,6 +686,10 @@
 }
 
 /* ===================== 데스크톱 전용 인라인 채팅 (모바일 숨김) ===================== */
+.chat-inline-desktop {
+    width: 100%;
+}
+
 @media (max-width: 767px) {
     .chat-inline-desktop {
         display: none !important;
