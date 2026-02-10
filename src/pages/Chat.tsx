@@ -79,6 +79,8 @@ const Chat = () => {
 
   // TASK C: VizDirective 상태 (3D Visualizer)
   const [vizDirective, setVizDirective] = useState<VizDirective | null>(null);
+  // 모바일 탭 토글 (채팅 ↔ 3D뷰)
+  const [mobileActiveTab, setMobileActiveTab] = useState<"chat" | "viz">("chat");
   const [leadFormData, setLeadFormData] = useState<LeadFormData>({
     email: "",
     company: "",
@@ -1137,6 +1139,24 @@ const Chat = () => {
             </div>
           )}
 
+          {/* 모바일 탭 버튼 (vizDirective 있을 때만) */}
+          {vizDirective && (
+            <div className="mobile-viz-tabs">
+              <button
+                className={`mobile-viz-tab${mobileActiveTab === "chat" ? " active" : ""}`}
+                onClick={() => setMobileActiveTab("chat")}
+              >
+                채팅
+              </button>
+              <button
+                className={`mobile-viz-tab${mobileActiveTab === "viz" ? " active" : ""}`}
+                onClick={() => setMobileActiveTab("viz")}
+              >
+                3D 뷰
+              </button>
+            </div>
+          )}
+
           {/* Chat UI + Visualizer Split Layout */}
           <div
             className="hero-content"
@@ -1144,8 +1164,7 @@ const Chat = () => {
           >
             {/* 채팅 영역 */}
             <div
-              className="chat-container"
-              style={{ width: vizDirective ? "45%" : "100%", transition: "width 0.5s ease" }}
+              className={`chat-container${vizDirective ? " with-viz" : ""}${vizDirective && mobileActiveTab !== "chat" ? " mobile-tab-hidden" : ""}`}
             >
               {/* 타이틀 + 전체화면 버튼 */}
               <div className="chat-title-row">
@@ -1361,18 +1380,7 @@ const Chat = () => {
             {/* 우측: 3D Visualizer (55%) - vizDirective가 있을 때만 표시 */}
             {vizDirective && (
               <div
-                className="visualizer-container"
-                style={{
-                  width: "55%",
-                  height: "600px",
-                  minHeight: "500px",
-                  position: "relative",
-                  backgroundColor: "rgba(3, 7, 18, 0.9)",
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  animation: "fadeIn 0.5s ease"
-                }}
+                className={`visualizer-container${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}
               >
                 {/* 3D Store Visualizer — KPI/Stage는 내부 오버레이로 렌더링 */}
                 <StoreVisualizer
