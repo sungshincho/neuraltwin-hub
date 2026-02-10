@@ -200,6 +200,17 @@ const Chat = () => {
     }
     if (!inputValue.trim() || isLoading) return;
 
+    // 모바일: 전체화면 전환 후 자동 전송 (인라인 API 호출 안 함)
+    if (isMobile) {
+      pendingMessageRef.current = inputValue.trim();
+      setFsInputValue(inputValue);
+      setInputValue("");
+      setIsFullscreen(true);
+      document.body.style.overflow = "hidden";
+      return;
+    }
+
+    // 데스크톱: 인라인 직접 전송
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
     const currentFileData: File[] = [];
     if (currentFiles) {
@@ -305,18 +316,32 @@ const Chat = () => {
         setVizDirective(data.vizDirective);
       }
 
-    if (isMobile) {
-      // 모바일: 전체화면 전환 후 자동 전송
-      pendingMessageRef.current = inputValue.trim();
-      setFsInputValue(inputValue);
-      setInputValue("");
-      setIsFullscreen(true);
-      document.body.style.overflow = "hidden";
-    } else {
-      // 데스크톱: 인라인에서 직접 전송
-      const msg = inputValue.trim();
-      setInputValue("");
-      await handleFsSendMessage(msg);
+      // 어시스턴트 응답 추가
+      if (data.content) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.content,
+          suggestions: data.suggestions,
+          showLeadForm: data.showLeadForm,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log("Request aborted");
+      } else {
+        console.error("Chat error:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
