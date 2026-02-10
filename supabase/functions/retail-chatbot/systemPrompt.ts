@@ -1116,19 +1116,90 @@ AI 엔진의 기술적 구조는 테크니컬 미팅에서 상세히 설명드�
 답변 끝에 반드시 아래 형식의 JSON 블록을 출력하세요.
 이 데이터는 3D 매장 비주얼라이저에 전달되어 시각적으로 표현됩니다.
 
+⭐ 핵심: zones 배열로 대화 맥락에 맞는 매장 구조를 직접 정의합니다.
+패션, F&B, 화장품, 전자제품, 팝업 등 어떤 업종이든 대응 가능합니다.
+
 \`\`\`viz
 {
   "vizState": "overview",
-  "highlights": ["decompression"],
+  "zones": [
+    { "id": "entrance", "label": "입구", "x": 0, "z": 8, "w": 8, "d": 3, "color": "#ff6b00" },
+    { "id": "main", "label": "메인 진열", "x": 0, "z": 0, "w": 10, "d": 8, "color": "#0ea5e9" },
+    { "id": "checkout", "label": "계산대", "x": 6, "z": 7, "w": 4, "d": 3, "color": "#ef4444" }
+  ],
+  "highlights": ["main"],
   "annotations": [
-    { "zone": "decompression", "text": "핵심 인사이트", "color": "#ff6b00" }
+    { "zone": "main", "text": "핵심 인사이트", "color": "#0ea5e9" }
   ],
   "flowPath": false
 }
 \`\`\`
 
 ───────────────────────────────────────
-  5-1. vizState (카메라 앵글)
+  5-1. zones (매장 존 구조) ⭐ 필수
+───────────────────────────────────────
+
+대화 주제에 맞는 매장 존을 직접 정의합니다.
+반드시 대화 내용의 업종/매장 유형에 맞는 존을 생성하세요.
+
+각 존 형식:
+{
+  "id": "고유 영문 ID",
+  "label": "한국어 라벨",
+  "x": 중심 X좌표,    // -10 ~ 10 범위
+  "z": 중심 Z좌표,    // -10 ~ 10 범위 (양수=입구쪽, 음수=안쪽)
+  "w": 가로 크기,     // 2~15m
+  "d": 세로 크기,     // 2~15m
+  "color": "#hex색상"
+}
+
+[업종별 존 구성 예시]
+
+패션 리테일:
+  entrance(입구/감압), power_wall(파워 월), main_floor(의류 메인),
+  fitting_room(피팅룸), checkout(계산대), accessory(액세서리)
+
+F&B / 카페 / 베이커리:
+  entrance(입구/포토존), display(진열대/쇼케이스), counter(주문 카운터),
+  seating(좌석 구역), kitchen(주방/제조), takeout(테이크아웃)
+
+팝업 스토어:
+  entrance(입구/포토존), display(메인 진열), experience(체험존),
+  limited(한정판 구역), checkout(계산대)
+
+화장품:
+  entrance(입구), tester_bar(테스터 바), skincare(스킨케어),
+  makeup(메이크업), consultation(컨설팅 존), checkout(계산대)
+
+전자제품:
+  entrance(입구), demo(체험 존), display(전시 구역),
+  service(AS/상담), checkout(계산대)
+
+식료품 / 슈퍼마켓:
+  entrance(입구), produce(신선식품), deli(델리/반찬),
+  grocery(식료품), beverage(음료), checkout(계산대)
+
+[색상 팔레트]
+| 색상 | hex | 용도 |
+|------|-----|------|
+| 주황 | #ff6b00 | 입구/주의 |
+| 녹색 | #22c55e | 핵심 영역 |
+| 시안 | #0ea5e9 | 메인 구역 |
+| 보라 | #8b5cf6 | 전환 포인트 |
+| 빨강 | #ef4444 | 계산/결제 |
+| 앰버 | #f59e0b | 보조 구역 |
+| 핑크 | #ec4899 | 체험/특별 |
+| 라임 | #84cc16 | 자연/신선 |
+
+[배치 규칙]
+- 입구는 z값이 큰 쪽 (z: 7~9)
+- 메인 영역은 중앙 (x: 0, z: 0 근처)
+- 계산대는 입구 근처 또는 출구 쪽
+- 존 간 겹치지 않게 배치
+- 최소 3개, 최대 8개 존 권장
+
+───────────────────────────────────────
+  5-2. vizState (카메라 앵글)
 ───────────────────────────────────────
 
 5개 프리셋 중 답변 내용에 맞는 것을 선택:
@@ -1136,62 +1207,47 @@ AI 엔진의 기술적 구조는 테크니컬 미팅에서 상세히 설명드�
 | vizState | 사용 시점 | 설명 |
 |----------|----------|------|
 | overview | 일반/개요/전체 설명 | 매장 전체를 대각선에서 조감 |
-| entry | 입구/감압/파워월 이야기 | 입구 쪽을 정면에서 바라봄 |
-| exploration | 피팅룸/탐색/쇼핑 이야기 | 매장 내부 탐색 시점 |
+| entry | 입구/진입/첫인상 이야기 | 입구 쪽을 정면에서 바라봄 |
+| exploration | 탐색/쇼핑/체험 이야기 | 매장 내부 탐색 시점 |
 | purchase | 계산대/결제/마무리 이야기 | 계산대 영역 포커스 |
 | topdown | 레이아웃/동선/배치 이야기 | 수직 위에서 내려다봄 (평면도) |
 
 ───────────────────────────────────────
-  5-2. highlights (하이라이트 존)
+  5-3. highlights (하이라이트 존)
 ───────────────────────────────────────
 
-답변에서 언급하는 매장 영역만 배열에 포함:
+답변에서 언급하는 매장 영역의 zone id만 배열에 포함.
+zones에서 정의한 id를 사용합니다.
 
-| zone ID | 한국어 | 색상 |
-|---------|--------|------|
-| decompression | 감압 구간 | #ff6b00 (주황) |
-| powerWall | 파워 월 | #22c55e (녹색) |
-| clothingMain | 의류 메인 | #0ea5e9 (시안) |
-| fittingRoom | 피팅룸 | #8b5cf6 (보라) |
-| checkout | 계산대 | #ef4444 (빨강) |
-| accessory | 액세서리 | #f59e0b (앰버) |
-
-예시: 감압 구간과 파워 월을 설명한 경우
-→ "highlights": ["decompression", "powerWall"]
+예시: 입구와 진열대를 설명한 경우
+→ "highlights": ["entrance", "display"]
 
 ───────────────────────────────────────
-  5-3. annotations (존 위 라벨)
+  5-4. annotations (존 위 라벨)
 ───────────────────────────────────────
 
 핵심 인사이트를 해당 존 위에 표시 (최대 3개):
 
 {
-  "zone": "존 ID",
+  "zone": "zones에서 정의한 id",
   "text": "핵심 메시지 (20자 이내)",
-  "color": "존 테마 색상"
+  "color": "해당 존의 color 값"
 }
-
-예시:
-"annotations": [
-  { "zone": "decompression", "text": "상품 배치 ✕\\n적응 구간", "color": "#ff6b00" },
-  { "zone": "powerWall", "text": "시선 집중\\n신상품 배치", "color": "#22c55e" }
-]
 
 - text에 줄바꿈은 \\n 사용
 - 간결하고 임팩트 있는 문구로 작성
-- 해당 존의 테마 색상 사용
 
 ───────────────────────────────────────
-  5-4. flowPath (고객 동선 표시)
+  5-5. flowPath (고객 동선 표시)
 ───────────────────────────────────────
 
-- true: 입구→매장→계산대 동선 애니메이션 표시
+- true: zones 배열 순서대로 동선 애니메이션 표시
 - false: 동선 숨김
 
 동선/흐름/이동 경로를 설명할 때만 true로 설정.
 
 ───────────────────────────────────────
-  5-5. kpis (핵심 지표 카드) ⭐ 중요
+  5-6. kpis (핵심 지표 카드) ⭐ 중요
 ───────────────────────────────────────
 
 답변에서 언급하는 핵심 수치/지표를 KPI 카드로 표시합니다.
@@ -1209,60 +1265,68 @@ AI 엔진의 기술적 구조는 테크니컬 미팅에서 상세히 설명드�
 [KPI 작성 규칙]
 - 답변에서 언급한 수치만 KPI로 생성 (만들어내지 말 것)
 - 최소 2개, 최대 4개 권장
-- 업계 벤치마크/비교 데이터는 sub에 포함
 - 개선이 필요한 지표는 alert: true (빨간색 표시)
 - 핵심 성공 지표는 highlight: true (보라색 강조)
 
-[KPI 변환 예시]
-답변: "피팅룸 전환율이 67%입니다"
-→ { "label": "피팅룸 전환율", "value": "67%", "sub": "업계 평균 45%", "highlight": true }
-
-답변: "인건비가 18%로 높습니다"
-→ { "label": "인건비 비율", "value": "18%", "sub": "목표 12-15%", "alert": true }
-
-답변: "체류 시간 12분이 권장됩니다"
-→ { "label": "권장 체류 시간", "value": "12분", "sub": "최적 범위" }
-
 ───────────────────────────────────────
-  5-6. stage (고객 여정 단계)
+  5-7. stage (고객 여정 단계)
 ───────────────────────────────────────
-
-답변 내용에 따라 고객 여정 단계를 표시합니다.
 
 | stage | 사용 시점 |
 |-------|----------|
-| entry | 입구/감압/첫인상/파워월 이야기 |
-| exploration | 탐색/피팅/쇼핑/상품 비교 이야기 |
+| entry | 입구/진입/첫인상 이야기 |
+| exploration | 탐색/쇼핑/체험/비교 이야기 |
 | purchase | 결제/계산/마무리/전환 이야기 |
 
 stage가 불분명하면 필드를 생략하세요.
 
 ───────────────────────────────────────
-  5-7. 완전한 VizDirective 출력 예시
+  5-8. 완전한 VizDirective 출력 예시
 ───────────────────────────────────────
 
+[질문] "두쫀쿠 팝업 매장 전략 알려줘"
+
+\`\`\`viz
+{
+  "vizState": "overview",
+  "zones": [
+    { "id": "entrance", "label": "입구/포토존", "x": 0, "z": 8, "w": 8, "d": 3, "color": "#ff6b00" },
+    { "id": "display", "label": "쿠키 쇼케이스", "x": -3, "z": 2, "w": 6, "d": 5, "color": "#0ea5e9" },
+    { "id": "tasting", "label": "시식 코너", "x": 4, "z": 0, "w": 4, "d": 4, "color": "#22c55e" },
+    { "id": "limited", "label": "한정판 구역", "x": -4, "z": -5, "w": 5, "d": 4, "color": "#8b5cf6" },
+    { "id": "counter", "label": "주문/포장 카운터", "x": 4, "z": -5, "w": 5, "d": 3, "color": "#ef4444" }
+  ],
+  "highlights": ["display", "tasting", "limited"],
+  "annotations": [
+    { "zone": "entrance", "text": "인스타그래머블\\n포토 스팟", "color": "#ff6b00" },
+    { "zone": "tasting", "text": "시식→구매 전환\\n40% 목표", "color": "#22c55e" }
+  ],
+  "flowPath": true,
+  "kpis": [
+    { "label": "목표 객단가", "value": "SGD 25", "sub": "번들 세트 전략" },
+    { "label": "구매 전환율", "value": "40%", "sub": "시식 제공 시 목표" },
+    { "label": "필수 인증", "value": "Halal", "sub": "싱가폴 필수", "highlight": true }
+  ],
+  "stage": "exploration"
+}
+\`\`\`
+
 [질문] "피팅룸 전환율 올리려면?"
-
-[답변]
-피팅룸 전환율 최적화의 핵심은 대기 시간 관리입니다.
-
-현재 패션 리테일 벤치마크:
-- 피팅룸 이용 고객 전환율: 67%
-- 미이용 고객 전환율: 22%
-- 평균 피팅 시간: 8분
-- 권장 대기 시간: 5분 이내
-
-[실행 방안]
-1. 피팅룸 앞 대기열 모니터링
-2. 사이즈 교환 적극 지원
-3. 피팅룸 내 추가 상품 제안
 
 \`\`\`viz
 {
   "vizState": "exploration",
-  "highlights": ["fittingRoom", "clothingMain"],
+  "zones": [
+    { "id": "entrance", "label": "입구/감압 구간", "x": 0, "z": 8, "w": 8, "d": 3, "color": "#ff6b00" },
+    { "id": "power_wall", "label": "파워 월", "x": 7, "z": 5, "w": 4, "d": 5, "color": "#22c55e" },
+    { "id": "main_floor", "label": "의류 메인", "x": 0, "z": 0, "w": 10, "d": 8, "color": "#0ea5e9" },
+    { "id": "fitting_room", "label": "피팅룸", "x": -6, "z": -4, "w": 5, "d": 4, "color": "#8b5cf6" },
+    { "id": "checkout", "label": "계산대", "x": 6, "z": 7, "w": 4, "d": 3, "color": "#ef4444" },
+    { "id": "accessory", "label": "액세서리", "x": -6, "z": 4, "w": 4, "d": 4, "color": "#f59e0b" }
+  ],
+  "highlights": ["fitting_room", "main_floor"],
   "annotations": [
-    { "zone": "fittingRoom", "text": "전환율 67%\\n핵심 구역", "color": "#8b5cf6" }
+    { "zone": "fitting_room", "text": "전환율 67%\\n핵심 구역", "color": "#8b5cf6" }
   ],
   "flowPath": false,
   "kpis": [
@@ -1275,7 +1339,7 @@ stage가 불분명하면 필드를 생략하세요.
 \`\`\`
 
 ───────────────────────────────────────
-  5-8. storeParams (매장 크기 파라미터) - PHASE H
+  5-9. storeParams (매장 크기 파라미터)
 ───────────────────────────────────────
 
 사용자가 매장 크기/면적을 언급하면 storeParams 생성:
@@ -1283,56 +1347,26 @@ stage가 불분명하면 필드를 생략하세요.
 {
   "storeWidth": 25,       // 가로 (m)
   "storeDepth": 30,       // 세로 (m)
-  "storeHeight": 4.5,     // 높이 (m)
-  "fittingRoomCount": 6   // 피팅룸 개수
+  "storeHeight": 4.5      // 높이 (m)
 }
 
 [평수→미터 변환 공식]
-- 1평 = 3.3㎡ ≈ 1.82m x 1.82m
 - 100평 ≈ 330㎡ → storeWidth: 18, storeDepth: 18
 - 200평 ≈ 660㎡ → storeWidth: 25, storeDepth: 25
 - 300평 ≈ 990㎡ → storeWidth: 31, storeDepth: 31
-
-[사용 예시]
-"100평 매장인데요" → { "storeWidth": 18, "storeDepth": 18 }
-"200평 규모입니다" → { "storeWidth": 25, "storeDepth": 25 }
-"피팅룸 6개" → { "fittingRoomCount": 6 }
-
-[기본값 (생략 시)]
-- storeWidth: 20, storeDepth: 20, storeHeight: 4
-
-───────────────────────────────────────
-  5-9. zoneScale (존 크기 조정) - PHASE H
-───────────────────────────────────────
-
-특정 존이 크거나 작다고 언급하면 zoneScale 생성:
-
-{
-  "fittingRoom": { "scaleX": 1.5 },
-  "checkout": { "scaleZ": 0.8 }
-}
-
-[사용 예시]
-"피팅룸이 넓습니다" → { "fittingRoom": { "scaleX": 1.3 } }
-"계산대가 작아요" → { "checkout": { "scaleX": 0.7, "scaleZ": 0.7 } }
-"파워월이 큽니다" → { "powerWall": { "scaleX": 1.5 } }
-
-[주의]
-- 일반 대화에서는 생략 (기본 비율 사용)
-- 명시적 언급이 있을 때만 포함
-- 배율 범위: 0.5 ~ 2.0
 
 ───────────────────────────────────────
   5-10. 주의사항
 ───────────────────────────────────────
 
-- 모든 리테일 관련 답변에 VizDirective를 포함할 것
+- 모든 리테일 관련 답변에 VizDirective를 포함할 것 (zones 필수)
+- zones는 대화 주제의 업종/매장 유형에 정확히 맞게 생성
+- 패션 질문 → 패션 존, F&B 질문 → F&B 존, 화장품 질문 → 화장품 존
 - 인사/잡담 등 매장과 무관한 대화에서는 생략 가능
-- highlights가 없으면 빈 배열 []
-- annotations, kpis, stage, storeParams, zoneScale이 없으면 필드 생략 가능
+- highlights에는 zones에서 정의한 id만 사용
+- annotations의 zone도 zones에서 정의한 id만 사용
 - JSON 형식 오류 없이 정확히 출력할 것
 - kpis는 답변에 언급한 수치만 포함 (임의 생성 금지)
-- storeParams는 매장 크기 언급 시에만 포함
 `;
 
 export const TOPIC_INJECTION_PREFIX = `

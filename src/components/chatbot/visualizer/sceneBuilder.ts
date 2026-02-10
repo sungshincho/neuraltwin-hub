@@ -16,7 +16,7 @@ import {
   type FurnitureConfig,
   type CameraPreset
 } from './storeData';
-import type { StoreParams, ZoneScale } from './vizDirectiveTypes';
+import type { StoreParams, ZoneScale, DynamicZone } from './vizDirectiveTypes';
 
 // ═══════════════════════════════════════════
 //  파라메트릭 씬 설정 (PHASE H)
@@ -73,24 +73,78 @@ export function createDefaultSceneConfig(): SceneConfig {
 }
 
 /**
- * storeParams + zoneScale을 적용하여 SceneConfig 생성
+ * CSS hex 문자열 → Three.js 숫자 색상 변환
+ */
+function cssHexToNumber(hex: string): number {
+  return parseInt(hex.replace('#', ''), 16) || 0x64748b;
+}
+
+/**
+ * DynamicZone[] → Record<string, ZoneConfig> 변환
+ */
+function dynamicZonesToRecord(zones: DynamicZone[]): Record<string, ZoneConfig> {
+  const record: Record<string, ZoneConfig> = {};
+  for (const zone of zones) {
+    record[zone.id] = {
+      x: zone.x,
+      z: zone.z,
+      w: Math.max(2, Math.min(15, zone.w)),
+      d: Math.max(2, Math.min(15, zone.d)),
+      color: cssHexToNumber(zone.color),
+      label: zone.label
+    };
+  }
+  return record;
+}
+
+/**
+ * DynamicZone[] → 동적 동선 포인트 생성
+ * 존들을 입구(z가 큰 것)부터 안쪽(z가 작은 것) 순으로 연결
+ */
+function generateFlowFromZones(zones: DynamicZone[]): [number, number, number][] {
+  if (zones.length < 2) {
+    return [[0, 0.3, 9], [0, 0.3, -5]];
+  }
+
+  // z가 큰 순서 (입구 가까운 쪽)부터 작은 순서 (안쪽)로 정렬
+  const sorted = [...zones].sort((a, b) => b.z - a.z);
+
+  const points: [number, number, number][] = [];
+  // 입구 시작점
+  points.push([0, 0.3, 10]);
+
+  for (const zone of sorted) {
+    points.push([zone.x, 0.3, zone.z]);
+  }
+
+  return points;
+}
+
+/**
+ * storeParams + zoneScale + dynamicZones를 적용하여 SceneConfig 생성
  */
 export function applyParamsToConfig(
   storeParams?: StoreParams,
-  zoneScale?: ZoneScale
+  zoneScale?: ZoneScale,
+  dynamicZones?: DynamicZone[]
 ): SceneConfig {
   const baseConfig = createDefaultSceneConfig();
+
+  // 동적 존이 있으면 기존 존/가구/동선을 교체
+  if (dynamicZones && dynamicZones.length > 0) {
+    baseConfig.zones = dynamicZonesToRecord(dynamicZones);
+    baseConfig.furniture = []; // 동적 존 모드에서는 하드코딩 가구 사용 안 함
+    baseConfig.flowCurvePoints = generateFlowFromZones(dynamicZones);
+  }
 
   // storeParams 적용
   if (storeParams) {
     if (storeParams.storeWidth) {
-      const widthRatio = storeParams.storeWidth / STORE.width;
       baseConfig.storeWidth = storeParams.storeWidth;
       baseConfig.gridSize = Math.max(30, storeParams.storeWidth * 1.5);
       baseConfig.particleBounds = Math.max(40, storeParams.storeWidth * 2);
     }
     if (storeParams.storeDepth) {
-      const depthRatio = storeParams.storeDepth / STORE.depth;
       baseConfig.storeDepth = storeParams.storeDepth;
       baseConfig.gridSize = Math.max(baseConfig.gridSize, storeParams.storeDepth * 1.5);
       baseConfig.particleBounds = Math.max(baseConfig.particleBounds, storeParams.storeDepth * 2);

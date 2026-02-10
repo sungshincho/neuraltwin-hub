@@ -74,6 +74,31 @@ export interface ZoneScale {
 }
 
 // ═══════════════════════════════════════════
+//  동적 존 정의 (AI 생성)
+// ═══════════════════════════════════════════
+
+/**
+ * AI가 대화 맥락에 맞게 동적으로 생성하는 존 정의
+ * 패션 매장뿐 아니라 F&B, 화장품, 전자제품 등 모든 업종에 대응
+ */
+export interface DynamicZone {
+  /** 존 고유 ID (예: "entrance", "kitchen", "display") */
+  id: string;
+  /** 존 라벨 (한국어, 예: "쿠키 진열대") */
+  label: string;
+  /** 중심 X좌표 (-10 ~ 10) */
+  x: number;
+  /** 중심 Z좌표 (-10 ~ 10) */
+  z: number;
+  /** 가로 크기 (미터) */
+  w: number;
+  /** 세로 크기 (미터) */
+  d: number;
+  /** CSS hex 색상 (예: "#0ea5e9") */
+  color: string;
+}
+
+// ═══════════════════════════════════════════
 //  메인 VizDirective 타입
 // ═══════════════════════════════════════════
 
@@ -83,6 +108,9 @@ export interface VizDirective {
 
   /** 하이라이트할 존 ID 배열 */
   highlights: string[];
+
+  /** AI가 대화 맥락에 맞게 생성한 동적 존 배열 */
+  zones?: DynamicZone[];
 
   /** 존 위 어노테이션 (선택) */
   annotations?: VizAnnotation[];

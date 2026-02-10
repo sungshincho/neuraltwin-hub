@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildScene, disposeScene, lerpVector3, applyParamsToConfig, type SceneObjects } from './sceneBuilder';
 import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeData';
-import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale } from './vizDirectiveTypes';
+import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale, DynamicZone } from './vizDirectiveTypes';
 import KPIBar from './KPIBar';
 import StageProgress from './StageProgress';
 
@@ -24,6 +24,9 @@ interface StoreVisualizerProps {
   annotations: VizAnnotation[];
   showFlow: boolean;
   className?: string;
+
+  /** AI가 대화 맥락에 맞게 생성한 동적 존 배열 */
+  zones?: DynamicZone[];
 
   /** KPI 데이터 — 3D 캔버스 위 좌상단 오버레이 */
   kpis?: VizKPI[];
@@ -61,6 +64,7 @@ export default function StoreVisualizer({
   annotations = [],
   showFlow,
   className = '',
+  zones,
   kpis,
   stage,
   storeParams,
@@ -87,11 +91,22 @@ export default function StoreVisualizer({
   // 어노테이션 스크린 좌표
   const [annotationPositions, setAnnotationPositions] = useState<AnnotationPosition[]>([]);
 
+  // 동적 존 맵 (어노테이션/범례에서 사용)
+  const zoneMap = useMemo(() => {
+    if (!zones || zones.length === 0) return null;
+    const map: Record<string, DynamicZone> = {};
+    for (const z of zones) {
+      map[z.id] = z;
+    }
+    return map;
+  }, [zones]);
+
   // 파라메트릭 설정 메모이제이션 (불필요한 씬 재빌드 방지)
   const sceneConfigKey = useMemo(() => {
-    if (!storeParams && !zoneScale) return 'default';
-    return JSON.stringify({ storeParams, zoneScale });
-  }, [storeParams, zoneScale]);
+    const zoneIds = zones?.map(z => z.id).join(',') || '';
+    if (!storeParams && !zoneScale && !zoneIds) return 'default';
+    return JSON.stringify({ storeParams, zoneScale, zoneIds });
+  }, [storeParams, zoneScale, zones]);
 
   // ─────────────────────────────────────────
   // 애니메이션 루프
@@ -211,13 +226,16 @@ export default function StoreVisualizer({
     const canvas = renderer.domElement;
 
     const newPositions: AnnotationPosition[] = annotations.map((ann) => {
-      const zone = STORE.zones[ann.zone];
-      if (!zone) {
+      // 동적 존 우선, 없으면 기본 STORE.zones 참조
+      const dynZone = zoneMap?.[ann.zone];
+      const staticZone = STORE.zones[ann.zone];
+      const zoneData = dynZone || staticZone;
+      if (!zoneData) {
         return { ...ann, x: 0, y: 0, visible: false };
       }
 
       // 3D 월드 좌표 (존 중심 위)
-      const worldPos = new THREE.Vector3(zone.x, 2.5, zone.z);
+      const worldPos = new THREE.Vector3(zoneData.x, 2.5, zoneData.z);
 
       // 2D 스크린 좌표 변환
       const projected = worldPos.clone().project(camera);
@@ -239,7 +257,7 @@ export default function StoreVisualizer({
     });
 
     setAnnotationPositions(newPositions);
-  }, [annotations]);
+  }, [annotations, zoneMap]);
 
   // ─────────────────────────────────────────
   // 초기화
@@ -257,9 +275,9 @@ export default function StoreVisualizer({
       return;
     }
 
-    // 파라메트릭 설정 적용 (PHASE H)
-    const sceneConfig = (storeParams || zoneScale)
-      ? applyParamsToConfig(storeParams, zoneScale)
+    // 파라메트릭 설정 적용 (PHASE H + 동적 존)
+    const sceneConfig = (storeParams || zoneScale || (zones && zones.length > 0))
+      ? applyParamsToConfig(storeParams, zoneScale, zones)
       : undefined;
 
     // 씬 빌드 (파라메트릭 config 전달)
@@ -452,27 +470,32 @@ export default function StoreVisualizer({
             ZONES
           </div>
           <div className="flex flex-col" style={{ gap: 'clamp(3px, 0.5vw, 6px)' }}>
-            {highlights.map((zoneId) => (
-              <div key={zoneId} className="flex items-center" style={{ gap: 'clamp(4px, 0.6vw, 8px)' }}>
-                <div
-                  className="rounded-full"
-                  style={{
-                    backgroundColor: getZoneColorHex(zoneId),
-                    width: 'clamp(6px, 1vw, 10px)',
-                    height: 'clamp(6px, 1vw, 10px)',
-                  }}
-                />
-                <span
-                  className="text-[#cbd5e1]"
-                  style={{
-                    fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
-                    fontSize: 'clamp(9px, 1.6vw, 12px)',
-                  }}
-                >
-                  {ZONE_LABELS_KO[zoneId] || zoneId}
-                </span>
-              </div>
-            ))}
+            {highlights.map((zoneId) => {
+              const dynZone = zoneMap?.[zoneId];
+              const color = dynZone ? dynZone.color : getZoneColorHex(zoneId);
+              const label = dynZone ? dynZone.label : (ZONE_LABELS_KO[zoneId] || zoneId);
+              return (
+                <div key={zoneId} className="flex items-center" style={{ gap: 'clamp(4px, 0.6vw, 8px)' }}>
+                  <div
+                    className="rounded-full"
+                    style={{
+                      backgroundColor: color,
+                      width: 'clamp(6px, 1vw, 10px)',
+                      height: 'clamp(6px, 1vw, 10px)',
+                    }}
+                  />
+                  <span
+                    className="text-[#cbd5e1]"
+                    style={{
+                      fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+                      fontSize: 'clamp(9px, 1.6vw, 12px)',
+                    }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -497,7 +520,10 @@ export default function StoreVisualizer({
           >
             VIEW: {vizState.toUpperCase()}
             {highlights.length > 0 && (
-              <span className="hidden sm:inline"> · {highlights.map(h => ZONE_LABELS_KO[h] || h).join(', ')}</span>
+              <span className="hidden sm:inline"> · {highlights.map(h => {
+                const dz = zoneMap?.[h];
+                return dz ? dz.label : (ZONE_LABELS_KO[h] || h);
+              }).join(', ')}</span>
             )}
           </div>
 
