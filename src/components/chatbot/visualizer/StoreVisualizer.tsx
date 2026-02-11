@@ -56,6 +56,69 @@ interface AnnotationPosition {
 }
 
 // ═══════════════════════════════════════════
+//  텍스트 라벨 겹침 방지 유틸리티
+// ═══════════════════════════════════════════
+
+interface LabelRect {
+  idx: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * 2D AABB 겹침 감지 + 밀어내기
+ * 모든 라벨의 추정 바운딩 박스를 계산하고
+ * 겹치는 쌍을 수직으로 분리시킴
+ */
+function resolveTextOverlaps(
+  items: Array<{ x: number; y: number; text: string; visible: boolean }>,
+  charWidth = 7,
+  lineHeight = 18,
+  padX = 16,
+  padY = 8,
+  gap = 6,
+): void {
+  // 보이는 항목만 필터링
+  const rects: LabelRect[] = [];
+  for (let i = 0; i < items.length; i++) {
+    if (!items[i].visible) continue;
+    const text = items[i].text;
+    const lines = text.split('\n');
+    const maxLineLen = Math.max(...lines.map(l => l.length));
+    const w = maxLineLen * charWidth + padX;
+    const h = lines.length * lineHeight + padY;
+    rects.push({ idx: i, x: items[i].x, y: items[i].y, w, h });
+  }
+
+  // Y 기준 정렬 (위에서 아래로)
+  rects.sort((a, b) => a.y - b.y);
+
+  // 겹침 해소: 2 패스 (대부분 1패스로 충분)
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i];
+        const b = rects[j];
+        const overlapX = (a.w / 2 + b.w / 2) - Math.abs(a.x - b.x);
+        const overlapY = (a.h / 2 + b.h / 2) - Math.abs(a.y - b.y);
+        if (overlapX > 0 && overlapY > 0) {
+          // 수직으로 밀어냄 — b를 아래로
+          const pushY = (a.h / 2 + b.h / 2 + gap) - (b.y - a.y);
+          b.y += pushY;
+        }
+      }
+    }
+  }
+
+  // 결과 적용
+  for (const r of rects) {
+    items[r.idx].y = r.y;
+  }
+}
+
+// ═══════════════════════════════════════════
 //  메인 컴포넌트
 // ═══════════════════════════════════════════
 
@@ -242,8 +305,9 @@ export default function StoreVisualizer({
     const canvas = renderer.domElement;
 
     // 어노테이션 위치 업데이트
+    let newAnnotations: AnnotationPosition[] = [];
     if (annotations?.length) {
-      const newPositions: AnnotationPosition[] = annotations.map((ann) => {
+      newAnnotations = annotations.map((ann) => {
         const dynZone = zoneMap?.[ann.zone];
         const staticZone = STORE.zones[ann.zone];
         const zoneData = dynZone || staticZone;
@@ -259,14 +323,12 @@ export default function StoreVisualizer({
 
         return { zone: ann.zone, text: ann.text, color: ann.color, x, y, visible };
       });
-      setAnnotationPositions(newPositions);
-    } else {
-      setAnnotationPositions([]);
     }
 
     // 존 라벨 위치 업데이트 (동적 존이 있을 때만)
+    let newZoneLabels: Array<{ id: string; label: string; color: string; x: number; y: number; visible: boolean }> = [];
     if (zones && zones.length > 0) {
-      const labelPositions = zones.map((z) => {
+      newZoneLabels = zones.map((z) => {
         // 존 바닥 중심 바로 위 (y=0.5)
         const worldPos = new THREE.Vector3(z.x, 0.5, z.z);
         const projected = worldPos.clone().project(camera);
@@ -276,10 +338,34 @@ export default function StoreVisualizer({
 
         return { id: z.id, label: z.label, color: z.color, x, y, visible };
       });
-      setZoneLabelPositions(labelPositions);
-    } else {
-      setZoneLabelPositions([]);
     }
+
+    // ── 텍스트 겹침 방지: 모든 텍스트 요소를 통합해서 충돌 해소 ──
+    // 통합 배열: zone labels + annotations → 겹침 해소 → 분리해서 setState
+    const combined: Array<{ x: number; y: number; text: string; visible: boolean; type: 'zone' | 'ann'; idx: number }> = [];
+    for (let i = 0; i < newZoneLabels.length; i++) {
+      combined.push({ x: newZoneLabels[i].x, y: newZoneLabels[i].y, text: newZoneLabels[i].label, visible: newZoneLabels[i].visible, type: 'zone', idx: i });
+    }
+    for (let i = 0; i < newAnnotations.length; i++) {
+      combined.push({ x: newAnnotations[i].x, y: newAnnotations[i].y, text: newAnnotations[i].text, visible: newAnnotations[i].visible, type: 'ann', idx: i });
+    }
+
+    if (combined.length > 1) {
+      resolveTextOverlaps(combined);
+      // 해소 결과 역반영
+      for (const item of combined) {
+        if (item.type === 'zone') {
+          newZoneLabels[item.idx].x = item.x;
+          newZoneLabels[item.idx].y = item.y;
+        } else {
+          newAnnotations[item.idx].x = item.x;
+          newAnnotations[item.idx].y = item.y;
+        }
+      }
+    }
+
+    setAnnotationPositions(newAnnotations);
+    setZoneLabelPositions(newZoneLabels);
   }, [annotations, zoneMap, zones]);
 
   // ─────────────────────────────────────────
