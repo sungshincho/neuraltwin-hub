@@ -1267,8 +1267,8 @@ const Chat = () => {
                 </div>
               )}
 
-              {/* 전체화면: Lead Capture Form */}
-              {showLeadForm && !leadSubmitted && (
+              {/* 전체화면: Lead Capture Form — 응답 완료 후에만 표시 */}
+              {showLeadForm && !leadSubmitted && !isLoading && (
                 <div className="chat-fs-lead-form-container">
                   <div className="chat-fs-lead-form">
                     <div className="chat-fs-lead-form-header">
@@ -1558,7 +1558,8 @@ const Chat = () => {
                   </div>
                 )}
 
-                {showLeadForm && !leadSubmitted && (
+                {/* Lead Capture Form — 응답 완료 후에만 표시 */}
+                {showLeadForm && !leadSubmitted && !isLoading && (
                   <div className="chat-lead-form-container">
                     <div className="chat-lead-form">
                       <div className="chat-lead-form-header">
