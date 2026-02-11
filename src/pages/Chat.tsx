@@ -195,8 +195,15 @@ const Chat = () => {
     }
   }, [isGuestLimitReached, isLoading]);
 
-  // 모바일 감지
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // 모바일 감지 (resize 반응형)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 768
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // ═══════════════════════════════════════════
   // A-1: 공통 SSE 스트리밍 소비 함수
