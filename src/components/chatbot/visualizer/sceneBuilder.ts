@@ -410,10 +410,8 @@ function createZoneBorder(
   });
 
   const cornerMarkers = new THREE.LineSegments(cornerGeo, cornerMat);
-  cornerMarkers.position.copy(position);
-  cornerMarkers.position.y = 0.07;
-
-  // 그룹 대신 border를 반환해야 하므로 cornerMarkers를 borderLine의 자식으로 추가
+  // borderLine의 자식이므로 로컬 좌표 사용 (부모 기준 상대 오프셋)
+  cornerMarkers.position.set(0, 0.01, 0); // borderLine(y=0.06)으로부터 +0.01 → y=0.07
   borderLine.add(cornerMarkers);
 
   return borderLine;
