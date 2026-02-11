@@ -516,12 +516,40 @@ const Chat = () => {
         await processJsonResponse(response, assistantMsgId);
       }
 
-      // 빈 메시지 체크 — 스트리밍 후에도 비어있으면 제거
+      // 스트리밍 후 잔존 viz 블록 클리닝 + 빈 메시지 체크
       setMessages((prev) => {
         const msg = prev.find((m) => m.id === assistantMsgId);
-        if (msg && !msg.content) {
+        if (!msg) return prev;
+
+        // 빈 메시지 제거
+        if (!msg.content) {
           return prev.filter((m) => m.id !== assistantMsgId);
         }
+
+        // SSE에서 viz 블록이 감지되지 않은 경우: 텍스트에서 직접 추출 (안전망)
+        const vizMatch = msg.content.match(/```viz\s*\n?([\s\S]*?)\n?```/);
+        if (vizMatch) {
+          try {
+            const vizData = JSON.parse(vizMatch[1].trim());
+            if (vizData.vizState) {
+              setVizDirective((prev) =>
+                prev ? mergeVizDirective(prev, vizData) : vizData
+              );
+            }
+          } catch (e) {
+            console.warn('[Chat] Residual viz JSON parse error:', e);
+          }
+          // viz 블록을 텍스트에서 제거
+          const cleaned = msg.content
+            .replace(/```viz[\s\S]*?```/g, '')
+            .replace(/```viz[\s\S]*$/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+          return prev.map((m) =>
+            m.id === assistantMsgId ? { ...m, content: cleaned } : m
+          );
+        }
+
         return prev;
       });
     } catch (error) {
@@ -1545,43 +1573,45 @@ const Chat = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Suggestions + Lead Form: 스크롤 영역 내부에 배치 (입력창 겹침 방지) */}
+                  {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
+                    <div className="chat-suggestions">
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          className="chat-suggestion-chip"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Lead Capture Form — 응답 완료 후에만 표시 */}
+                  {showLeadForm && !leadSubmitted && !isLoading && (
+                    <div className="chat-lead-form-container">
+                      <div className="chat-lead-form">
+                        <div className="chat-lead-form-header">
+                          <h4>더 자세한 상담을 원하시나요?</h4>
+                          <button className="chat-lead-form-close" onClick={handleLeadFormClose}>✕</button>
+                        </div>
+                        <p className="chat-lead-form-desc">연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.</p>
+                        <form onSubmit={handleLeadSubmit}>
+                          <input type="email" className="chat-lead-input" placeholder="이메일 *" value={leadFormData.email} onChange={(e) => setLeadFormData({ ...leadFormData, email: e.target.value })} required />
+                          <input type="text" className="chat-lead-input" placeholder="회사명" value={leadFormData.company} onChange={(e) => setLeadFormData({ ...leadFormData, company: e.target.value })} />
+                          <input type="text" className="chat-lead-input" placeholder="직책/역할" value={leadFormData.role} onChange={(e) => setLeadFormData({ ...leadFormData, role: e.target.value })} />
+                          <button type="submit" className="chat-lead-submit" disabled={isSubmittingLead || !leadFormData.email.trim()}>
+                            {isSubmittingLead ? "제출 중..." : "상담 요청"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+
                   <div ref={messagesEndRef} />
                 </div>
-
-                {!isLoading && !isGuestLimitReached && suggestions.length > 0 && (
-                  <div className="chat-suggestions">
-                    {suggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        className="chat-suggestion-chip"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Lead Capture Form — 응답 완료 후에만 표시 */}
-                {showLeadForm && !leadSubmitted && !isLoading && (
-                  <div className="chat-lead-form-container">
-                    <div className="chat-lead-form">
-                      <div className="chat-lead-form-header">
-                        <h4>더 자세한 상담을 원하시나요?</h4>
-                        <button className="chat-lead-form-close" onClick={handleLeadFormClose}>✕</button>
-                      </div>
-                      <p className="chat-lead-form-desc">연락처를 남겨주시면 전문 컨설턴트가 연락드립니다.</p>
-                      <form onSubmit={handleLeadSubmit}>
-                        <input type="email" className="chat-lead-input" placeholder="이메일 *" value={leadFormData.email} onChange={(e) => setLeadFormData({ ...leadFormData, email: e.target.value })} required />
-                        <input type="text" className="chat-lead-input" placeholder="회사명" value={leadFormData.company} onChange={(e) => setLeadFormData({ ...leadFormData, company: e.target.value })} />
-                        <input type="text" className="chat-lead-input" placeholder="직책/역할" value={leadFormData.role} onChange={(e) => setLeadFormData({ ...leadFormData, role: e.target.value })} />
-                        <button type="submit" className="chat-lead-submit" disabled={isSubmittingLead || !leadFormData.email.trim()}>
-                          {isSubmittingLead ? "제출 중..." : "상담 요청"}
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* 입력 영역 (모바일+데스크톱 공통) */}

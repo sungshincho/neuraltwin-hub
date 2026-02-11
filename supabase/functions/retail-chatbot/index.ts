@@ -758,6 +758,7 @@ function createSSEStreamV2(
   let vizBuffer = '';
   let isInsideVizBlock = false;
   let sseBuffer = '';  // 업스트림 SSE 라인 버퍼
+  let pendingBackticks = '';  // 청크 경계에서 잘린 백틱 캐리오버
 
   function sendEvent(controller: ReadableStreamDefaultController<Uint8Array>, event: string, data: unknown) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -814,6 +815,12 @@ function createSSEStreamV2(
               vizBuffer = '';
             }
 
+            // 캐리오버된 백틱 플러시 (viz 블록이 아닌 경우)
+            if (pendingBackticks && !isInsideVizBlock) {
+              sendEvent(controller, 'text', { content: pendingBackticks });
+              pendingBackticks = '';
+            }
+
             // done 이벤트 전송
             sendEvent(controller, 'done', {
               conversationId: opts.conversationId,
@@ -846,7 +853,9 @@ function createSSEStreamV2(
               fullContent += content;
 
               // viz 블록 감지 및 분리
-              let remaining = content;
+              // 이전 청크에서 캐리오버된 백틱을 앞에 붙임
+              let remaining = pendingBackticks + content;
+              pendingBackticks = '';
 
               while (remaining.length > 0) {
                 if (isInsideVizBlock) {
@@ -873,7 +882,14 @@ function createSSEStreamV2(
                     }
                     vizBuffer = '';
                   } else {
-                    vizBuffer += remaining;
+                    // 종료 마커 ``` 의 부분 매칭 감지 (`, ``)
+                    const closeTail = remaining.match(/`{1,2}$/);
+                    if (closeTail) {
+                      vizBuffer += remaining.slice(0, -closeTail[0].length);
+                      pendingBackticks = closeTail[0];
+                    } else {
+                      vizBuffer += remaining;
+                    }
                     remaining = '';
                   }
                 } else {
@@ -894,14 +910,23 @@ function createSSEStreamV2(
                   } else {
                     // 일반 텍스트: 단, 부분적 ``` 매치 방지
                     // 끝이 ` 또는 `` 로 끝나면 다음 청크까지 대기
-                    const backtickTail = remaining.match(/`{1,5}$/);
-                    if (backtickTail) {
-                      const safe = remaining.substring(0, remaining.length - backtickTail[0].length);
+                    // ```viz 마커의 부분 매칭 감지 (청크 경계 대응)
+                    // 가능한 부분: `, ``, ```, ```v, ```vi
+                    const vizMarker = '```viz';
+                    let partialLen = 0;
+                    for (let t = Math.min(remaining.length, vizMarker.length - 1); t >= 1; t--) {
+                      if (vizMarker.startsWith(remaining.slice(-t))) {
+                        partialLen = t;
+                        break;
+                      }
+                    }
+                    if (partialLen > 0) {
+                      const safe = remaining.slice(0, -partialLen);
                       if (safe) {
                         sendEvent(controller, 'text', { content: safe });
                       }
-                      // 백틱 부분은 sseBuffer 에 넣지 않고 fullContent 에 이미 포함됨
-                      // 다음 청크에서 ```viz 판단됨
+                      // 부분 마커를 다음 청크로 캐리오버 (```viz 시작 감지에 사용)
+                      pendingBackticks = remaining.slice(-partialLen);
                       remaining = '';
                     } else {
                       sendEvent(controller, 'text', { content: remaining });
