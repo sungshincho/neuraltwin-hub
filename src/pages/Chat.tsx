@@ -1369,6 +1369,7 @@ const Chat = () => {
             >
               {/* 타이틀 + 전체화면 버튼 */}
               <div className="chat-title-row">
+                <h1 className="chat-headline">가장 강력한 AI 리테일 어시스턴트</h1>
                 <h2 className="chat-title">오늘은 어떤 업무를 도와드릴까요?</h2>
                 <button
                   className="chat-expand-fullscreen-btn"
