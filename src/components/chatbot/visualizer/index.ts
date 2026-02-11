@@ -56,3 +56,6 @@ export {
 } from './sceneBuilder';
 
 export type { SceneConfig } from './sceneBuilder';
+
+// 씬 Diff 엔진 (A-4)
+export { computeZoneDiff, describeDiff, type ZoneDiff } from './sceneDiff';

@@ -129,6 +129,9 @@ const Chat = () => {
   ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
+  // SSE 스트리밍: 현재 어시스턴트 메시지 ID (점진적 업데이트용)
+  const streamingMessageIdRef = useRef<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fsMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -195,6 +198,299 @@ const Chat = () => {
   // 모바일 감지
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
+  // ═══════════════════════════════════════════
+  // A-1: 공통 SSE 스트리밍 소비 함수
+  // ═══════════════════════════════════════════
+
+  /**
+   * SSE 스트리밍 응답 소비 — text/viz/meta/done 이벤트 처리
+   * 빈 어시스턴트 메시지를 먼저 추가하고, text 이벤트마다 점진적 업데이트
+   */
+  const processStreamingResponse = async (
+    response: Response,
+    assistantMsgId: string,
+    signal: AbortSignal
+  ) => {
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('Response body is not readable');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    streamingMessageIdRef.current = assistantMsgId;
+
+    try {
+      while (true) {
+        if (signal.aborted) {
+          reader.cancel();
+          break;
+        }
+
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE 이벤트 파싱: "event: xxx\ndata: {...}\n\n"
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || ''; // 마지막 불완전 이벤트 보관
+
+        for (const eventBlock of events) {
+          if (!eventBlock.trim()) continue;
+
+          const lines = eventBlock.split('\n');
+          let eventType = '';
+          let eventData = '';
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              eventData = line.slice(6);
+            }
+          }
+
+          if (!eventType || !eventData) continue;
+
+          try {
+            const parsed = JSON.parse(eventData);
+
+            switch (eventType) {
+              case 'text': {
+                // 점진적 텍스트 추가
+                const content = parsed.content || '';
+                if (content) {
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === assistantMsgId
+                        ? { ...msg, content: msg.content + content }
+                        : msg
+                    )
+                  );
+                }
+                break;
+              }
+
+              case 'viz': {
+                // VizDirective 업데이트
+                console.log('[Chat:SSE] viz event received:', parsed);
+                setVizDirective(parsed);
+                break;
+              }
+
+              case 'meta': {
+                // suggestions, salesBridge, painPoints, showLeadForm
+                if (parsed.suggestions?.length > 0) {
+                  setSuggestions(parsed.suggestions);
+                } else {
+                  setSuggestions([]);
+                }
+                if (parsed.showLeadForm && !leadSubmitted) {
+                  setShowLeadForm(true);
+                }
+                // 어시스턴트 메시지에 meta 첨부
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMsgId
+                      ? {
+                          ...msg,
+                          suggestions: parsed.suggestions,
+                          showLeadForm: parsed.showLeadForm,
+                        }
+                      : msg
+                  )
+                );
+                break;
+              }
+
+              case 'done': {
+                // conversationId 저장
+                if (parsed.conversationId) {
+                  setConversationId(parsed.conversationId);
+                }
+                console.log('[Chat:SSE] Stream complete');
+                break;
+              }
+
+              case 'error': {
+                console.error('[Chat:SSE] Server error:', parsed.error);
+                break;
+              }
+            }
+          } catch (parseErr) {
+            console.warn('[Chat:SSE] Event parse error:', parseErr);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+      streamingMessageIdRef.current = null;
+    }
+  };
+
+  /**
+   * Non-streaming JSON 응답 처리 (fallback)
+   */
+  const processJsonResponse = async (response: Response, assistantMsgId: string) => {
+    const data = await response.json();
+
+    console.log('[Chat] JSON fallback response');
+
+    if (data.conversationId) {
+      setConversationId(data.conversationId);
+    }
+
+    if (data.suggestions?.length > 0) {
+      setSuggestions(data.suggestions);
+    } else {
+      setSuggestions([]);
+    }
+
+    if (data.showLeadForm && !leadSubmitted) {
+      setShowLeadForm(true);
+    }
+
+    if (data.vizDirective) {
+      setVizDirective(data.vizDirective);
+    }
+
+    if (data.content) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId
+            ? {
+                ...msg,
+                content: data.content,
+                suggestions: data.suggestions,
+                showLeadForm: data.showLeadForm,
+              }
+            : msg
+        )
+      );
+    }
+  };
+
+  /**
+   * 공통 메시지 전송 함수 (인라인 + 전체화면 공용)
+   */
+  const sendChatMessage = async (messageText: string, currentFiles?: FileAttachment[]) => {
+    const currentFileData: File[] = [];
+    if (currentFiles) {
+      for (const f of currentFiles) {
+        const fileObj = pendingFileDataRef.current.get(f.id);
+        if (fileObj) currentFileData.push(fileObj);
+      }
+    }
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: messageText,
+      attachments: currentFiles,
+    };
+
+    // 빈 어시스턴트 메시지 (스트리밍용 placeholder)
+    const assistantMsgId = (Date.now() + 1).toString();
+    const assistantPlaceholder: Message = {
+      id: assistantMsgId,
+      role: "assistant",
+      content: "",
+    };
+
+    setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
+    setPendingFiles([]);
+    pendingFileDataRef.current.clear();
+    setIsLoading(true);
+
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const sessionId = getOrCreateSessionId();
+
+      // 파일 업로드
+      let uploadedFiles: UploadedFile[] = [];
+      if (currentFileData.length > 0) {
+        try {
+          uploadedFiles = await uploadChatFiles(currentFileData, sessionId);
+        } catch (err) {
+          console.error('[FileUpload] Upload error:', err);
+        }
+      }
+
+      // 히스토리 (최근 10턴, 현재 빈 placeholder 제외)
+      const history = messages.slice(-20).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const attachments = uploadedFiles.length > 0
+        ? uploadedFiles.map(f => ({
+            name: f.name,
+            type: f.type,
+            size: f.size,
+            url: f.url,
+            textContent: f.textContent,
+          }))
+        : undefined;
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.content,
+          sessionId,
+          conversationId,
+          history,
+          attachments,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API Error: ${response.status}`);
+      }
+
+      // Content-Type에 따라 SSE vs JSON 분기
+      const contentType = response.headers.get('Content-Type') || '';
+
+      if (contentType.includes('text/event-stream')) {
+        // SSE 스트리밍
+        await processStreamingResponse(response, assistantMsgId, abortControllerRef.current.signal);
+      } else {
+        // JSON fallback
+        await processJsonResponse(response, assistantMsgId);
+      }
+
+      // 빈 메시지 체크 — 스트리밍 후에도 비어있으면 제거
+      setMessages((prev) => {
+        const msg = prev.find((m) => m.id === assistantMsgId);
+        if (msg && !msg.content) {
+          return prev.filter((m) => m.id !== assistantMsgId);
+        }
+        return prev;
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log("Request aborted");
+        // 빈 placeholder 제거
+        setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
+      } else {
+        console.error("Chat error:", error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? { ...msg, content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." }
+              : msg
+          )
+        );
+      }
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
   // 메시지 전송 — 데스크톱: 인라인 전송 / 모바일: 전체화면 전환 후 자동 전송
   const pendingMessageRef = useRef<string | null>(null);
 
@@ -217,137 +513,9 @@ const Chat = () => {
 
     // 데스크톱: 인라인 직접 전송
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
-    const currentFileData: File[] = [];
-    if (currentFiles) {
-      for (const f of currentFiles) {
-        const fileObj = pendingFileDataRef.current.get(f.id);
-        if (fileObj) currentFileData.push(fileObj);
-      }
-    }
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputValue.trim(),
-      attachments: currentFiles,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const msgText = inputValue.trim();
     setInputValue("");
-    setPendingFiles([]);
-    pendingFileDataRef.current.clear();
-    setIsLoading(true);
-
-    // AbortController 생성
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const sessionId = getOrCreateSessionId();
-
-      // 파일 업로드 (Supabase Storage)
-      let uploadedFiles: UploadedFile[] = [];
-      if (currentFileData.length > 0) {
-        try {
-          uploadedFiles = await uploadChatFiles(currentFileData, sessionId);
-        } catch (err) {
-          console.error('[FileUpload] Upload error:', err);
-        }
-      }
-
-      // 히스토리 구성 (최근 10턴)
-      const history = messages.slice(-20).map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      // 첨부 파일 정보 구성
-      const attachments = uploadedFiles.length > 0
-        ? uploadedFiles.map(f => ({
-            name: f.name,
-            type: f.type,
-            size: f.size,
-            url: f.url,
-            textContent: f.textContent,
-          }))
-        : undefined;
-
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          sessionId,
-          conversationId,
-          history,
-          attachments,
-        }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
-      }
-
-      // JSON 응답 파싱
-      const data = await response.json();
-
-      // DEBUG: API 응답 전체 로그
-      console.log('[Chat] API Response:', JSON.stringify(data, null, 2));
-      console.log('[Chat] vizDirective:', data.vizDirective);
-
-      // conversationId 저장
-      if (data.conversationId) {
-        setConversationId(data.conversationId);
-      }
-
-      // TASK 9: Suggestions 저장
-      if (data.suggestions && data.suggestions.length > 0) {
-        setSuggestions(data.suggestions);
-      } else {
-        setSuggestions([]);
-      }
-
-      // TASK 9: Lead Form 표시 여부
-      if (data.showLeadForm && !leadSubmitted) {
-        setShowLeadForm(true);
-      }
-
-      // TASK C: VizDirective 저장 (3D Visualizer)
-      if (data.vizDirective) {
-        setVizDirective(data.vizDirective);
-      }
-
-      // 어시스턴트 응답 추가
-      if (data.content) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.content,
-          suggestions: data.suggestions,
-          showLeadForm: data.showLeadForm,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        console.log("Request aborted");
-      } else {
-        console.error("Chat error:", error);
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
-    }
+    await sendChatMessage(msgText, currentFiles);
   };
 
   // Enter 키 처리
@@ -694,104 +862,8 @@ const Chat = () => {
     if (!msgText || isLoading) return;
 
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
-    const currentFileData: File[] = [];
-    if (currentFiles) {
-      for (const f of currentFiles) {
-        const fileObj = pendingFileDataRef.current.get(f.id);
-        if (fileObj) currentFileData.push(fileObj);
-      }
-    }
-
     setFsInputValue("");
-    setPendingFiles([]);
-    pendingFileDataRef.current.clear();
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: fsInputValue.trim(),
-      attachments: currentFiles,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-
-    abortControllerRef.current = new AbortController();
-    try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const sessionId = getOrCreateSessionId();
-
-      // 파일 업로드 (Supabase Storage)
-      let uploadedFiles: UploadedFile[] = [];
-      if (currentFileData.length > 0) {
-        try {
-          uploadedFiles = await uploadChatFiles(currentFileData, sessionId);
-        } catch (err) {
-          console.error('[FileUpload] Upload error:', err);
-        }
-      }
-
-      const history = messages.slice(-20).map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const attachments = uploadedFiles.length > 0
-        ? uploadedFiles.map(f => ({
-            name: f.name,
-            type: f.type,
-            size: f.size,
-            url: f.url,
-            textContent: f.textContent,
-          }))
-        : undefined;
-
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMessage.content,
-          sessionId,
-          conversationId,
-          history,
-          attachments,
-        }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.conversationId) setConversationId(data.conversationId);
-      if (data.suggestions?.length > 0) setSuggestions(data.suggestions);
-      else setSuggestions([]);
-      if (data.showLeadForm && !leadSubmitted) setShowLeadForm(true);
-      if (data.vizDirective) setVizDirective(data.vizDirective);
-
-      if (data.content) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.content,
-          suggestions: data.suggestions,
-          showLeadForm: data.showLeadForm,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name !== "AbortError") {
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "죄송합니다. 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
-    }
+    await sendChatMessage(msgText, currentFiles);
   };
 
   // 전체화면 전용 키 핸들러
@@ -1086,7 +1158,7 @@ const Chat = () => {
             <div className="chat-fs-inner">
               {/* 전체화면에서도 축소모드와 동일한 collapsible 메시지 렌더링 (Phase J 통합) */}
               {renderFsCollapsibleMessages()}
-              {isLoading && (
+              {isLoading && !streamingMessageIdRef.current && (
                 <div className="chat-fs-message assistant">
                   <div className="chat-fs-loading">
                     <span className="chat-fs-loading-text">NEURALTWIN 생각 중</span>
@@ -1394,7 +1466,7 @@ const Chat = () => {
 
                 <div className="chat-messages">
                   {renderCollapsibleMessages()}
-                  {isLoading && (
+                  {isLoading && !streamingMessageIdRef.current && (
                     <div className="chat-message assistant">
                       <div className="chat-loading">
                         <span className="chat-loading-text">NEURALTWIN 생각 중</span>

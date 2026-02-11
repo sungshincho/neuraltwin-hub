@@ -13,6 +13,7 @@ import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeD
 import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale, DynamicZone } from './vizDirectiveTypes';
 import KPIBar from './KPIBar';
 import StageProgress from './StageProgress';
+import { computeZoneDiff, describeDiff } from './sceneDiff';
 
 // ═══════════════════════════════════════════
 //  Props 인터페이스
@@ -101,6 +102,9 @@ export default function StoreVisualizer({
     return map;
   }, [zones]);
 
+  // Scene diff: 이전 존 상태 추적
+  const prevZonesRef = useRef<DynamicZone[] | undefined>(undefined);
+
   // 파라메트릭 설정 메모이제이션 (불필요한 씬 재빌드 방지)
   const sceneConfigKey = useMemo(() => {
     const zoneIds = zones?.map(z => z.id).join(',') || '';
@@ -135,10 +139,14 @@ export default function StoreVisualizer({
     // 1. 카메라 lerp 보간 (사용자 인터랙션 중이 아닐 때만)
     // TODO: 프리셋 전환 애니메이션 속도 조절 필요 시 lerpFactor 변경
     if (!isUserInteracting.current) {
-      const lerpFactor = 0.025;
+      // ease-out cubic: 시작은 빠르게, 끝은 부드럽게
+      const rawLerp = 0.035;
+      const posDist = camera.position.distanceTo(cameraTargetPos.current);
+      const maxDist = 30;
+      const t = Math.min(1, posDist / maxDist);
+      const lerpFactor = rawLerp * (1 + 2 * t * t); // 멀수록 더 빠르게 이동
 
       // 현재 위치가 타겟과 충분히 가까우면 lerp 스킵 (불필요한 미세 보정 방지)
-      const posDist = camera.position.distanceTo(cameraTargetPos.current);
       if (posDist > 0.01) {
         const newPos = lerpVector3(camera.position, cameraTargetPos.current, lerpFactor);
         camera.position.copy(newPos);
@@ -166,9 +174,11 @@ export default function StoreVisualizer({
       const borderMat = border.material as THREE.LineBasicMaterial;
 
       if (plane.userData.highlighted) {
-        // 하이라이트: pulse 애니메이션 (더 선명하게)
-        mat.opacity = 0.25 + Math.sin(time * 2) * 0.12;
-        borderMat.opacity = 0.85 + Math.sin(time * 2) * 0.15;
+        // 하이라이트: ease-in-out sine pulse (부드러운 호흡 효과)
+        const pulse = (Math.sin(time * 1.8) + 1) * 0.5; // 0~1 정규화
+        const eased = pulse * pulse * (3 - 2 * pulse);    // smoothstep
+        mat.opacity = 0.15 + eased * 0.22;
+        borderMat.opacity = 0.7 + eased * 0.3;
       } else {
         // 비활성: 존 경계는 약하게 유지 (완전히 안 보이면 공간감 상실)
         mat.opacity = Math.max(0.04, mat.opacity - 0.02);
@@ -391,6 +401,19 @@ export default function StoreVisualizer({
       }
     });
   }, [highlights]);
+
+  // ─────────────────────────────────────────
+  // A-4: Scene Diff 로깅 (존 변경사항 추적)
+  // ─────────────────────────────────────────
+  useEffect(() => {
+    if (!zones) return;
+
+    const diff = computeZoneDiff(prevZonesRef.current, zones);
+    if (diff.added.length > 0 || diff.removed.length > 0 || diff.updated.length > 0) {
+      console.log(`[SceneDiff] ${describeDiff(diff)}`);
+    }
+    prevZonesRef.current = zones;
+  }, [zones]);
 
   // ─────────────────────────────────────────
   // showFlow 변경 시 동선 표시 업데이트

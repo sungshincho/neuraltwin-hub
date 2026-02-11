@@ -121,6 +121,34 @@ function generateFlowFromZones(zones: DynamicZone[]): [number, number, number][]
 }
 
 /**
+ * 존 라벨로부터 업종별 집기 타입 추론
+ */
+function inferFixtureType(label: string): 'rack' | 'shelf' | 'table' | 'counter' | 'mannequin' | 'display_case' {
+  const lc = label.toLowerCase();
+  if (/행거|의류|패션|옷|rack/.test(lc)) return 'rack';
+  if (/선반|진열|식료|grocery|shelf/.test(lc)) return 'shelf';
+  if (/테이블|시식|tasting|table|좌석|seating/.test(lc)) return 'table';
+  if (/카운터|계산|checkout|counter|바|bar/.test(lc)) return 'counter';
+  if (/마네킹|mannequin|피팅|fitting/.test(lc)) return 'mannequin';
+  return 'display_case';
+}
+
+/**
+ * 집기 타입별 크기 프리셋
+ */
+function getFixtureDimensions(type: string, rand: () => number): { w: number; h: number; d: number } {
+  switch (type) {
+    case 'rack':      return { w: 2.0 + rand() * 1.0, h: 1.8 + rand() * 0.4, d: 0.5 + rand() * 0.3 };
+    case 'shelf':     return { w: 1.5 + rand() * 1.0, h: 1.5 + rand() * 0.8, d: 0.6 + rand() * 0.4 };
+    case 'table':     return { w: 1.8 + rand() * 1.2, h: 0.7 + rand() * 0.2, d: 1.0 + rand() * 0.8 };
+    case 'counter':   return { w: 2.5 + rand() * 1.5, h: 0.9 + rand() * 0.2, d: 0.6 + rand() * 0.3 };
+    case 'mannequin': return { w: 0.4 + rand() * 0.2, h: 1.6 + rand() * 0.3, d: 0.3 + rand() * 0.15 };
+    case 'display_case':
+    default:          return { w: 1.2 + rand() * 1.0, h: 1.2 + rand() * 0.6, d: 0.8 + rand() * 0.6 };
+  }
+}
+
+/**
  * 동적 존 내부에 자동 와이어프레임 집기(fixture) 생성
  * 각 존에 2~4개의 박스를 배치하여 시각적 밀도 확보
  */
@@ -150,26 +178,10 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
       const fx = zone.x + (seededRandom(s) - 0.5) * (zw - marginX * 2);
       const fz = zone.z + (seededRandom(s + 1) - 0.5) * (zd - marginZ * 2);
 
-      // 크기 변화 (카운터/테이블/선반 느낌) — 전체적으로 크기 증가
-      const sizeVariant = seededRandom(s + 2);
-      let fw: number, fh: number, fd: number;
-
-      if (sizeVariant < 0.3) {
-        // 낮은 테이블/카운터 (넓고 낮음)
-        fw = 1.5 + seededRandom(s + 3) * 1.5;
-        fh = 0.8 + seededRandom(s + 4) * 0.5;
-        fd = 0.8 + seededRandom(s + 5) * 1.0;
-      } else if (sizeVariant < 0.6) {
-        // 높은 선반/진열대 (좁고 높음)
-        fw = 0.8 + seededRandom(s + 3) * 1.2;
-        fh = 1.6 + seededRandom(s + 4) * 0.8;
-        fd = 0.6 + seededRandom(s + 5) * 0.8;
-      } else {
-        // 중간 크기 집기
-        fw = 1.0 + seededRandom(s + 3) * 1.5;
-        fh = 1.0 + seededRandom(s + 4) * 0.8;
-        fd = 0.7 + seededRandom(s + 5) * 1.0;
-      }
+      // 업종별 집기 타입 추론 → 타입별 크기 프리셋 적용
+      const fixtureType = inferFixtureType(zone.label);
+      const fixtureRand = () => seededRandom(s + 3 + furniture.length);
+      const { w: fw, h: fh, d: fd } = getFixtureDimensions(fixtureType, fixtureRand);
 
       furniture.push({
         x: fx,
@@ -285,7 +297,7 @@ function createWireBox(
 }
 
 /**
- * 존 바닥 플레인 생성
+ * 존 바닥 플레인 생성 (미세 그리드 패턴)
  */
 function createZonePlane(
   w: number,
@@ -297,19 +309,41 @@ function createZonePlane(
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
-    opacity: 0.06, // 비하이라이트 상태에서도 약간 보이게 (완전 투명 → 미세 표시)
+    opacity: 0.06,
     side: THREE.DoubleSide,
     depthWrite: false
   });
   const plane = new THREE.Mesh(geometry, material);
   plane.rotation.x = -Math.PI / 2;
   plane.position.copy(position);
-  plane.position.y = 0.05; // 바닥에서 약간 위
+  plane.position.y = 0.05;
+
+  // 존 내부 미세 그리드 (1m 간격)
+  const gridW = Math.floor(w);
+  const gridD = Math.floor(d);
+  if (gridW > 1 && gridD > 1) {
+    const innerGrid = new THREE.GridHelper(
+      Math.max(w, d),
+      Math.max(gridW, gridD),
+      color,
+      color
+    );
+    innerGrid.material.transparent = true;
+    (innerGrid.material as THREE.Material).opacity = 0.04;
+    // GridHelper는 XZ 평면이므로 회전 불필요
+    // 부모 plane은 XZ 회전됨 → grid는 plane.add 대신 별도 위치
+    innerGrid.position.copy(position);
+    innerGrid.position.y = 0.04;
+    // 씬에 직접 추가하지 않고, plane과 같은 위치에 배치
+    // plane에 userData로 참조 저장 (씬 빌더에서 추가)
+    plane.userData.innerGrid = innerGrid;
+  }
+
   return plane;
 }
 
 /**
- * 존 테두리 생성
+ * 존 테두리 생성 (대시 + 코너 마커)
  */
 function createZoneBorder(
   w: number,
@@ -317,19 +351,72 @@ function createZoneBorder(
   color: number,
   position: THREE.Vector3
 ): THREE.LineSegments {
-  const geometry = new THREE.PlaneGeometry(w, d);
-  const edges = new THREE.EdgesGeometry(geometry);
-  const material = new THREE.LineBasicMaterial({
+  // 메인 테두리 (dashed)
+  const hw = w / 2, hd = d / 2;
+  const cornerLen = Math.min(w, d) * 0.15; // 코너 마커 길이
+
+  // 대시 테두리 vertices
+  const borderVerts: number[] = [];
+  // Top edge
+  borderVerts.push(-hw, 0, -hd, hw, 0, -hd);
+  // Right edge
+  borderVerts.push(hw, 0, -hd, hw, 0, hd);
+  // Bottom edge
+  borderVerts.push(hw, 0, hd, -hw, 0, hd);
+  // Left edge
+  borderVerts.push(-hw, 0, hd, -hw, 0, -hd);
+
+  const borderGeo = new THREE.BufferGeometry();
+  borderGeo.setAttribute('position', new THREE.Float32BufferAttribute(borderVerts, 3));
+
+  const borderMat = new THREE.LineDashedMaterial({
     color,
     transparent: true,
-    opacity: 0.25, // 비하이라이트에서도 존 경계 약하게 표시
-    linewidth: 2
+    opacity: 0.25,
+    dashSize: 0.4,
+    gapSize: 0.2,
+    linewidth: 1,
   });
-  const border = new THREE.LineSegments(edges, material);
-  border.rotation.x = -Math.PI / 2;
-  border.position.copy(position);
-  border.position.y = 0.06;
-  return border;
+
+  const borderLine = new THREE.LineSegments(borderGeo, borderMat);
+  borderLine.computeLineDistances();
+  borderLine.rotation.x = 0; // already in XZ plane
+  borderLine.position.copy(position);
+  borderLine.position.y = 0.06;
+
+  // 코너 마커 (밝은 L자 표시)
+  const cornerVerts: number[] = [];
+  // Top-left corner
+  cornerVerts.push(-hw, 0, -hd, -hw + cornerLen, 0, -hd);
+  cornerVerts.push(-hw, 0, -hd, -hw, 0, -hd + cornerLen);
+  // Top-right corner
+  cornerVerts.push(hw, 0, -hd, hw - cornerLen, 0, -hd);
+  cornerVerts.push(hw, 0, -hd, hw, 0, -hd + cornerLen);
+  // Bottom-right corner
+  cornerVerts.push(hw, 0, hd, hw - cornerLen, 0, hd);
+  cornerVerts.push(hw, 0, hd, hw, 0, hd - cornerLen);
+  // Bottom-left corner
+  cornerVerts.push(-hw, 0, hd, -hw + cornerLen, 0, hd);
+  cornerVerts.push(-hw, 0, hd, -hw, 0, hd - cornerLen);
+
+  const cornerGeo = new THREE.BufferGeometry();
+  cornerGeo.setAttribute('position', new THREE.Float32BufferAttribute(cornerVerts, 3));
+
+  const cornerMat = new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.6,
+    linewidth: 2,
+  });
+
+  const cornerMarkers = new THREE.LineSegments(cornerGeo, cornerMat);
+  cornerMarkers.position.copy(position);
+  cornerMarkers.position.y = 0.07;
+
+  // 그룹 대신 border를 반환해야 하므로 cornerMarkers를 borderLine의 자식으로 추가
+  borderLine.add(cornerMarkers);
+
+  return borderLine;
 }
 
 // ═══════════════════════════════════════════
@@ -473,6 +560,10 @@ export function buildScene(
     plane.userData.zoneId = zoneId;
     plane.userData.highlighted = false;
     scene.add(plane);
+    // 존 내부 미세 그리드 추가
+    if (plane.userData.innerGrid) {
+      scene.add(plane.userData.innerGrid);
+    }
 
     const border = createZoneBorder(zone.w, zone.d, zone.color, position);
     border.userData.zoneId = zoneId;
