@@ -682,13 +682,19 @@ const LOVABLE_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions'
 async function callLovableGateway(
   systemPrompt: string,
   messages: ChatMessage[],
-  stream: boolean = true
+  stream: boolean = true,
+  useFastModel: boolean = false
 ): Promise<Response> {
   const apiKey = Deno.env.get('LOVABLE_API_KEY');
 
   if (!apiKey) {
     throw new Error('LOVABLE_API_KEY not configured');
   }
+
+  // 간단한 질문 → Flash (빠름), 복잡한 질문 → Pro (정확)
+  const model = useFastModel ? 'google/gemini-2.5-flash' : 'google/gemini-2.5-pro';
+  // Flash: 2048 토큰 충분, Pro: 4096 (기존 8192에서 절반 축소)
+  const maxTokens = useFastModel ? 2048 : 4096;
 
   const response = await fetch(LOVABLE_GATEWAY_URL, {
     method: 'POST',
@@ -697,13 +703,13 @@ async function callLovableGateway(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-pro',
+      model,
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages
       ],
       temperature: 0.7,
-      max_tokens: 8192,
+      max_tokens: maxTokens,
       stream,
     }),
   });
@@ -1237,14 +1243,28 @@ serve(async (request: Request) => {
       console.log(`[PainPoint] ${painPointResult.summary}`);
     }
 
-    // 12. Lovable Gateway 호출 — 클라이언트가 stream=false 요청 시 JSON 직행, 아니면 SSE 시도
+    // 12. 모델 선택: 간단 질문 → Flash (빠름), 복잡 질문 → Pro (정확)
+    // Flash 조건: 짧은 질문 + 높은 토픽 confidence + 첨부 없음 + 비주얼라이저 불필요
+    const isSimpleQuery = (
+      message.length < 80 &&
+      classification.confidence > 0.7 &&
+      !attachments?.length &&
+      !message.includes('매장') && !message.includes('공간') && !message.includes('레이아웃') &&
+      !message.includes('시각화') && !message.includes('비주얼')
+    );
+    const useFastModel = isSimpleQuery;
+    if (useFastModel) {
+      console.log('[AI] Using Flash model (simple query detected)');
+    }
+
+    // 13. Lovable Gateway 호출 — 클라이언트가 stream=false 요청 시 JSON 직행, 아니면 SSE 시도
     const clientWantsStream = body.stream !== false;
     let useStreaming = clientWantsStream;
     let upstreamResponse: Response;
 
     if (clientWantsStream) {
       try {
-        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
+        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true, useFastModel);
         // Content-Type 확인 — SSE가 아니면 non-streaming fallback
         const ct = upstreamResponse.headers.get('Content-Type') || '';
         if (!ct.includes('text/event-stream') && !ct.includes('text/plain')) {
@@ -1254,11 +1274,11 @@ serve(async (request: Request) => {
       } catch (streamErr) {
         console.warn('[AI] Streaming call failed, falling back to non-streaming:', streamErr);
         useStreaming = false;
-        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
+        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false, useFastModel);
       }
     } else {
       console.log('[AI] Client requested non-streaming (mobile)');
-      upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
+      upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false, useFastModel);
     }
 
     // ═══════════════════════════════════════════
