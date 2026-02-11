@@ -2,6 +2,7 @@
 // HTML 원본을 React로 변환: 인트로 애니메이션, 아코디언, 캔버스, 스크롤 Reveal
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import "@/styles/about.css";
 
 // 서비스 아코디언 데이터
@@ -61,6 +62,7 @@ const SERVICES = [
 
 
 const About = () => {
+  const { user, isAuthenticated, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // 인트로 애니메이션 상태
   const [introComplete, setIntroComplete] = useState(false);
@@ -184,8 +186,17 @@ const About = () => {
           <div className="page-nav-links">
             <Link to="/about" className="active">제품 &amp; 회사소개</Link>
             <Link to="/contact">문의하기</Link>
-            <Link to="/auth" state={{ tab: "login" }} style={{ display: "none" }}>로그인</Link>
-            <Link to="/auth" state={{ tab: "signup" }} style={{ display: "none" }}>회원가입</Link>
+            {isAuthenticated ? (
+              <>
+                <span className="nav-user-name">{user?.user_metadata?.name || user?.email?.split('@')[0] || '사용자'}</span>
+                <button className="nav-auth-btn" onClick={() => signOut()}>로그아웃</button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
+                <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
+              </>
+            )}
           </div>
           <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
             <span className="mobile-menu-bar"></span>
@@ -197,6 +208,14 @@ const About = () => {
           <div className="mobile-menu-dropdown">
             <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
             <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
+            {isAuthenticated ? (
+              <button className="mobile-auth-btn" onClick={() => { signOut(); setMobileMenuOpen(false); }}>로그아웃</button>
+            ) : (
+              <>
+                <Link to="/auth" state={{ tab: "login" }} onClick={() => setMobileMenuOpen(false)}>로그인</Link>
+                <Link to="/auth" state={{ tab: "signup" }} onClick={() => setMobileMenuOpen(false)}>회원가입</Link>
+              </>
+            )}
           </div>
         )}
 
