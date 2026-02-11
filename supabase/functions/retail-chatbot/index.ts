@@ -464,6 +464,7 @@ interface WebChatRequest {
   conversationId?: string;    // 기존 대화 이어가기
   history?: ChatMessage[];    // 클라이언트 측 히스토리 (선택적)
   attachments?: FileAttachmentData[];  // 첨부 파일 데이터
+  stream?: boolean;           // 클라이언트 SSE 스트리밍 요청 (default: true, 모바일은 false)
   // TASK 9: Action 분기
   action?: 'chat' | 'capture_lead' | 'handover_session';
   lead?: LeadFormData;
@@ -1236,22 +1237,27 @@ serve(async (request: Request) => {
       console.log(`[PainPoint] ${painPointResult.summary}`);
     }
 
-    // 12. Lovable Gateway 호출 — SSE 스트리밍 모드 시도, 실패 시 non-streaming fallback
-    let useStreaming = true;
+    // 12. Lovable Gateway 호출 — 클라이언트가 stream=false 요청 시 JSON 직행, 아니면 SSE 시도
+    const clientWantsStream = body.stream !== false;
+    let useStreaming = clientWantsStream;
     let upstreamResponse: Response;
 
-    try {
-      upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
-      // Content-Type 확인 — SSE가 아니면 non-streaming fallback
-      const ct = upstreamResponse.headers.get('Content-Type') || '';
-      if (!ct.includes('text/event-stream') && !ct.includes('text/plain')) {
-        // JSON 응답일 수 있음 → non-streaming으로 처리
+    if (clientWantsStream) {
+      try {
+        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
+        // Content-Type 확인 — SSE가 아니면 non-streaming fallback
+        const ct = upstreamResponse.headers.get('Content-Type') || '';
+        if (!ct.includes('text/event-stream') && !ct.includes('text/plain')) {
+          useStreaming = false;
+          console.log('[AI] Gateway returned non-streaming response, using fallback');
+        }
+      } catch (streamErr) {
+        console.warn('[AI] Streaming call failed, falling back to non-streaming:', streamErr);
         useStreaming = false;
-        console.log('[AI] Gateway returned non-streaming response, using fallback');
+        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
       }
-    } catch (streamErr) {
-      console.warn('[AI] Streaming call failed, falling back to non-streaming:', streamErr);
-      useStreaming = false;
+    } else {
+      console.log('[AI] Client requested non-streaming (mobile)');
       upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
     }
 

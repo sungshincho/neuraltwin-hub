@@ -329,16 +329,29 @@ const Chat = () => {
    * Non-streaming JSON 응답 처리 (fallback)
    */
   const processJsonResponse = async (response: Response, assistantMsgId: string) => {
-    const data = await response.json();
+    let data: Record<string, unknown>;
+    try {
+      data = await response.json();
+    } catch {
+      // JSON 파싱 실패 — 텍스트로 시도
+      const text = await response.text().catch(() => '');
+      console.warn('[Chat] JSON parse failed, raw text:', text.slice(0, 200));
+      throw new Error('응답을 파싱할 수 없습니다.');
+    }
 
     console.log('[Chat] JSON fallback response');
 
-    if (data.conversationId) {
-      setConversationId(data.conversationId);
+    if (data.error) {
+      throw new Error(String(data.error));
     }
 
-    if (data.suggestions?.length > 0) {
-      setSuggestions(data.suggestions);
+    if (data.conversationId) {
+      setConversationId(data.conversationId as string);
+    }
+
+    const suggestions = data.suggestions as string[] | undefined;
+    if (suggestions?.length && suggestions.length > 0) {
+      setSuggestions(suggestions);
     } else {
       setSuggestions([]);
     }
@@ -348,18 +361,19 @@ const Chat = () => {
     }
 
     if (data.vizDirective) {
-      setVizDirective(data.vizDirective);
+      setVizDirective(data.vizDirective as VizDirective);
     }
 
-    if (data.content) {
+    const content = data.content as string | undefined;
+    if (content) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMsgId
             ? {
                 ...msg,
-                content: data.content,
-                suggestions: data.suggestions,
-                showLeadForm: data.showLeadForm,
+                content,
+                suggestions,
+                showLeadForm: data.showLeadForm as boolean | undefined,
               }
             : msg
         )
@@ -431,6 +445,11 @@ const Chat = () => {
           }))
         : undefined;
 
+      // 모바일 감지: SSE 비활성화 (모바일 네트워크/브라우저 호환성)
+      const isMobileDevice = typeof window !== 'undefined' && (
+        window.innerWidth < 768 || /Mobi|Android/i.test(navigator.userAgent)
+      );
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -440,6 +459,7 @@ const Chat = () => {
           conversationId,
           history,
           attachments,
+          stream: !isMobileDevice, // 모바일: JSON, 데스크톱: SSE
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -451,12 +471,29 @@ const Chat = () => {
 
       // Content-Type에 따라 SSE vs JSON 분기
       const contentType = response.headers.get('Content-Type') || '';
+      const canStream = contentType.includes('text/event-stream') && response.body;
 
-      if (contentType.includes('text/event-stream')) {
-        // SSE 스트리밍
-        await processStreamingResponse(response, assistantMsgId, abortControllerRef.current.signal);
+      if (canStream) {
+        // SSE 스트리밍 (데스크톱) — 실패 시 부분 콘텐츠 유지
+        try {
+          await processStreamingResponse(response, assistantMsgId, abortControllerRef.current.signal);
+        } catch (sseErr) {
+          console.warn('[Chat] SSE processing failed:', sseErr);
+          // 부분 콘텐츠가 있으면 유지, 없으면 에러 표시
+          setMessages((prev) => {
+            const msg = prev.find((m) => m.id === assistantMsgId);
+            if (msg && !msg.content) {
+              return prev.map((m) =>
+                m.id === assistantMsgId
+                  ? { ...m, content: "죄송합니다. 스트리밍 응답 중 오류가 발생했습니다. 다시 시도해 주세요." }
+                  : m
+              );
+            }
+            return prev; // 부분 콘텐츠가 있으면 그대로 유지
+          });
+        }
       } else {
-        // JSON fallback
+        // JSON fallback (모바일 또는 SSE 미지원)
         await processJsonResponse(response, assistantMsgId);
       }
 
