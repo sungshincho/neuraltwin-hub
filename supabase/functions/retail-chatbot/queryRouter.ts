@@ -77,6 +77,8 @@ const SEARCH_TRIGGER_PATTERNS = [
   /\d{4}년?\s*(실적|매출|현황|동향)/,
   /(경쟁사|경쟁 브랜드|경쟁업체)\s*(분석|비교|현황)/,
   /(시장|마켓)\s*(조사|분석|규모|현황)/,
+  /(유통|입점|매장)\s*(현황|분석|전략|구조)/,
+  /(브랜드|기업)\s*(분석|리서치|조사|소개)/,
   // SNS/소셜미디어 검색 트리거
   /(인스타|인스타그램|instagram)\s*(계정|팔로워|반응|인기|피드)?/i,
   /(페이스북|facebook|페북)\s*(페이지|광고|마케팅)?/i,
@@ -172,13 +174,27 @@ function isCommonEnglishWord(word: string): boolean {
 
 /**
  * 한글 단어가 브랜드명처럼 보이는지 판단
- * 맥락 기반: "XX 수입", "XX 팝업", "XX 브랜드" 등의 패턴
+ * 맥락 기반 + 형태 기반 판단
  */
 function looksLikeBrandName(candidate: string, fullMessage: string): boolean {
+  // ── 형태 기반: 업종 접미어가 포함된 복합어 (예: XX골프, XX패션, XX뷰티) ──
+  const BRAND_SUFFIXES = /(?:골프|패션|뷰티|스포츠|리빙|푸드|키친|커피|베이커리|스토어|랩|하우스|클럽|웨어|몰|샵|마켓|갤러리|플레이스|스튜디오|카페|코스메틱|홈|라이프|팩토리)$/;
+  if (BRAND_SUFFIXES.test(candidate)) {
+    return true; // "매너스골프", "블랙야크스포츠" 등 → 높은 확률로 브랜드명
+  }
+
+  // ── 맥락 기반: 브랜드명 뒤에 오는 단어 패턴 ──
   const brandContextPatterns = [
+    // 기존 패턴
     new RegExp(`${candidate}\\s*(수입|팝업|매장|오픈|론칭|입점|브랜드|제품|상품|컬렉션)`),
     new RegExp(`(수입|해외|글로벌|유럽|미국|일본|프랑스|이탈리아)\\s*.*${candidate}`),
     new RegExp(`${candidate}\\s*(이|가|을|를|의|에서|에)\\s`),
+    // 확장 패턴: 유통/분석/현황 등 비즈니스 맥락
+    new RegExp(`${candidate}\\s*(한국|국내|해외|글로벌|유통|현황|분석|전략|매출|실적|히스토리)`),
+    new RegExp(`${candidate}\\s*(인스타|sns|소셜|마케팅|광고|채널|홈페이지|사이트)`),
+    new RegExp(`${candidate}\\s*(리서치|조사|검색|찾아|알려|소개|설명)`),
+    // "XX에 대해", "XX에대해", "XX 관련" 등
+    new RegExp(`${candidate}\\s*(에\\s*대해|관련|관한|대한|정보)`),
   ];
 
   return brandContextPatterns.some(p => p.test(fullMessage));
