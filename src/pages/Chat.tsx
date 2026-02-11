@@ -658,6 +658,26 @@ const Chat = () => {
   // PHASE J: 메시지 리액션 핸들러 (Copy / Like / Dislike)
   // ═══════════════════════════════════════════
 
+  // 리액션 로그를 백엔드에 전송 (fire-and-forget)
+  const logReaction = useCallback((type: 'copy' | 'positive' | 'negative', messageId: string, messageContent?: string) => {
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    if (!SUPABASE_URL) return;
+    fetch(`${SUPABASE_URL}/functions/v1/retail-chatbot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'log_reaction',
+        sessionId: getOrCreateSessionId(),
+        conversationId,
+        reaction: {
+          type,
+          messageId,
+          messageContent: messageContent?.slice(0, 200),
+        },
+      }),
+    }).catch((err) => console.warn('[Reaction] Log failed:', err));
+  }, [conversationId]);
+
   const handleCopyMessage = useCallback((messageId: string, content: string) => {
     navigator.clipboard.writeText(content).then(() => {
       setCopiedMessageId(messageId);
@@ -673,7 +693,8 @@ const Chat = () => {
       setCopiedMessageId(messageId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     });
-  }, []);
+    logReaction('copy', messageId, content);
+  }, [logReaction]);
 
   const handleFeedback = useCallback((messageId: string, feedback: "positive" | "negative") => {
     setMessages((prev) =>
@@ -683,8 +704,12 @@ const Chat = () => {
           : msg
       )
     );
-    // TODO: DB에 피드백 저장 (chat_messages.user_feedback 컬럼)
-  }, []);
+    // 피드백 토글: 이미 같은 피드백이면 취소 (null로 변경되므로 로그하지 않음)
+    const currentMsg = messages.find(m => m.id === messageId);
+    if (currentMsg?.feedback !== feedback) {
+      logReaction(feedback, messageId, currentMsg?.content);
+    }
+  }, [logReaction, messages]);
 
   // ═══════════════════════════════════════════
   // PHASE J: Export 핸들러

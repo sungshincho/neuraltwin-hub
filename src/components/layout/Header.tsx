@@ -140,16 +140,7 @@ export const Header = () => {
           소개서 요청
         </Link>
       </Button>
-      <Button variant="ghost" asChild className="hover:text-white">
-        <Link to="/auth" state={{ tab: "login" }}>
-          로그인
-        </Link>
-      </Button>
-      <Button variant="ghost" asChild className="hover:text-white">
-        <Link to="/auth" state={{ tab: "signup" }}>
-          회원가입
-        </Link>
-      </Button>
+      {/* 로그인/회원가입 임시 숨김 */}
     </>
   )}
 </div>
@@ -199,16 +190,7 @@ export const Header = () => {
                     소개서 요청
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
-                  <Link to="/auth" state={{ tab: "login" }} onClick={() => setMobileMenuOpen(false)}>
-                    로그인
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full">
-                  <Link to="/auth" state={{ tab: "signup" }} onClick={() => setMobileMenuOpen(false)}>
-                    회원가입
-                  </Link>
-                </Button>
+                {/* 로그인/회원가입 임시 숨김 */}
               </div>}
           </div>
         </div>}

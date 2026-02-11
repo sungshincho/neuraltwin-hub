@@ -466,8 +466,14 @@ interface WebChatRequest {
   attachments?: FileAttachmentData[];  // 첨부 파일 데이터
   stream?: boolean;           // 클라이언트 SSE 스트리밍 요청 (default: true, 모바일은 false)
   // TASK 9: Action 분기
-  action?: 'chat' | 'capture_lead' | 'handover_session';
+  action?: 'chat' | 'capture_lead' | 'handover_session' | 'log_reaction';
   lead?: LeadFormData;
+  // log_reaction 전용
+  reaction?: {
+    messageId?: string;         // 프론트엔드 메시지 ID
+    type: 'copy' | 'positive' | 'negative';
+    messageContent?: string;    // 리액션 대상 메시지 내용 (처음 200자)
+  };
 }
 
 // TASK 9: 리드 폼 데이터
@@ -1060,6 +1066,90 @@ async function handleSessionHandover(
 }
 
 // ═══════════════════════════════════════════
+//  리액션 로그 기록 핸들러
+// ═══════════════════════════════════════════
+
+async function handleLogReaction(
+  supabase: ReturnType<typeof createClient>,
+  body: WebChatRequest,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const { reaction, sessionId, conversationId } = body;
+
+    if (!reaction || !reaction.type) {
+      return new Response(
+        JSON.stringify({ error: 'reaction.type is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // chat_events 테이블에 리액션 이벤트 로깅
+    const eventData: Record<string, unknown> = {
+      reactionType: reaction.type,     // 'copy' | 'positive' | 'negative'
+      messageId: reaction.messageId,
+      sessionId,
+      conversationId,
+      timestamp: new Date().toISOString(),
+    };
+
+    // 메시지 내용 일부 저장 (디버깅/분석용, 200자 제한)
+    if (reaction.messageContent) {
+      eventData.messagePreview = reaction.messageContent.slice(0, 200);
+    }
+
+    const { error: eventError } = await supabase
+      .from('chat_events')
+      .insert({
+        conversation_id: conversationId || null,
+        channel: 'website',
+        event_type: `reaction_${reaction.type}`,
+        event_data: eventData,
+      });
+
+    if (eventError) {
+      console.error('[Reaction] Event log error:', eventError);
+    }
+
+    // positive/negative 피드백인 경우 — conversationId가 있으면 최근 assistant 메시지에 user_feedback 업데이트
+    if ((reaction.type === 'positive' || reaction.type === 'negative') && conversationId) {
+      const { data: recentMsg } = await supabase
+        .from('chat_messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .eq('role', 'assistant')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentMsg) {
+        const { error: updateError } = await supabase
+          .from('chat_messages')
+          .update({ user_feedback: reaction.type })
+          .eq('id', recentMsg.id);
+
+        if (updateError) {
+          console.error('[Reaction] Message feedback update error:', updateError);
+        }
+      }
+    }
+
+    console.log(`[Reaction] ${reaction.type} logged, conv=${conversationId || 'none'}`);
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (err) {
+    console.error('[Reaction] Error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// ═══════════════════════════════════════════
 //  메인 핸들러
 // ═══════════════════════════════════════════
 
@@ -1102,6 +1192,10 @@ serve(async (request: Request) => {
 
     if (action === 'handover_session') {
       return handleSessionHandover(supabase, body, auth, corsHeaders);
+    }
+
+    if (action === 'log_reaction') {
+      return handleLogReaction(supabase, body, corsHeaders);
     }
 
     // ═══════════════════════════════════════════
