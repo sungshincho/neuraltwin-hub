@@ -10889,6 +10889,20 @@ export type Database = {
         Args: { p_org_id: string; p_store_id?: string }
         Returns: Json
       }
+      get_customer_segments: {
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_store_id: string
+        }
+        Returns: {
+          avg_transaction_value: number
+          customer_count: number
+          segment_name: string
+          visit_frequency: number
+        }[]
+      }
       get_daily_kpis_summary: {
         Args: { p_days?: number; p_store_id: string }
         Returns: {
@@ -10953,6 +10967,19 @@ export type Database = {
         Args: { p_import_type: string }
         Returns: string
       }
+      get_inventory_status: {
+        Args: { p_org_id: string }
+        Returns: {
+          category: string
+          current_stock: number
+          minimum_stock: number
+          optimal_stock: number
+          product_id: string
+          product_name: string
+          stock_status: string
+          weekly_demand: number
+        }[]
+      }
       get_kpi_lineage: {
         Args: {
           p_date?: string
@@ -10961,6 +10988,28 @@ export type Database = {
           p_store_id?: string
         }
         Returns: Json
+      }
+      get_overview_kpis: {
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_store_id: string
+        }
+        Returns: {
+          avg_conversion_rate: number
+          avg_transaction_value: number
+          funnel_browse: number
+          funnel_engage: number
+          funnel_entry: number
+          funnel_fitting: number
+          funnel_purchase: number
+          returning_visitors: number
+          total_revenue: number
+          total_transactions: number
+          total_visitors: number
+          unique_visitors: number
+        }[]
       }
       get_product_associations: {
         Args: {
@@ -10971,6 +11020,22 @@ export type Database = {
           p_store_id: string
         }
         Returns: Json
+      }
+      get_product_performance: {
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_store_id: string
+        }
+        Returns: {
+          category: string
+          product_id: string
+          product_name: string
+          revenue: number
+          stock_level: number
+          units_sold: number
+        }[]
       }
       get_roi_by_category: {
         Args: { p_org_id: string; p_store_id?: string }
@@ -11048,6 +11113,22 @@ export type Database = {
           date: string
           purchase_count: number
           total_visits: number
+        }[]
+      }
+      get_zone_metrics: {
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_store_id: string
+        }
+        Returns: {
+          avg_dwell_seconds: number
+          revenue: number
+          visitors: number
+          zone_id: string
+          zone_name: string
+          zone_type: string
         }[]
       }
       graph_n_hop_query: {
