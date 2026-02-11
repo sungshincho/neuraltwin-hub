@@ -19,7 +19,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Rebuild trigger - latest GitHub commit v8
+// Rebuild trigger - latest GitHub commit v9
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
