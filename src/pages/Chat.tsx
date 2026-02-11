@@ -436,8 +436,8 @@ const Chat = () => {
         }
       }
 
-      // 히스토리 (최근 5턴=10메시지, 토큰 절약으로 레이턴시 단축)
-      const history = messages.slice(-10).map((m) => ({
+      // 히스토리 (최근 10턴, 현재 빈 placeholder 제외)
+      const history = messages.slice(-20).map((m) => ({
         role: m.role,
         content: m.content,
       }));
