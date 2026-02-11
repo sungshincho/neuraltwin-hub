@@ -317,6 +317,44 @@
     color: var(--white);
 }
 
+/* 네비게이션 인증 버튼 */
+.nav-signup-link {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 16px;
+    border-radius: 6px;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+.nav-signup-link:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.nav-user-name {
+    color: var(--gray-300);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.nav-auth-btn {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--gray-300);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.3s, background 0.3s, border-color 0.3s;
+}
+.nav-auth-btn:hover {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* --- Hero Content --- */
 .hero-content {
     display: flex;
@@ -615,6 +653,22 @@
 }
 
 .mobile-menu-dropdown a:hover {
+    color: var(--white);
+}
+
+/* 모바일 메뉴 인증 버튼 */
+.mobile-auth-btn {
+    background: none;
+    border: none;
+    color: var(--gray-300);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 0;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.mobile-auth-btn:hover {
     color: var(--white);
 }
 
