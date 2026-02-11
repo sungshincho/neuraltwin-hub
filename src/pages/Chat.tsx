@@ -10,6 +10,7 @@ import "@/styles/chat.css";
 // 3D Visualizer 컴포넌트
 import { StoreVisualizer } from "@/components/chatbot/visualizer";
 import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
+import { mergeVizDirective } from "@/components/chatbot/visualizer";
 
 // Export 유틸리티
 import { exportAsMarkdown, exportAsPDF, exportAsDocx } from "@/shared/chat/utils/exportConversation";
@@ -276,9 +277,12 @@ const Chat = () => {
               }
 
               case 'viz': {
-                // VizDirective 업데이트
+                // VizDirective 업데이트 — 부분 이벤트 병합 (zones, kpis 등 별도 도착 대응)
                 console.log('[Chat:SSE] viz event received:', parsed);
-                setVizDirective(parsed);
+                setVizDirective((prev) => {
+                  if (!prev) return parsed as VizDirective;
+                  return mergeVizDirective(prev, parsed as Partial<VizDirective>);
+                });
                 break;
               }
 
@@ -368,7 +372,10 @@ const Chat = () => {
     }
 
     if (data.vizDirective) {
-      setVizDirective(data.vizDirective as VizDirective);
+      setVizDirective((prev) => {
+        if (!prev) return data.vizDirective as VizDirective;
+        return mergeVizDirective(prev, data.vizDirective as Partial<VizDirective>);
+      });
     }
 
     const content = data.content as string | undefined;
@@ -418,6 +425,7 @@ const Chat = () => {
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
     setPendingFiles([]);
     pendingFileDataRef.current.clear();
+    setVizDirective(null);  // 새 질문 시 이전 비주얼라이저 데이터 리셋
     setIsLoading(true);
 
     abortControllerRef.current = new AbortController();
