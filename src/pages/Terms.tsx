@@ -1,49 +1,138 @@
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import "@/styles/legal.css";
 
 const Terms = () => {
-  return (
-    <div className="min-h-screen">
-      <Header />
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-      <section className="pt-32 pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl font-bold mb-8">
-              <span className="gradient-text">이용약관</span>
-            </h1>
-            
-            <Card className="glass p-8 space-y-6 text-muted-foreground">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">1. 서비스 이용</h2>
+  // === Intro animation state ===
+  const [introDone, setIntroDone] = useState(false);
+  const [curtainOpen, setCurtainOpen] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [introHidden, setIntroHidden] = useState(false);
+
+  useEffect(() => {
+    document.body.style.backgroundColor = "#0a0a0a";
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+
+    const t1 = setTimeout(() => setIntroDone(true), 1100);
+    const t2 = setTimeout(() => {
+      setCurtainOpen(true);
+      setContentVisible(true);
+    }, 1400);
+    const t3 = setTimeout(() => setIntroHidden(true), 2200);
+
+    return () => {
+      document.body.style.backgroundColor = "";
+      document.body.style.margin = "";
+      document.body.style.padding = "";
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
+  return (
+    <div className="legal-page">
+      {/* ==================== INTRO ANIMATION ==================== */}
+      {!introHidden && (
+        <div className={`intro-overlay${introDone ? " done" : ""}`}>
+          <div className="intro-logo-wrapper">
+            <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" />
+          </div>
+          <div className="intro-tagline">Intelligence Redefined</div>
+          <div className="intro-line"></div>
+        </div>
+      )}
+      {!introHidden && <div className={`intro-curtain-top${curtainOpen ? " open" : ""}`} />}
+      {!introHidden && <div className={`intro-curtain-bottom${curtainOpen ? " open" : ""}`} />}
+
+      {/* ==================== GRID BACKGROUND ==================== */}
+      <div className="page-grid-bg">
+        <div className="grid-lines"></div>
+        <div className="grid-lines-fine"></div>
+        <div className="grid-dots"></div>
+        <div className="grid-glow"></div>
+      </div>
+
+      {/* ==================== PAGE CONTENT ==================== */}
+      <div className={`page-content${contentVisible ? " visible" : ""}`}>
+
+        {/* Nav */}
+        <nav className="page-nav">
+          <Link to="/">
+            <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
+          </Link>
+          <div className="page-nav-links">
+            <Link to="/about">제품 &amp; 회사소개</Link>
+            <Link to="/contact">문의하기</Link>
+            <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
+          </div>
+          <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
+            <span className="mobile-menu-bar"></span>
+            <span className="mobile-menu-bar"></span>
+            <span className="mobile-menu-bar"></span>
+          </button>
+        </nav>
+        {mobileMenuOpen && (
+          <div className="mobile-menu-dropdown">
+            <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
+            <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
+            <Link to="/auth" state={{ tab: "login" }} onClick={() => setMobileMenuOpen(false)}>로그인</Link>
+          </div>
+        )}
+
+        {/* ==================== LEGAL CONTENT ==================== */}
+        <section className="legal-section">
+          <div className="legal-inner">
+            <div className="legal-label">Terms of Service</div>
+            <h1 className="legal-title">이용약관</h1>
+
+            <div className="legal-card">
+              <div className="legal-block">
+                <h2>1. 서비스 이용</h2>
                 <p>NEURALTWIN 서비스 이용 시 본 약관에 동의한 것으로 간주됩니다.</p>
               </div>
 
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">2. 이용자의 의무</h2>
+              <hr className="legal-divider" />
+
+              <div className="legal-block">
+                <h2>2. 이용자의 의무</h2>
                 <p>이용자는 서비스를 올바르게 사용해야 하며, 불법적인 활동에 이용할 수 없습니다.</p>
               </div>
 
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">3. 서비스 제공 및 변경</h2>
+              <hr className="legal-divider" />
+
+              <div className="legal-block">
+                <h2>3. 서비스 제공 및 변경</h2>
                 <p>NEURALTWIN은 서비스 개선을 위해 내용을 변경할 수 있습니다.</p>
               </div>
 
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">4. 면책조항</h2>
+              <hr className="legal-divider" />
+
+              <div className="legal-block">
+                <h2>4. 면책조항</h2>
                 <p>NEURALTWIN은 천재지변 등 불가항력으로 인한 서비스 중단에 대해 책임지지 않습니다.</p>
               </div>
 
-              <div className="pt-4 border-t border-border">
-                <p className="text-sm">최종 수정일: 2025년 1월 1일</p>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
+              <hr className="legal-divider" />
 
-      <Footer />
+              <div className="legal-date">최종 수정일: 2025년 1월 1일</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="legal-footer">
+          <span>&copy; 2025 NEURALTWIN. All rights reserved.</span>
+          <div className="legal-footer-links">
+            <Link to="/privacy">개인정보처리방침</Link>
+            <Link to="/terms">이용약관</Link>
+            <Link to="/contact">문의하기</Link>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };
