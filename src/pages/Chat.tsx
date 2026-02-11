@@ -1333,7 +1333,7 @@ const Chat = () => {
               ) : (
                 <>
                   <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
-                  <Link to="/auth" state={{ tab: "signup" }} className="nav-signup-link">회원가입</Link>
+                  <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
                 </>
               )}
             </div>

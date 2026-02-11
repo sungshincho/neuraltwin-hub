@@ -317,19 +317,7 @@
     color: var(--white);
 }
 
-/* 네비게이션 인증 버튼 */
-.nav-signup-link {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 6px 16px;
-    border-radius: 6px;
-    transition: background 0.3s, border-color 0.3s, color 0.3s;
-}
-.nav-signup-link:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
+/* 네비게이션 인증 영역 */
 .nav-user-name {
     color: var(--gray-300);
     font-size: 13px;
