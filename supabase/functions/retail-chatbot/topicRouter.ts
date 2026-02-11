@@ -52,6 +52,23 @@ function normalizeText(text: string): string {
     .trim();
 }
 
+// ═══════════════════════════════════════════
+//  복합 패턴 매칭 (단일 키워드보다 높은 가중치)
+// ═══════════════════════════════════════════
+
+const COMPOUND_PATTERNS: Array<{ pattern: RegExp; topicId: string; boost: number }> = [
+  { pattern: /매장.*(동선|레이아웃|배치)/, topicId: 'store_design', boost: 3 },
+  { pattern: /(VMD|비주얼\s*머천다이징).*(트렌드|전략)/, topicId: 'vmd', boost: 3 },
+  { pattern: /(전환율|구매율).*(향상|개선|높)/, topicId: 'conversion', boost: 3 },
+  { pattern: /(고객\s*경험|CX).*(개선|향상|설계)/, topicId: 'customer_experience', boost: 3 },
+  { pattern: /(프로모션|할인).*(기획|전략|설계)/, topicId: 'promotion', boost: 3 },
+  { pattern: /(재고|발주).*(관리|최적화)/, topicId: 'inventory', boost: 3 },
+  { pattern: /(KPI|성과|매출).*(분석|리포트|보고)/, topicId: 'analytics', boost: 3 },
+  { pattern: /(직원|스태프).*(교육|관리|배치)/, topicId: 'staff', boost: 3 },
+  { pattern: /(카페|커피|음료).*(매장|운영)/, topicId: 'fnb', boost: 3 },
+  { pattern: /(코스메틱|화장품|뷰티).*(매장|진열)/, topicId: 'cosmetics', boost: 3 },
+];
+
 /**
  * 각 토픽의 키워드 매칭 점수를 계산합니다.
  *
@@ -59,6 +76,7 @@ function normalizeText(text: string): string {
  * - 정확한 키워드 매칭: 2점
  * - 부분 키워드 매칭: 1점
  * - 제목/첫 문장의 키워드: 1.5배 가중치
+ * - 복합 패턴 매칭: 3점 부스트 (다중 키워드 조합)
  */
 function scoreTopics(message: string): Map<string, { score: number; keywords: string[] }> {
   const normalized = normalizeText(message);
@@ -93,6 +111,18 @@ function scoreTopics(message: string): Map<string, { score: number; keywords: st
 
     if (score > 0) {
       scores.set(topic.id, { score, keywords: matchedKeywords });
+    }
+  }
+
+  // 복합 패턴 매칭 — 다중 키워드 조합 시 부스트
+  for (const { pattern, topicId, boost } of COMPOUND_PATTERNS) {
+    if (pattern.test(message)) {
+      const existing = scores.get(topicId);
+      if (existing) {
+        existing.score += boost;
+      } else {
+        scores.set(topicId, { score: boost, keywords: [`[compound:${topicId}]`] });
+      }
     }
   }
 

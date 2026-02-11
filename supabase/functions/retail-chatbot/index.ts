@@ -618,25 +618,71 @@ async function callLovableGateway(
 }
 
 // ═══════════════════════════════════════════
-//  SSE 스트리밍 응답
+//  SSE 스트리밍 응답 (A-1: 완전한 SSE 파이프라인)
 // ═══════════════════════════════════════════
 
-function createSSEStream(
+/**
+ * 업스트림 AI SSE → 클라이언트 SSE 프록시
+ * - text 이벤트: 일반 텍스트 청크
+ * - viz 이벤트: 완성된 VizDirective JSON
+ * - meta 이벤트: suggestions, salesBridge, painPoints
+ * - done 이벤트: 스트리밍 완료 + conversationId
+ * - error 이벤트: 에러 발생
+ *
+ * viz 블록 감지: ```viz 시작 → 버퍼링 → ``` 끝 → 파싱 후 viz 이벤트 전송
+ */
+function createSSEStreamV2(
   upstreamResponse: Response,
-  conversationId: string,
-  classification: { primaryTopic: string; confidence: number },
-  onComplete: (fullContent: string) => void
+  opts: {
+    conversationId: string;
+    classification: { primaryTopic: string; confidence: number };
+    vizDirectiveFallback: VizDirective | null;
+    suggestions: string[];
+    salesBridge: SalesBridgeResult;
+    painPoints: PainPointResult;
+    showLeadForm: boolean;
+    isAuthenticated: boolean;
+    sessionId: string;
+    onComplete: (fullContent: string, vizDirective: VizDirective | null) => void;
+  }
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
   let fullContent = '';
+  let vizBuffer = '';
+  let isInsideVizBlock = false;
+  let sseBuffer = '';  // 업스트림 SSE 라인 버퍼
+
+  function sendEvent(controller: ReadableStreamDefaultController<Uint8Array>, event: string, data: unknown) {
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    controller.enqueue(encoder.encode(payload));
+  }
 
   return new ReadableStream({
     async start(controller) {
-      const reader = upstreamResponse.body?.getReader();
+      // 1) meta 이벤트 먼저 전송 (AI 응답과 무관한 미리 계산된 데이터)
+      sendEvent(controller, 'meta', {
+        suggestions: opts.suggestions,
+        showLeadForm: opts.showLeadForm,
+        salesBridge: {
+          leadScore: opts.salesBridge.leadScore,
+          stage: opts.salesBridge.stage,
+        },
+        painPoints: {
+          detected: opts.painPoints.painPoints.length > 0,
+          primary: opts.painPoints.primaryPain,
+          summary: opts.painPoints.summary,
+        },
+        classification: {
+          topic: opts.classification.primaryTopic,
+          confidence: opts.classification.confidence,
+        },
+      });
 
+      const reader = upstreamResponse.body?.getReader();
       if (!reader) {
+        sendEvent(controller, 'error', { error: 'No response body' });
         controller.close();
         return;
       }
@@ -646,54 +692,130 @@ function createSSEStream(
           const { done, value } = await reader.read();
 
           if (done) {
-            // 완료 이벤트 전송
-            const doneEvent = `event: done\ndata: ${JSON.stringify({
-              conversationId,
-              classification,
-              totalLength: fullContent.length
-            })}\n\n`;
-            controller.enqueue(encoder.encode(doneEvent));
+            // 업스트림 종료 — 미완성 viz 블록 처리
+            if (isInsideVizBlock && vizBuffer.length > 0) {
+              console.log('[SSE] Attempting to recover truncated viz block at stream end');
+              const repaired = repairTruncatedJson(vizBuffer);
+              if (repaired) {
+                try {
+                  const parsed = JSON.parse(repaired);
+                  const vizDir = extractVizDirectiveFromResponse('```viz\n' + repaired + '\n```');
+                  if (vizDir) {
+                    sendEvent(controller, 'viz', vizDir);
+                  }
+                } catch { /* ignore */ }
+              }
+              isInsideVizBlock = false;
+              vizBuffer = '';
+            }
 
-            onComplete(fullContent);
+            // done 이벤트 전송
+            sendEvent(controller, 'done', {
+              conversationId: opts.conversationId,
+              sessionId: opts.sessionId,
+              isAuthenticated: opts.isAuthenticated,
+            });
+
+            const finalViz = extractVizDirectiveFromResponse(fullContent);
+            opts.onComplete(fullContent, finalViz);
             controller.close();
             break;
           }
 
-          // 업스트림 SSE 파싱
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          // 업스트림 SSE 청크 파싱
+          sseBuffer += decoder.decode(value, { stream: true });
+          const lines = sseBuffer.split('\n');
+          // 마지막 줄은 불완전할 수 있으므로 버퍼에 보관
+          sseBuffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
 
-              if (data === '[DONE]') {
-                continue;
-              }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (!content) continue;
 
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
+              fullContent += content;
 
-                if (content) {
-                  fullContent += content;
+              // viz 블록 감지 및 분리
+              let remaining = content;
 
-                  // 청크 이벤트 전송
-                  const chunkEvent = `event: chunk\ndata: ${JSON.stringify({ content })}\n\n`;
-                  controller.enqueue(encoder.encode(chunkEvent));
+              while (remaining.length > 0) {
+                if (isInsideVizBlock) {
+                  // viz 블록 종료 감지: ```
+                  const endIdx = remaining.indexOf('```');
+                  if (endIdx !== -1) {
+                    vizBuffer += remaining.substring(0, endIdx);
+                    remaining = remaining.substring(endIdx + 3);
+                    isInsideVizBlock = false;
+
+                    // viz 블록 파싱 및 전송
+                    const vizDir = extractVizDirectiveFromResponse('```viz\n' + vizBuffer + '\n```');
+                    if (vizDir) {
+                      // AI 생성 viz + fallback kpis/stage 병합
+                      const mergedViz: VizDirective = {
+                        ...vizDir,
+                        kpis: vizDir.kpis || opts.vizDirectiveFallback?.kpis,
+                        stage: vizDir.stage || opts.vizDirectiveFallback?.stage,
+                      };
+                      sendEvent(controller, 'viz', mergedViz);
+                      console.log(`[SSE] Sent viz event: state=${mergedViz.vizState}, zones=${mergedViz.zones?.length || 0}`);
+                    } else {
+                      console.warn('[SSE] Failed to parse viz block');
+                    }
+                    vizBuffer = '';
+                  } else {
+                    vizBuffer += remaining;
+                    remaining = '';
+                  }
+                } else {
+                  // viz 블록 시작 감지: ```viz
+                  const startIdx = remaining.indexOf('```viz');
+                  if (startIdx !== -1) {
+                    // viz 시작 전의 텍스트 전송
+                    const textBefore = remaining.substring(0, startIdx);
+                    if (textBefore) {
+                      sendEvent(controller, 'text', { content: textBefore });
+                    }
+                    // viz 블록 버퍼링 시작 (```viz\n 이후부터)
+                    const afterMarker = remaining.substring(startIdx + 6);
+                    // 줄바꿈으로 시작하면 제거
+                    remaining = afterMarker.startsWith('\n') ? afterMarker.substring(1) : afterMarker;
+                    isInsideVizBlock = true;
+                    vizBuffer = '';
+                  } else {
+                    // 일반 텍스트: 단, 부분적 ``` 매치 방지
+                    // 끝이 ` 또는 `` 로 끝나면 다음 청크까지 대기
+                    const backtickTail = remaining.match(/`{1,5}$/);
+                    if (backtickTail) {
+                      const safe = remaining.substring(0, remaining.length - backtickTail[0].length);
+                      if (safe) {
+                        sendEvent(controller, 'text', { content: safe });
+                      }
+                      // 백틱 부분은 sseBuffer 에 넣지 않고 fullContent 에 이미 포함됨
+                      // 다음 청크에서 ```viz 판단됨
+                      remaining = '';
+                    } else {
+                      sendEvent(controller, 'text', { content: remaining });
+                      remaining = '';
+                    }
+                  }
                 }
-              } catch {
-                // JSON 파싱 실패는 무시
               }
+            } catch {
+              // JSON 파싱 실패는 무시
             }
           }
         }
       } catch (err) {
         console.error('[SSE] Stream error:', err);
-
-        const errorEvent = `event: error\ndata: ${JSON.stringify({ error: 'Stream error' })}\n\n`;
-        controller.enqueue(encoder.encode(errorEvent));
+        sendEvent(controller, 'error', { error: 'Stream processing error' });
         controller.close();
+      } finally {
+        reader.releaseLock();
       }
     }
   });
@@ -991,53 +1113,9 @@ serve(async (request: Request) => {
       });
     }
 
-    // 11. Lovable Gateway 호출 (비스트리밍 모드)
-    const upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
-
-    // 10. JSON 응답 파싱
-    const data = await upstreamResponse.json();
-    const rawAssistantContent = data.choices?.[0]?.message?.content || '';
-
-    if (!rawAssistantContent) {
-      console.error('[AI] No content in response:', JSON.stringify(data));
-      throw new Error('AI가 응답을 생성하지 못했습니다.');
-    }
-
-    // 11. AI 응답에서 VizDirective 추출 (B 방식: AI가 직접 생성)
-    const aiGeneratedVizDirective = extractVizDirectiveFromResponse(rawAssistantContent);
-
-    // 클라이언트에 보낼 텍스트에서 ```viz 블록 제거
-    const assistantContent = cleanResponseText(rawAssistantContent);
-
-    // PHASE G: VizDirective 병합 (AI 생성 우선, 토픽 기반 fallback)
-    let finalVizDirective: VizDirective | null = null;
-
-    if (aiGeneratedVizDirective) {
-      // AI가 생성한 모든 필드 우선 사용
-      // AI가 kpis/stage를 생성하지 않은 경우만 토픽 기반 fallback
-      finalVizDirective = {
-        ...aiGeneratedVizDirective,
-        // AI가 kpis를 생성했으면 AI 것 사용, 아니면 토픽 기반 fallback
-        kpis: aiGeneratedVizDirective.kpis || vizDirective?.kpis,
-        // AI가 stage를 생성했으면 AI 것 사용, 아니면 토픽 기반 fallback
-        stage: aiGeneratedVizDirective.stage || vizDirective?.stage
-      };
-
-      const kpiSource = aiGeneratedVizDirective.kpis ? 'AI' : 'topic-fallback';
-      const stageSource = aiGeneratedVizDirective.stage ? 'AI' : 'topic-fallback';
-      console.log(`[VizDirective] AI Generated: state=${aiGeneratedVizDirective.vizState}, kpis=${kpiSource}(${finalVizDirective.kpis?.length || 0}), stage=${stageSource}(${finalVizDirective.stage || 'none'})`);
-    } else if (vizDirective) {
-      // AI가 생성하지 않은 경우 토픽 기반 fallback
-      finalVizDirective = vizDirective;
-      console.log(`[VizDirective] Fallback to topic-based: state=${vizDirective.vizState}`);
-    } else {
-      console.log(`[VizDirective] None generated`);
-    }
-
-    // 12. TASK 7: Pain Point 추출
+    // 11. Pre-compute: Pain Point, Sales Bridge, Suggestions (AI 응답 전에 계산)
     const painPointResult: PainPointResult = extractPainPoints(message, historyTexts);
 
-    // 13. TASK 7: Sales Bridge 평가
     const salesBridgeResult: SalesBridgeResult = evaluateSalesBridge({
       turnCount: conversation?.message_count || historyTexts.length,
       painPointDetected: painPointResult.painPoints.length > 0,
@@ -1047,7 +1125,6 @@ serve(async (request: Request) => {
       repeatTopics: false
     });
 
-    // 14. TASK 7: 후속 질문 생성
     const suggestionResult: SuggestionResult = generateSuggestions({
       topicCategory: classification.primaryTopic,
       painPointCategory: painPointResult.primaryPain,
@@ -1061,18 +1138,109 @@ serve(async (request: Request) => {
       console.log(`[PainPoint] ${painPointResult.summary}`);
     }
 
-    // 15. 어시스턴트 응답 로깅 (Pain Point 데이터 포함)
+    // 12. Lovable Gateway 호출 — SSE 스트리밍 모드 시도, 실패 시 non-streaming fallback
+    let useStreaming = true;
+    let upstreamResponse: Response;
+
+    try {
+      upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
+      // Content-Type 확인 — SSE가 아니면 non-streaming fallback
+      const ct = upstreamResponse.headers.get('Content-Type') || '';
+      if (!ct.includes('text/event-stream') && !ct.includes('text/plain')) {
+        // JSON 응답일 수 있음 → non-streaming으로 처리
+        useStreaming = false;
+        console.log('[AI] Gateway returned non-streaming response, using fallback');
+      }
+    } catch (streamErr) {
+      console.warn('[AI] Streaming call failed, falling back to non-streaming:', streamErr);
+      useStreaming = false;
+      upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
+    }
+
+    // ═══════════════════════════════════════════
+    // PATH A: SSE Streaming 응답
+    // ═══════════════════════════════════════════
+    if (useStreaming && upstreamResponse.body) {
+      console.log('[AI] SSE streaming mode');
+
+      const sseStream = createSSEStreamV2(upstreamResponse, {
+        conversationId: conversation?.id || '',
+        classification: { primaryTopic: classification.primaryTopic, confidence: classification.confidence },
+        vizDirectiveFallback: vizDirective,
+        suggestions: suggestionResult.suggestions,
+        salesBridge: salesBridgeResult,
+        painPoints: painPointResult,
+        showLeadForm: salesBridgeResult.showLeadForm,
+        isAuthenticated: auth.isAuthenticated,
+        sessionId: effectiveSessionId || '',
+        onComplete: async (fullContent: string, vizDir: VizDirective | null) => {
+          // 비동기 로깅 (스트리밍 완료 후)
+          const cleanedContent = cleanResponseText(fullContent);
+          if (conversation) {
+            await logMessage(supabase, conversation.id, 'assistant', cleanedContent, {
+              topic: classification.primaryTopic,
+              painPointSummary: painPointResult.summary,
+              containsPainPoint: painPointResult.painPoints.length > 0,
+              confidence: classification.confidence,
+              solutionMentioned: cleanedContent.toLowerCase().includes('neuraltwin'),
+              streamed: true,
+            });
+          }
+        },
+      });
+
+      return new Response(sseStream, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Conversation-Id': conversation?.id || '',
+          'X-Session-Id': effectiveSessionId || '',
+          'X-Is-Authenticated': String(auth.isAuthenticated),
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // PATH B: Non-streaming JSON fallback
+    // ═══════════════════════════════════════════
+    console.log('[AI] Non-streaming fallback mode');
+
+    const data = await upstreamResponse.json();
+    const rawAssistantContent = data.choices?.[0]?.message?.content || '';
+
+    if (!rawAssistantContent) {
+      console.error('[AI] No content in response:', JSON.stringify(data));
+      throw new Error('AI가 응답을 생성하지 못했습니다.');
+    }
+
+    const aiGeneratedVizDirective = extractVizDirectiveFromResponse(rawAssistantContent);
+    const assistantContent = cleanResponseText(rawAssistantContent);
+
+    let finalVizDirective: VizDirective | null = null;
+    if (aiGeneratedVizDirective) {
+      finalVizDirective = {
+        ...aiGeneratedVizDirective,
+        kpis: aiGeneratedVizDirective.kpis || vizDirective?.kpis,
+        stage: aiGeneratedVizDirective.stage || vizDirective?.stage
+      };
+    } else if (vizDirective) {
+      finalVizDirective = vizDirective;
+    }
+
     if (conversation) {
       await logMessage(supabase, conversation.id, 'assistant', assistantContent, {
         topic: classification.primaryTopic,
         painPointSummary: painPointResult.summary,
         containsPainPoint: painPointResult.painPoints.length > 0,
         confidence: classification.confidence,
-        solutionMentioned: assistantContent.toLowerCase().includes('neuraltwin')
+        solutionMentioned: assistantContent.toLowerCase().includes('neuraltwin'),
+        streamed: false,
       });
     }
 
-    // 16. JSON 응답 반환 (TASK 7 필드 + AI 생성 VizDirective)
     return new Response(
       JSON.stringify({
         content: assistantContent,
@@ -1082,7 +1250,6 @@ serve(async (request: Request) => {
           topic: classification.primaryTopic,
           confidence: classification.confidence
         },
-        // TASK 7: 세일즈 브릿지 + Pain Point 필드
         suggestions: suggestionResult.suggestions,
         showLeadForm: salesBridgeResult.showLeadForm,
         salesBridge: {
@@ -1094,7 +1261,6 @@ serve(async (request: Request) => {
           primary: painPointResult.primaryPain,
           summary: painPointResult.summary
         },
-        // 3D 비주얼라이저 지시 데이터 (AI 생성 또는 토픽 기반 fallback)
         vizDirective: finalVizDirective
       }),
       {

@@ -18,6 +18,7 @@ export interface SuggestionContext {
   conversationStage: ConversationStage;
   detectedKeywords: string[];
   turnCount: number;
+  hasRecentVizDirective?: boolean;  // VizDirective가 최근에 생성되었는지 여부
 }
 
 export interface SuggestionResult {
@@ -194,38 +195,152 @@ const STAGE_TEMPLATES: Record<ConversationStage, string[]> = {
 };
 
 // ═══════════════════════════════════════════
+//  시각화(Viz) 관련 후속 질문 템플릿
+// ═══════════════════════════════════════════
+
+const VIZ_SUGGESTION_TEMPLATES: string[] = [
+  '매장 레이아웃을 3D로 보여줘',
+  '다른 업종 매장도 비교해줘',
+  '동선 분석을 시각화해줘',
+  '히트맵으로 고객 동선을 확인해줘',
+  '시뮬레이션 결과를 시각적으로 보여줘',
+  '매장 구역별 성과를 차트로 보여줘',
+];
+
+// Viz 제안이 유효한 토픽 목록
+const VIZ_RELEVANT_TOPICS = [
+  'layout_flow',
+  'vmd_display',
+  'customer_analytics',
+  'digital_twin',
+  'data_kpi',
+  'retail_tech',
+];
+
+// ═══════════════════════════════════════════
+//  세일즈 브릿지 후속 질문 템플릿
+//  consideration/decision 단계에서 리드 전환 유도
+// ═══════════════════════════════════════════
+
+const SALES_BRIDGE_TEMPLATES: string[] = [
+  '우리 매장에 맞는 컨설팅 받아보고 싶어',
+  '구체적인 개선 제안서를 받아볼 수 있나요?',
+  '무료 매장 진단을 신청할 수 있나요?',
+  '도입 전 ROI 시뮬레이션을 해볼 수 있나요?',
+  '담당 컨설턴트와 직접 상담할 수 있나요?',
+];
+
+// ═══════════════════════════════════════════
+//  Pain Point 직접 대응 후속 질문 (followup)
+//  Pain Point가 감지되면 해당 고충을 직접 해결하는 제안
+// ═══════════════════════════════════════════
+
+const PAIN_POINT_FOLLOWUP_TEMPLATES: Record<PainPointCategory, string[]> = {
+  cost_pressure: [
+    '우리 매장 비용 구조를 진단받아볼 수 있나요?',
+    '마진 개선 시뮬레이션을 돌려볼 수 있나요?',
+  ],
+  efficiency_gap: [
+    '운영 효율 개선 포인트를 자동으로 분석해줘',
+    '우리 매장의 병목 구간을 진단해줘',
+  ],
+  staffing_challenge: [
+    '최적 인력 배치 시뮬레이션을 해줄 수 있나요?',
+    '직원 생산성 벤치마크를 비교해줘',
+  ],
+  technology_barrier: [
+    '우리 매장에 맞는 디지털화 로드맵을 제안해줘',
+    '기술 도입 ROI를 계산해줄 수 있나요?',
+  ],
+  data_insight_lack: [
+    '우리 매장 데이터를 자동 분석해줄 수 있나요?',
+    '핵심 KPI 대시보드를 구성해줘',
+  ],
+  compliance_risk: [
+    '매장 안전/규정 체크리스트를 만들어줘',
+    '리스크 모니터링 방안을 제안해줘',
+  ],
+  competition_threat: [
+    '경쟁 매장 대비 우리의 강점을 분석해줘',
+    '차별화 전략 시뮬레이션을 해볼 수 있나요?',
+  ],
+};
+
+// ═══════════════════════════════════════════
 //  메인 생성 함수
 // ═══════════════════════════════════════════
 
 export function generateSuggestions(context: SuggestionContext): SuggestionResult {
   const candidates: string[] = [];
+  const reservedSuggestions: string[] = [];  // 반드시 포함될 제안 슬롯
 
-  // 1. 대화 단계별 템플릿 (consideration/decision 단계는 높은 우선순위)
-  if (context.conversationStage === 'decision' || context.conversationStage === 'consideration') {
-    candidates.push(...STAGE_TEMPLATES[context.conversationStage]);
+  // ── 1. Pain Point followup: 감지 시 반드시 1개 확보 ──
+  if (context.painPointCategory && PAIN_POINT_FOLLOWUP_TEMPLATES[context.painPointCategory]) {
+    const followups = PAIN_POINT_FOLLOWUP_TEMPLATES[context.painPointCategory];
+    const filtered = filterSuggestions(followups, context.detectedKeywords);
+    if (filtered.length > 0) {
+      // 예약 슬롯에 1개 확보 (나머지는 일반 후보에 추가)
+      const shuffledFollowups = shuffleArray(filtered);
+      reservedSuggestions.push(shuffledFollowups[0]);
+      // 기존 Pain Point 템플릿도 후보에 추가
+      candidates.push(...PAIN_POINT_TEMPLATES[context.painPointCategory]);
+    }
   }
 
-  // 2. Pain Point 템플릿 (감지된 경우 우선)
+  // ── 2. 세일즈 브릿지: consideration/decision 단계에서 리드 전환 유도 ──
+  if (context.conversationStage === 'consideration' || context.conversationStage === 'decision') {
+    // 기존 단계 템플릿도 포함
+    candidates.push(...STAGE_TEMPLATES[context.conversationStage]);
+    // 세일즈 브릿지 제안 중 1개를 예약 (아직 예약 슬롯에 여유가 있을 때)
+    const bridgeFiltered = filterSuggestions(SALES_BRIDGE_TEMPLATES, context.detectedKeywords);
+    if (bridgeFiltered.length > 0 && reservedSuggestions.length < 2) {
+      const shuffledBridge = shuffleArray(bridgeFiltered);
+      reservedSuggestions.push(shuffledBridge[0]);
+    } else {
+      // 여유 없으면 일반 후보에 추가
+      candidates.push(...SALES_BRIDGE_TEMPLATES);
+    }
+  }
+
+  // ── 3. Viz 관련 제안: 관련 토픽이고, 최근 VizDirective가 없을 때 ──
+  if (
+    VIZ_RELEVANT_TOPICS.includes(context.topicCategory) &&
+    !context.hasRecentVizDirective
+  ) {
+    const vizFiltered = filterSuggestions(VIZ_SUGGESTION_TEMPLATES, context.detectedKeywords);
+    if (vizFiltered.length > 0) {
+      candidates.push(...vizFiltered);
+    }
+  }
+
+  // ── 4. Pain Point 일반 템플릿 (감지된 경우 우선) ──
   if (context.painPointCategory && PAIN_POINT_TEMPLATES[context.painPointCategory]) {
+    // followup에서 이미 추가했으면 중복 방지 (Set으로 처리됨)
     candidates.push(...PAIN_POINT_TEMPLATES[context.painPointCategory]);
   }
 
-  // 3. 토픽별 템플릿
+  // ── 5. 토픽별 템플릿 ──
   const topicTemplates = TOPIC_TEMPLATES[context.topicCategory] || TOPIC_TEMPLATES['general_retail'];
   candidates.push(...topicTemplates);
 
-  // 4. awareness/interest 단계 템플릿 (후순위)
+  // ── 6. awareness/interest 단계 템플릿 (후순위) ──
   if (context.conversationStage === 'awareness' || context.conversationStage === 'interest') {
     candidates.push(...STAGE_TEMPLATES[context.conversationStage]);
   }
 
-  // 5. 중복 제거 및 키워드 유사도 필터링
+  // ── 7. 중복 제거 및 키워드 유사도 필터링 ──
   const uniqueCandidates = filterSuggestions(candidates, context.detectedKeywords);
 
-  // 6. 랜덤 셔플 후 2-3개 선택
-  const shuffled = shuffleArray(uniqueCandidates);
-  const count = context.conversationStage === 'decision' ? 2 : 3;
-  const suggestions = shuffled.slice(0, count);
+  // ── 8. 예약 슬롯 제외 후 나머지 셔플 ──
+  const reservedSet = new Set(reservedSuggestions);
+  const remainingCandidates = uniqueCandidates.filter(c => !reservedSet.has(c));
+  const shuffled = shuffleArray(remainingCandidates);
+
+  // ── 9. 최종 조합: 예약 슬롯 + 나머지에서 채움 ──
+  const totalCount = context.conversationStage === 'decision' ? 2 : 3;
+  const remainingSlots = totalCount - reservedSuggestions.length;
+  const fillers = shuffled.slice(0, Math.max(0, remainingSlots));
+  const suggestions = [...reservedSuggestions, ...fillers].slice(0, totalCount);
 
   return { suggestions };
 }
