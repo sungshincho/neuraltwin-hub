@@ -270,6 +270,32 @@
     color: var(--white);
 }
 
+/* 네비게이션 인증 영역 */
+.contact-page .nav-user-name {
+    color: var(--gray-300);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.contact-page .nav-auth-btn {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--gray-300);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.3s, background 0.3s, border-color 0.3s;
+}
+.contact-page .nav-auth-btn:hover {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* ===================== CONTACT SECTION ===================== */
 .contact-page .contact-section {
     min-height: calc(100vh - 80px);
@@ -682,6 +708,22 @@
 }
 
 .contact-page .mobile-menu-dropdown a:hover {
+    color: var(--white);
+}
+
+/* 모바일 메뉴 인증 버튼 */
+.contact-page .mobile-auth-btn {
+    background: none;
+    border: none;
+    color: var(--gray-300);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 0;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.contact-page .mobile-auth-btn:hover {
     color: var(--white);
 }
 
