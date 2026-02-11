@@ -156,10 +156,11 @@ export function mergeVizDirective(
   return {
     ...current,
     ...updates,
-    // 배열은 완전 교체 (병합하지 않음)
+    // 배열 필드: 새 값이 있으면 교체, 없으면 기존 유지 (undefined로 덮어쓰기 방지)
     highlights: updates.highlights ?? current.highlights,
     annotations: updates.annotations ?? current.annotations,
-    kpis: updates.kpis ?? current.kpis
+    kpis: updates.kpis ?? current.kpis,
+    zones: updates.zones ?? current.zones,
   };
 }
 
