@@ -222,7 +222,7 @@ const Chat = () => {
 
     const decoder = new TextDecoder();
     let buffer = '';
-    streamingMessageIdRef.current = assistantMsgId;
+    // streamingMessageIdRef는 첫 text content 도착 시 설정 (로딩 버블 유지를 위해)
 
     try {
       while (true) {
@@ -265,6 +265,10 @@ const Chat = () => {
                 // 점진적 텍스트 추가
                 const content = parsed.content || '';
                 if (content) {
+                  // 첫 text 도착 시 스트리밍 ID 설정 → 로딩 버블 숨김
+                  if (!streamingMessageIdRef.current) {
+                    streamingMessageIdRef.current = assistantMsgId;
+                  }
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === assistantMsgId
