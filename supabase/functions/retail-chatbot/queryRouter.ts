@@ -67,6 +67,15 @@ const COMMON_RETAIL_TERMS: Set<string> = new Set([
   '인테리어', '리뉴얼', '확장', '축소', '폐점', '이전', '입점', '수입',
   'popup', 'store', 'shop', 'brand', 'product', 'strategy', 'plan',
   '서울', '강남', '성수', '홍대', '명동', '가로수길', '신사', '압구정', '이태원',
+  // 2글자 일반 용어 (고유명사 오탐 방지)
+  '한남', '한남동', '청담', '연남', '삼성', '잠실', '여의도', '판교', '해운대',
+  '카페', '맛집', '식당', '레스토랑', '베이커리', '디저트',
+  '정보', '소개', '설명', '질문', '답변', '의견', '제안', '요청', '확인',
+  '시장', '동향', '현황', '리포트', '데이터', '수치', '비율', '결과',
+  '마케팅', '광고', '홍보', '이벤트', '캠페인', '컨텐츠', '콘텐츠',
+  '온라인', '오프라인', '모바일', '디지털', '소셜', '채널',
+  '가격', '비용', '예산', '투자', '수익', '이익', '손실', '성장',
+  '인력', '교육', '서비스', '관리', '시스템', '프로세스', '구조',
 ]);
 
 // 검색 트리거 패턴 (최신 정보 필요)
@@ -136,12 +145,13 @@ function detectEntities(message: string): string[] {
 
   // 3. 한글 고유명사 패턴 (XX크로우, XX브랜드명 등)
   //    한글에서 일반적이지 않은 외래어 음차 패턴 감지
+  //    2글자도 감지 (릭십, 무지 등 짧은 브랜드명 대응)
   const koreanCandidates = message.match(/[가-힣]{2,10}/g);
   if (koreanCandidates) {
     for (const candidate of koreanCandidates) {
       const lower = candidate.toLowerCase();
       if (
-        candidate.length >= 3 &&
+        candidate.length >= 2 &&
         !KNOWN_KEYWORDS.has(lower) &&
         !COMMON_RETAIL_TERMS.has(lower) &&
         !WELL_KNOWN_BRANDS.has(lower) &&
@@ -184,17 +194,23 @@ function looksLikeBrandName(candidate: string, fullMessage: string): boolean {
   }
 
   // ── 맥락 기반: 브랜드명 뒤에 오는 단어 패턴 ──
+  const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const brandContextPatterns = [
-    // 기존 패턴
-    new RegExp(`${candidate}\\s*(수입|팝업|매장|오픈|론칭|입점|브랜드|제품|상품|컬렉션)`),
-    new RegExp(`(수입|해외|글로벌|유럽|미국|일본|프랑스|이탈리아)\\s*.*${candidate}`),
-    new RegExp(`${candidate}\\s*(이|가|을|를|의|에서|에)\\s`),
-    // 확장 패턴: 유통/분석/현황 등 비즈니스 맥락
-    new RegExp(`${candidate}\\s*(한국|국내|해외|글로벌|유통|현황|분석|전략|매출|실적|히스토리)`),
-    new RegExp(`${candidate}\\s*(인스타|sns|소셜|마케팅|광고|채널|홈페이지|사이트)`),
-    new RegExp(`${candidate}\\s*(리서치|조사|검색|찾아|알려|소개|설명)`),
-    // "XX에 대해", "XX에대해", "XX 관련" 등
-    new RegExp(`${candidate}\\s*(에\\s*대해|관련|관한|대한|정보)`),
+    // 브랜드명 + 비즈니스 맥락 (뒤에 오는 단어)
+    new RegExp(`${escaped}\\s*(수입|팝업|매장|오픈|론칭|입점|브랜드|제품|상품|컬렉션)`),
+    new RegExp(`${escaped}\\s*(한국|국내|해외|글로벌|유통|현황|분석|전략|매출|실적|히스토리)`),
+    new RegExp(`${escaped}\\s*(인스타|sns|소셜|마케팅|광고|채널|홈페이지|사이트)`),
+    new RegExp(`${escaped}\\s*(리서치|조사|검색|찾아|알려|소개|설명)`),
+    // "XX에 대해", "XX에대해", "XX 관련" 등 (한국어 조사 직접 연결)
+    new RegExp(`${escaped}\\s*(에\\s*대해|관련|관한|대한|정보)`),
+    // 한국어 조사 직접 연결 ("릭십이", "릭십을", "릭십에서" 등 — 공백 없이 붙는 패턴)
+    new RegExp(`${escaped}(이|가|을|를|의|에서|에|은|는|도|라는|이라는)\\s`),
+    new RegExp(`${escaped}(이|가|을|를|의|에서|에|은|는|도|라는|이라는)$`),
+    // 앞에 오는 맥락 ("매장 릭십", "f&b 릭십" 등)
+    new RegExp(`(수입|해외|글로벌|유럽|미국|일본|프랑스|이탈리아)\\s*.*${escaped}`),
+    new RegExp(`(매장|카페|레스토랑|식당|브랜드|가게|샵)\\s+${escaped}`),
+    // "XX 알려줘", "XX 검색해줘" 등 (직접 요청)
+    new RegExp(`${escaped}.*?(알려|검색|찾아|조사|소개)`),
   ];
 
   return brandContextPatterns.some(p => p.test(fullMessage));
@@ -223,10 +239,31 @@ export function routeQuery(
   // 2. 검색 트리거 패턴 매칭 (최신 정보 필요)
   for (const pattern of SEARCH_TRIGGER_PATTERNS) {
     if (pattern.test(message)) {
+      // 현재 메시지에서 엔티티 감지 시도
+      const currentEntities = detectEntities(message);
+      const unknownCurrent = currentEntities.filter(e => !WELL_KNOWN_BRANDS.has(e.toLowerCase()));
+
+      // 현재 메시지에 엔티티가 없으면 최근 히스토리에서 추출 (후속 질문 대응)
+      let finalEntities = unknownCurrent;
+      if (finalEntities.length === 0 && conversationHistory && conversationHistory.length > 0) {
+        // 최근 3턴에서 엔티티 탐색
+        const recentHistory = conversationHistory.slice(-3);
+        for (let i = recentHistory.length - 1; i >= 0; i--) {
+          const histEntities = detectEntities(recentHistory[i]);
+          const unknownHist = histEntities.filter(e => !WELL_KNOWN_BRANDS.has(e.toLowerCase()));
+          if (unknownHist.length > 0) {
+            finalEntities = unknownHist;
+            break;
+          }
+        }
+      }
+
       return {
         augmentation: 'web_search',
-        detectedEntities: [],
-        searchReason: 'latest_info_requested',
+        detectedEntities: finalEntities,
+        searchReason: finalEntities.length > 0
+          ? `latest_info_requested + entity: ${finalEntities.join(', ')}`
+          : 'latest_info_requested',
       };
     }
   }
