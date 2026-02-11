@@ -753,6 +753,17 @@
     max-height: calc(100vh - 340px);
 }
 
+/* 메인 헤드라인 — "가장 강력한 AI 리테일 어시스턴트" */
+.chat-headline {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700;
+    color: var(--white);
+    text-align: center;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin: 0;
+}
+
 .chat-title {
     font-size: clamp(24px, 3vw, 32px);
     font-weight: 600;
@@ -1408,7 +1419,10 @@
         border-color: rgba(255, 255, 255, 0.3);
     }
 
-    /* 채팅 타이틀 축소 */
+    /* 채팅 헤드라인 + 타이틀 축소 */
+    .chat-headline {
+        font-size: 28px !important;
+    }
     .chat-title {
         font-size: 18px !important;
         margin-bottom: 16px;
@@ -1438,14 +1452,20 @@
 
 /* ===================== FULLSCREEN CHAT ===================== */
 
-/* 채팅 타이틀 행 (타이틀 + 전체화면 버튼) */
+/* 채팅 타이틀 행 (헤드라인 + 서브타이틀 + 전체화면 버튼) */
 .chat-title-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: 6px 14px;
     width: 100%;
     margin-bottom: 32px;
+}
+
+.chat-title-row .chat-headline {
+    flex-basis: 100%;
+    text-align: center;
 }
 
 .chat-title-row .chat-title {
@@ -2434,7 +2454,8 @@
     .hero-nav { padding: 14px 16px; }
     .hero-content { padding: 16px; }
     .chat-container { padding: 0 12px; }
-    .chat-title { font-size: 20px; margin-bottom: 20px; }
+    .chat-headline { font-size: 24px; }
+    .chat-title { font-size: 16px; margin-bottom: 16px; }
     .chat-footer { padding: 24px 16px; }
     .footer-bottom { padding: 16px; }
     .mobile-menu-dropdown { padding: 8px 16px 16px; }
