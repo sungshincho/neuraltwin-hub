@@ -15,7 +15,7 @@ import { extractPainPoints, type PainPointResult } from './painPointExtractor.ts
 import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } from './salesBridge.ts';
 import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
 import { routeQuery } from './queryRouter.ts';
-import { searchWeb, buildSearchQuery } from './webSearch.ts';
+import { searchWeb, buildSearchQuery, dualSearch } from './webSearch.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -1162,14 +1162,24 @@ serve(async (request: Request) => {
 
     if (queryRoute.augmentation === 'web_search') {
       console.log(`[QueryRouter] Web search triggered: ${queryRoute.searchReason}`);
-      const searchQuery = buildSearchQuery(message, queryRoute.detectedEntities);
-      const searchResult = await searchWeb(searchQuery);
 
-      if (searchResult.context) {
-        searchContext = '\n\n' + searchResult.context;
-        // 시스템 프롬프트에 검색 결과 주입
-        systemPrompt += searchContext;
-        console.log(`[WebSearch] Injected ${searchResult.results.length} results into context`);
+      // 미지 엔티티가 있으면 → 듀얼 검색 (웹 + 소셜미디어 병렬)
+      // 트리거 패턴만 매칭이면 → 기존 단일 검색
+      if (queryRoute.detectedEntities.length > 0) {
+        const { combinedContext } = await dualSearch(message, queryRoute.detectedEntities);
+        if (combinedContext) {
+          searchContext = '\n\n' + combinedContext;
+          systemPrompt += searchContext;
+          console.log(`[DualSearch] Injected combined web+sns context`);
+        }
+      } else {
+        const searchQuery = buildSearchQuery(message, queryRoute.detectedEntities);
+        const searchResult = await searchWeb(searchQuery);
+        if (searchResult.context) {
+          searchContext = '\n\n' + searchResult.context;
+          systemPrompt += searchContext;
+          console.log(`[WebSearch] Injected ${searchResult.results.length} results into context`);
+        }
       }
     } else {
       console.log(`[QueryRouter] No search needed`);

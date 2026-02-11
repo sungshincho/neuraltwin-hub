@@ -177,3 +177,74 @@ export function buildSearchQuery(
   // 엔티티 없으면 원본 메시지 축약
   return message.slice(0, 100);
 }
+
+// ═══════════════════════════════════════════
+//  듀얼 검색: 웹 + 소셜미디어 병렬 실행
+// ═══════════════════════════════════════════
+
+/**
+ * 미지 엔티티에 대해 웹검색 + 소셜미디어 검색을 동시 실행하여
+ * 결합된 컨텍스트를 반환합니다.
+ *
+ * - webQuery: 브랜드 일반 정보 (공식 사이트, 제품, 소개)
+ * - snsQuery: 인스타그램/소셜미디어 반응 (리뷰, 해시태그, 계정)
+ */
+export async function dualSearch(
+  message: string,
+  detectedEntities: string[]
+): Promise<{ webResult: WebSearchResult; snsResult: WebSearchResult; combinedContext: string }> {
+  const entity = detectedEntities[0] || message.slice(0, 30);
+  const msgLower = message.toLowerCase();
+
+  // 메시지 맥락에 맞는 웹 검색 쿼리 구성
+  let webQuery: string;
+  if (msgLower.includes('팝업') || msgLower.includes('popup')) {
+    webQuery = `${entity} 브랜드 공식 사이트 제품 카테고리`;
+  } else if (msgLower.includes('수입') || msgLower.includes('import')) {
+    webQuery = `${entity} brand official products`;
+  } else if (/유통|현황|분석|전략/.test(msgLower)) {
+    webQuery = `${entity} 브랜드 유통 현황 분석`;
+  } else if (/매장|공간|인테리어|동선/.test(msgLower)) {
+    webQuery = `${entity} 매장 공간 인테리어 컨셉`;
+  } else {
+    webQuery = `${entity} 브랜드 소개 제품`;
+  }
+
+  // 소셜미디어 검색 쿼리
+  const snsQuery = `${entity} 인스타그램 리뷰 후기`;
+
+  console.log(`[DualSearch] web="${webQuery}", sns="${snsQuery}"`);
+
+  // 병렬 실행
+  const [webResult, snsResult] = await Promise.all([
+    searchWeb(webQuery, 5),
+    searchWeb(snsQuery, 3),
+  ]);
+
+  // 결합 컨텍스트 생성
+  const parts: string[] = [];
+
+  if (webResult.context) {
+    parts.push(webResult.context);
+  }
+
+  if (snsResult.results.length > 0) {
+    parts.push('\n[소셜미디어 검색 결과]');
+    if (snsResult.knowledgeSummary) {
+      parts.push(`요약: ${snsResult.knowledgeSummary}`);
+    }
+    for (const r of snsResult.results) {
+      parts.push(`- ${r.title}: ${r.snippet}`);
+    }
+  }
+
+  if (parts.length > 0) {
+    parts.push('\n위 웹 검색 결과와 소셜미디어 정보를 종합하여 정확한 정보 기반으로 답변하세요. 검색 결과에서 확인된 사실만 전달하고, 확인되지 않은 내용은 지어내지 마세요. 검색 결과를 바탕으로 초기 분석을 제공한 뒤, 더 심화된 리서치를 위한 후속 질문을 안내하세요.');
+  }
+
+  const combinedContext = parts.join('\n');
+  const totalResults = webResult.results.length + snsResult.results.length;
+  console.log(`[DualSearch] combined: web=${webResult.results.length}, sns=${snsResult.results.length}, total=${totalResults}`);
+
+  return { webResult, snsResult, combinedContext };
+}
