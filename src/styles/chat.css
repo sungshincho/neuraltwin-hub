@@ -775,10 +775,10 @@
 /* 채팅 기록 영역 — overscroll-behavior로 페이지 스크롤 전파 차단 */
 .chat-messages {
     width: 100%;
-    max-height: 300px;
+    max-height: 360px;
     overflow-y: auto;
     overscroll-behavior: contain;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     padding: 16px;
     scrollbar-width: thin;
     scrollbar-color: var(--gray-700) transparent;
@@ -1143,6 +1143,7 @@
 /* ===================== TASK 9: LEAD FORM ===================== */
 .chat-lead-form-container {
     margin-top: 16px;
+    margin-bottom: 8px;
     animation: slideInUp 0.3s ease;
 }
 
