@@ -1011,15 +1011,19 @@ const Chat = () => {
         )}
 
         {/* 최근 대화 (항상 표시) */}
-        {visibleTurns.flat().map((msg) => (
-          <div key={msg.id} className="chat-message-wrapper">
-            <div className={`chat-message ${msg.role}`}>
-              {msg.role === 'user' && renderAttachments(msg.attachments)}
-              {msg.content}
+        {visibleTurns.flat().map((msg) => {
+          // 빈 assistant placeholder는 숨김 (로딩 인디케이터가 대신 표시됨)
+          if (msg.role === 'assistant' && !msg.content) return null;
+          return (
+            <div key={msg.id} className="chat-message-wrapper">
+              <div className={`chat-message ${msg.role}`}>
+                {msg.role === 'user' && renderAttachments(msg.attachments)}
+                {msg.content}
+              </div>
+              {renderMessageActions(msg, 'inline')}
             </div>
-            {renderMessageActions(msg, 'inline')}
-          </div>
-        ))}
+          );
+        })}
       </>
     );
   };
@@ -1069,15 +1073,19 @@ const Chat = () => {
         )}
 
         {/* 최근 대화 (항상 표시) */}
-        {visibleTurns.flat().map((msg) => (
-          <div key={msg.id} className="chat-fs-message-wrapper">
-            <div className={`chat-fs-message ${msg.role}`}>
-              {msg.role === 'user' && renderAttachments(msg.attachments)}
-              {msg.content}
+        {visibleTurns.flat().map((msg) => {
+          // 빈 assistant placeholder는 숨김 (로딩 인디케이터가 대신 표시됨)
+          if (msg.role === 'assistant' && !msg.content) return null;
+          return (
+            <div key={msg.id} className="chat-fs-message-wrapper">
+              <div className={`chat-fs-message ${msg.role}`}>
+                {msg.role === 'user' && renderAttachments(msg.attachments)}
+                {msg.content}
+              </div>
+              {renderMessageActions(msg, 'fullscreen')}
             </div>
-            {renderMessageActions(msg, 'fullscreen')}
-          </div>
-        ))}
+          );
+        })}
       </>
     );
   };
