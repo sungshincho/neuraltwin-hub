@@ -144,7 +144,12 @@ export function buildSearchQuery(
 
   // 감지된 고유명사가 있으면 해당 엔티티 중심 쿼리
   if (detectedEntities.length > 0) {
-    const entity = detectedEntities[0];
+    // 한글 엔티티 우선, 없으면 가장 긴 영문 엔티티
+    const koreanEnt = detectedEntities.find(e => /[가-힣]/.test(e));
+    const longEngEnt = detectedEntities
+      .filter(e => !/[가-힣]/.test(e))
+      .sort((a, b) => b.length - a.length)[0];
+    const entity = koreanEnt || longEngEnt || detectedEntities[0];
 
     // SNS/소셜미디어 검색
     if (isSnsQuery) {
@@ -193,7 +198,13 @@ export async function dualSearch(
   message: string,
   detectedEntities: string[]
 ): Promise<{ webResult: WebSearchResult; snsResult: WebSearchResult; combinedContext: string }> {
-  const entity = detectedEntities[0] || message.slice(0, 30);
+  // 엔티티 우선순위: 한글 엔티티 > 긴 영문 엔티티 > 첫 번째 엔티티
+  // (f&b, sns 같은 약어보다 실제 브랜드명을 우선)
+  const koreanEntity = detectedEntities.find(e => /[가-힣]/.test(e));
+  const longEnglishEntity = detectedEntities
+    .filter(e => !/[가-힣]/.test(e))
+    .sort((a, b) => b.length - a.length)[0];
+  const entity = koreanEntity || longEnglishEntity || detectedEntities[0] || message.slice(0, 30);
   const msgLower = message.toLowerCase();
 
   // 메시지 맥락에 맞는 웹 검색 쿼리 구성

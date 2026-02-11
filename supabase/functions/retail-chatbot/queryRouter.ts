@@ -114,12 +114,22 @@ function detectEntities(message: string): string[] {
   const entities: string[] = [];
   const msgLower = message.toLowerCase();
 
-  // 1. 따옴표/괄호 안의 이름 추출 ("블랙크로우", [Black Crow] 등)
+  // 1. 따옴표/괄호 안의 이름 추출 ("블랙크로우", [Black Crow], (licksip) 등)
   const quotedMatches = message.match(/["'""'']([^"'""'']+)["'""'']/g);
   if (quotedMatches) {
     for (const match of quotedMatches) {
       const clean = match.replace(/["'""'']/g, '').trim();
       if (clean.length >= 2) {
+        entities.push(clean);
+      }
+    }
+  }
+  // 괄호 안의 영문 이름도 추출 — "릭십(licksip)", "매장(Brand Name)" 패턴
+  const parenMatches = message.match(/\(([A-Za-z][A-Za-z\s&'-]*[A-Za-z])\)/g);
+  if (parenMatches) {
+    for (const match of parenMatches) {
+      const clean = match.replace(/[()]/g, '').trim();
+      if (clean.length >= 2 && !isCommonEnglishWord(clean.toLowerCase())) {
         entities.push(clean);
       }
     }
@@ -178,6 +188,11 @@ function isCommonEnglishWord(word: string): boolean {
     'please', 'want', 'need', 'tell', 'know', 'think', 'give', 'create',
     'analysis', 'compare', 'recommend', 'suggest', 'plan', 'report',
     'online', 'offline', 'global', 'local', 'total', 'average', 'percent',
+    // 업종/비즈니스 약어 (고유명사 아님)
+    'f&b', 'fnb', 'b2b', 'b2c', 'd2c', 'dtc', 'diy', 'pos', 'crm', 'erp',
+    'roi', 'kpi', 'vmd', 'ux', 'ui', 'it', 'ai', 'ar', 'vr', 'iot',
+    'sns', 'seo', 'sem', 'cpc', 'cpa', 'ctr', 'atv', 'upt', 'ropo',
+    'faq', 'q&a', 'r&d', 'hr', 'pr', 'ir', 'cs', 'as', 'md', 'pm',
   ]);
   return commonWords.has(word);
 }
