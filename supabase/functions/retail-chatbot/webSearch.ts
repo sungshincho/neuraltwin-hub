@@ -136,17 +136,42 @@ export function buildSearchQuery(
   message: string,
   detectedEntities: string[]
 ): string {
+  const msgLower = message.toLowerCase();
+
+  // SNS/소셜미디어 컨텍스트 감지
+  const isSnsQuery = /인스타|instagram|페이스북|facebook|유튜브|youtube|틱톡|tiktok|sns|소셜|블로그/i.test(message);
+  const isResearchQuery = /리서치|조사|검색|찾아/i.test(message);
+
   // 감지된 고유명사가 있으면 해당 엔티티 중심 쿼리
   if (detectedEntities.length > 0) {
     const entity = detectedEntities[0];
+
+    // SNS/소셜미디어 검색
+    if (isSnsQuery) {
+      if (/인스타|instagram/i.test(message)) return `${entity} 인스타그램 공식 계정`;
+      if (/페이스북|facebook/i.test(message)) return `${entity} 페이스북 페이지`;
+      if (/유튜브|youtube/i.test(message)) return `${entity} 유튜브 채널`;
+      return `${entity} SNS 소셜미디어 공식 계정`;
+    }
+
+    // 리서치/조사 요청
+    if (isResearchQuery) {
+      return `${entity} 브랜드 매장 리뷰 소개`;
+    }
+
     // 리테일 맥락 추가
-    if (message.includes('팝업') || message.includes('popup')) {
+    if (msgLower.includes('팝업') || msgLower.includes('popup')) {
       return `${entity} 브랜드 공식 사이트 제품 카테고리`;
     }
-    if (message.includes('수입') || message.includes('import')) {
+    if (msgLower.includes('수입') || msgLower.includes('import')) {
       return `${entity} brand official products`;
     }
     return `${entity} 브랜드 소개 제품`;
+  }
+
+  // 엔티티 없이 SNS 일반 검색
+  if (isSnsQuery) {
+    return message.slice(0, 80) + ' SNS 인스타그램';
   }
 
   // 엔티티 없으면 원본 메시지 축약
