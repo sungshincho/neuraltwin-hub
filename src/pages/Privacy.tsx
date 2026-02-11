@@ -124,14 +124,28 @@ const Privacy = () => {
         </section>
 
         {/* Footer */}
-        <footer className="legal-footer">
-          <span>&copy; 2025 NEURALTWIN. All rights reserved.</span>
-          <div className="legal-footer-links">
-            <Link to="/privacy">개인정보처리방침</Link>
-            <Link to="/terms">이용약관</Link>
-            <Link to="/contact">문의하기</Link>
+        <footer className="legal-footer-full">
+          <div className="footer-left">
+            <img src="/NEURALTWIN_logo_white.png" alt="NEURALTWIN" className="logo-img" />
+            <p>복잡한 세계를 위한 AI 플랫폼.<br />데이터를 의사결정으로 전환합니다.</p>
+          </div>
+          <div className="footer-cols">
+            <div className="footer-col">
+              <h4>Company &amp; Product</h4>
+              <Link to="/about">제품 & 회사소개</Link>
+            </div>
+            <div className="footer-col">
+              <h4>Contact</h4>
+              <Link to="/contact">문의하기</Link>
+            </div>
           </div>
         </footer>
+        <div className="footer-bottom">
+          <span>&copy; 2026 NEURALTWIN. All rights reserved.</span>
+          <span>
+            <Link to="/privacy">Privacy Policy</Link> · <Link to="/terms">Terms of Service</Link>
+          </span>
+        </div>
       </div>
     </div>
   );
