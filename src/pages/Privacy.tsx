@@ -113,12 +113,12 @@ const Privacy = () => {
 
               <div className="legal-block">
                 <h2>4. 문의</h2>
-                <p>개인정보 관련 문의: privacy@neuraltwin.ai</p>
+                <p>개인정보 관련 문의: neuraltwin.hq@neuraltwin.io</p>
               </div>
 
               <hr className="legal-divider" />
 
-              <div className="legal-date">최종 수정일: 2025년 1월 1일</div>
+              <div className="legal-date">최종 수정일: 2026년 02월</div>
             </div>
           </div>
         </section>
