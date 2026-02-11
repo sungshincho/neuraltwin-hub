@@ -92,6 +92,11 @@ export default function StoreVisualizer({
   // 어노테이션 스크린 좌표
   const [annotationPositions, setAnnotationPositions] = useState<AnnotationPosition[]>([]);
 
+  // 존 라벨 스크린 좌표 (3D 씬 내부 존 이름 표시용)
+  const [zoneLabelPositions, setZoneLabelPositions] = useState<Array<{
+    id: string; label: string; color: string; x: number; y: number; visible: boolean;
+  }>>([]);
+
   // 동적 존 맵 (어노테이션/범례에서 사용)
   const zoneMap = useMemo(() => {
     if (!zones || zones.length === 0) return null;
@@ -227,47 +232,55 @@ export default function StoreVisualizer({
   // 어노테이션 3D→2D 좌표 변환
   // ─────────────────────────────────────────
   const updateAnnotationPositions = useCallback(() => {
-    if (!sceneRef.current || !canvasRef.current || !annotations?.length) {
+    if (!sceneRef.current || !canvasRef.current) {
       setAnnotationPositions([]);
+      setZoneLabelPositions([]);
       return;
     }
 
     const { camera, renderer } = sceneRef.current;
     const canvas = renderer.domElement;
 
-    const newPositions: AnnotationPosition[] = annotations.map((ann) => {
-      // 동적 존 우선, 없으면 기본 STORE.zones 참조
-      const dynZone = zoneMap?.[ann.zone];
-      const staticZone = STORE.zones[ann.zone];
-      const zoneData = dynZone || staticZone;
-      if (!zoneData) {
-        return { ...ann, x: 0, y: 0, visible: false };
-      }
+    // 어노테이션 위치 업데이트
+    if (annotations?.length) {
+      const newPositions: AnnotationPosition[] = annotations.map((ann) => {
+        const dynZone = zoneMap?.[ann.zone];
+        const staticZone = STORE.zones[ann.zone];
+        const zoneData = dynZone || staticZone;
+        if (!zoneData) {
+          return { ...ann, x: 0, y: 0, visible: false };
+        }
 
-      // 3D 월드 좌표 (존 중심 위)
-      const worldPos = new THREE.Vector3(zoneData.x, 2.5, zoneData.z);
+        const worldPos = new THREE.Vector3(zoneData.x, 2.5, zoneData.z);
+        const projected = worldPos.clone().project(camera);
+        const visible = projected.z < 1 && Math.abs(projected.x) < 1.2 && Math.abs(projected.y) < 1.2;
+        const x = (projected.x * 0.5 + 0.5) * canvas.clientWidth;
+        const y = (-projected.y * 0.5 + 0.5) * canvas.clientHeight;
 
-      // 2D 스크린 좌표 변환
-      const projected = worldPos.clone().project(camera);
+        return { zone: ann.zone, text: ann.text, color: ann.color, x, y, visible };
+      });
+      setAnnotationPositions(newPositions);
+    } else {
+      setAnnotationPositions([]);
+    }
 
-      // 화면 밖인지 확인
-      const visible = projected.z < 1 && Math.abs(projected.x) < 1.2 && Math.abs(projected.y) < 1.2;
+    // 존 라벨 위치 업데이트 (동적 존이 있을 때만)
+    if (zones && zones.length > 0) {
+      const labelPositions = zones.map((z) => {
+        // 존 바닥 중심 바로 위 (y=0.5)
+        const worldPos = new THREE.Vector3(z.x, 0.5, z.z);
+        const projected = worldPos.clone().project(camera);
+        const visible = projected.z < 1 && Math.abs(projected.x) < 1.2 && Math.abs(projected.y) < 1.2;
+        const x = (projected.x * 0.5 + 0.5) * canvas.clientWidth;
+        const y = (-projected.y * 0.5 + 0.5) * canvas.clientHeight;
 
-      const x = (projected.x * 0.5 + 0.5) * canvas.clientWidth;
-      const y = (-projected.y * 0.5 + 0.5) * canvas.clientHeight;
-
-      return {
-        zone: ann.zone,
-        text: ann.text,
-        color: ann.color,
-        x,
-        y,
-        visible
-      };
-    });
-
-    setAnnotationPositions(newPositions);
-  }, [annotations, zoneMap]);
+        return { id: z.id, label: z.label, color: z.color, x, y, visible };
+      });
+      setZoneLabelPositions(labelPositions);
+    } else {
+      setZoneLabelPositions([]);
+    }
+  }, [annotations, zoneMap, zones]);
 
   // ─────────────────────────────────────────
   // 초기화
@@ -433,6 +446,36 @@ export default function StoreVisualizer({
       <div ref={containerRef} className="w-full h-full overflow-hidden">
         <canvas ref={canvasRef} className="block w-full h-full" />
       </div>
+
+      {/* 존 라벨 오버레이 (3D 씬 내부 각 존 위에 이름 표시) */}
+      {zoneLabelPositions.map((zl) =>
+        zl.visible ? (
+          <div
+            key={`zone-label-${zl.id}`}
+            className="absolute pointer-events-none"
+            style={{
+              left: zl.x,
+              top: zl.y,
+              transform: 'translate(-50%, -50%)',
+              padding: '3px 8px',
+              borderRadius: '4px',
+              backgroundColor: `${zl.color}22`,
+              border: `1px solid ${zl.color}44`,
+              color: `${zl.color}`,
+              fontSize: 'clamp(9px, 1.4vw, 12px)',
+              fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+              zIndex: 5,
+              textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+              opacity: 0.9,
+            }}
+          >
+            {zl.label}
+          </div>
+        ) : null
+      )}
 
       {/* 어노테이션 오버레이 */}
       {annotationPositions.map((ann, index) =>

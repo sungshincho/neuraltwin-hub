@@ -167,27 +167,101 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
 
     // 동적 존 유효성 검증
     // 영문 zone ID → 한국어 라벨 자동 매핑 (AI가 한국어 라벨을 생략했을 때 보정)
+    // Phase 1: 전체 ID 매칭 (우선순위 높음)
     const ZONE_LABEL_FALLBACK: Record<string, string> = {
       entrance: '입구', entry: '입구', display: '진열대', showcase: '쇼케이스',
       counter: '카운터', checkout: '계산대', main: '메인 구역', main_floor: '메인 매장',
-      fitting_room: '피팅룸', power_wall: '파워 월', accessory: '액세서리',
-      tasting: '시식 코너', seating: '좌석 구역', kitchen: '주방',
-      takeout: '테이크아웃', experience: '체험존', limited: '한정판 구역',
-      tester_bar: '테스터 바', skincare: '스킨케어', makeup: '메이크업',
-      consultation: '컨설팅', demo: '체험 존', service: 'AS/상담',
+      fitting_room: '피팅룸', fitting_studio: '피팅 스튜디오', power_wall: '파워 월',
+      accessory: '액세서리', tasting: '시식 코너', seating: '좌석 구역',
+      kitchen: '주방', takeout: '테이크아웃', experience: '체험존',
+      limited: '한정판 구역', tester_bar: '테스터 바', skincare: '스킨케어',
+      makeup: '메이크업', consultation: '컨설팅', demo: '체험 존', service: 'AS/상담',
       produce: '신선식품', deli: '델리', grocery: '식료품', beverage: '음료',
       photo_zone: '포토존', packaging: '포장 구역', waiting: '대기 구역',
-      menu_board: '메뉴판', bar: '바 카운터', lounge: '라운지',
-      popup: '팝업 존', event: '이벤트 존', vip: 'VIP 구역',
+      menu_board: '메뉴판', bar: '바 카운터', lounge: '라운지', bar_lounge: '바/라운지',
+      popup: '팝업 존', event: '이벤트 존', vip: 'VIP 구역', vip_lounge: 'VIP 라운지',
+      gallery: '갤러리', studio: '스튜디오', cafe: '카페', green_cafe: '그린 카페',
+      putting_green: '퍼팅 그린', putting_green_cafe: '퍼팅 그린/카페',
+      vic_lounge: 'VIC 라운지', members_lounge: '멤버스 라운지',
+      brand_gallery: '브랜드 갤러리', decompression: '감압 구간',
+      simulation: '시뮬레이션', indoor_range: '인도어 레인지',
+      custom_fitting: '커스텀 피팅', pro_shop: '프로샵',
+      workshop: '워크숍', seminar: '세미나', kids: '키즈 존',
+      outdoor: '아웃도어', terrace: '테라스', rooftop: '루프탑',
+      storage: '창고', office: '오피스', staff: '스태프 구역',
+      community: '커뮤니티', co_working: '코워킹', meeting: '미팅룸',
+      reception: '리셉션', concierge: '컨시어지',
     };
 
-    // 라벨이 영어 ID와 동일하거나, ASCII만으로 구성된 경우 → 한국어 fallback 적용
+    // Phase 2: 단어 단위 한국어 변환 사전
+    const WORD_KO: Record<string, string> = {
+      entrance: '입구', entry: '입구', exit: '출구', main: '메인', floor: '매장',
+      fitting: '피팅', room: '룸', studio: '스튜디오', counter: '카운터',
+      checkout: '계산대', display: '진열', showcase: '쇼케이스', power: '파워',
+      wall: '월', accessory: '액세서리', tasting: '시식', seating: '좌석',
+      kitchen: '주방', takeout: '테이크아웃', experience: '체험', zone: '존',
+      area: '구역', limited: '한정', edition: '에디션', tester: '테스터',
+      bar: '바', skincare: '스킨케어', makeup: '메이크업', beauty: '뷰티',
+      consultation: '상담', consulting: '컨설팅', demo: '데모', service: '서비스',
+      produce: '신선', fresh: '신선', deli: '델리', grocery: '식료품',
+      beverage: '음료', drink: '음료', coffee: '커피', tea: '티',
+      photo: '포토', packaging: '포장', waiting: '대기', lounge: '라운지',
+      menu: '메뉴', board: '보드', popup: '팝업', pop: '팝', up: '업',
+      event: '이벤트', vip: 'VIP', vic: 'VIC', premium: '프리미엄',
+      gallery: '갤러리', art: '아트', brand: '브랜드', cafe: '카페',
+      green: '그린', putting: '퍼팅', golf: '골프', range: '레인지',
+      indoor: '인도어', outdoor: '아웃도어', simulation: '시뮬레이션',
+      custom: '커스텀', pro: '프로', shop: '샵', store: '스토어',
+      workshop: '워크숍', seminar: '세미나', kids: '키즈', children: '키즈',
+      terrace: '테라스', rooftop: '루프탑', garden: '가든',
+      members: '멤버스', member: '멤버', club: '클럽',
+      community: '커뮤니티', reception: '리셉션', concierge: '컨시어지',
+      storage: '창고', office: '오피스', staff: '스태프',
+      new: '신상', arrival: '신상품', seasonal: '시즌', collection: '컬렉션',
+      private: '프라이빗', exclusive: '익스클루시브',
+      wellness: '웰니스', spa: '스파', fitness: '피트니스',
+      dining: '다이닝', restaurant: '레스토랑', bakery: '베이커리',
+      wine: '와인', cocktail: '칵테일', dessert: '디저트',
+    };
+
+    // 영문 ID/라벨 → 한국어 변환 (Phase 1: 전체 매칭 → Phase 2: 단어 분리 변환)
     function enrichLabel(id: string, label: string): string {
       const lc = label.toLowerCase().trim();
-      // 라벨이 ID와 같거나, 순수 영어+숫자+공백이면 한국어로 보정
-      if (lc === id.toLowerCase() || /^[a-z0-9_ /]+$/.test(lc)) {
-        return ZONE_LABEL_FALLBACK[id.toLowerCase()] || ZONE_LABEL_FALLBACK[lc.replace(/\s+/g, '_')] || label;
+      const idLc = id.toLowerCase().trim();
+
+      // 한국어가 이미 포함되어 있으면 그대로 반환
+      if (/[가-힣]/.test(lc)) {
+        return label;
       }
+
+      // Phase 1: 전체 ID 또는 전체 라벨로 정확히 매칭
+      const fullMatch =
+        ZONE_LABEL_FALLBACK[idLc] ||
+        ZONE_LABEL_FALLBACK[lc.replace(/\s+/g, '_')] ||
+        ZONE_LABEL_FALLBACK[lc.replace(/[-\s]+/g, '_')];
+      if (fullMatch) return fullMatch;
+
+      // Phase 2: 단어 분리 후 개별 번역 조합
+      const words = idLc.split(/[_\-\s]+/).filter(Boolean);
+      if (words.length > 0) {
+        const translated = words.map(w => WORD_KO[w] || w);
+        // 모든 단어가 번역되었는지 확인
+        const allTranslated = words.every(w => WORD_KO[w]);
+        if (allTranslated || translated.some(t => /[가-힣]/.test(t))) {
+          return translated.join(' ');
+        }
+      }
+
+      // Phase 3: 라벨 자체를 단어 분리 시도
+      const labelWords = lc.split(/[_\-\s]+/).filter(Boolean);
+      if (labelWords.length > 0) {
+        const translated = labelWords.map(w => WORD_KO[w] || w);
+        if (translated.some(t => /[가-힣]/.test(t))) {
+          return translated.join(' ');
+        }
+      }
+
+      // 모든 변환 실패: 원본 라벨 반환
       return label;
     }
 
@@ -205,6 +279,30 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
           d: Math.min(15, Math.max(2, z.d || 4)),
           color: typeof z.color === 'string' && z.color.startsWith('#') ? z.color : '#64748b'
         }));
+
+      // 겹침 방지: 존들이 서로 너무 많이 겹치면 자동으로 밀어냄
+      if (validatedZones.length > 1) {
+        for (let i = 0; i < validatedZones.length; i++) {
+          for (let j = i + 1; j < validatedZones.length; j++) {
+            const a = validatedZones[i];
+            const b = validatedZones[j];
+            // 존 AABB 겹침 검사
+            const overlapX = (a.w / 2 + b.w / 2) - Math.abs(a.x - b.x);
+            const overlapZ = (a.d / 2 + b.d / 2) - Math.abs(a.z - b.z);
+            if (overlapX > 0.5 && overlapZ > 0.5) {
+              // 겹침 → 밀어냄 (b를 a에서 멀리)
+              const dx = b.x - a.x || 0.1;
+              const dz = b.z - a.z || 0.1;
+              const dist = Math.sqrt(dx * dx + dz * dz) || 1;
+              const pushX = (dx / dist) * (overlapX * 0.6);
+              const pushZ = (dz / dist) * (overlapZ * 0.6);
+              b.x = Math.min(10, Math.max(-10, b.x + pushX));
+              b.z = Math.min(10, Math.max(-10, b.z + pushZ));
+            }
+          }
+        }
+      }
+
       if (validatedZones.length === 0) validatedZones = undefined;
     }
 
@@ -366,6 +464,7 @@ interface WebChatRequest {
   conversationId?: string;    // 기존 대화 이어가기
   history?: ChatMessage[];    // 클라이언트 측 히스토리 (선택적)
   attachments?: FileAttachmentData[];  // 첨부 파일 데이터
+  stream?: boolean;           // 클라이언트 SSE 스트리밍 요청 (default: true, 모바일은 false)
   // TASK 9: Action 분기
   action?: 'chat' | 'capture_lead' | 'handover_session';
   lead?: LeadFormData;
@@ -1138,22 +1237,27 @@ serve(async (request: Request) => {
       console.log(`[PainPoint] ${painPointResult.summary}`);
     }
 
-    // 12. Lovable Gateway 호출 — SSE 스트리밍 모드 시도, 실패 시 non-streaming fallback
-    let useStreaming = true;
+    // 12. Lovable Gateway 호출 — 클라이언트가 stream=false 요청 시 JSON 직행, 아니면 SSE 시도
+    const clientWantsStream = body.stream !== false;
+    let useStreaming = clientWantsStream;
     let upstreamResponse: Response;
 
-    try {
-      upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
-      // Content-Type 확인 — SSE가 아니면 non-streaming fallback
-      const ct = upstreamResponse.headers.get('Content-Type') || '';
-      if (!ct.includes('text/event-stream') && !ct.includes('text/plain')) {
-        // JSON 응답일 수 있음 → non-streaming으로 처리
+    if (clientWantsStream) {
+      try {
+        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, true);
+        // Content-Type 확인 — SSE가 아니면 non-streaming fallback
+        const ct = upstreamResponse.headers.get('Content-Type') || '';
+        if (!ct.includes('text/event-stream') && !ct.includes('text/plain')) {
+          useStreaming = false;
+          console.log('[AI] Gateway returned non-streaming response, using fallback');
+        }
+      } catch (streamErr) {
+        console.warn('[AI] Streaming call failed, falling back to non-streaming:', streamErr);
         useStreaming = false;
-        console.log('[AI] Gateway returned non-streaming response, using fallback');
+        upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
       }
-    } catch (streamErr) {
-      console.warn('[AI] Streaming call failed, falling back to non-streaming:', streamErr);
-      useStreaming = false;
+    } else {
+      console.log('[AI] Client requested non-streaming (mobile)');
       upstreamResponse = await callLovableGateway(systemPrompt, chatMessages, false);
     }
 
