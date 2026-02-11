@@ -573,19 +573,20 @@ export default function StoreVisualizer({
               left: ann.x,
               top: ann.y,
               transform: 'translate(-50%, -50%)',
-              padding: '8px 14px',
+              padding: 'clamp(4px, 0.8vw, 8px) clamp(6px, 1vw, 14px)',
               borderRadius: '6px',
               backgroundColor: `${ann.color}33`,
               border: `1px solid ${ann.color}88`,
               color: ann.color,
-              fontSize: '12px',
+              fontSize: 'clamp(9px, 1.2vw, 12px)',
               fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
               fontWeight: 600,
               backdropFilter: 'blur(6px)',
               whiteSpace: 'pre-line',
               textAlign: 'center',
               zIndex: 10,
-              lineHeight: 1.5
+              lineHeight: 1.5,
+              maxWidth: 'clamp(120px, 25vw, 220px)'
             }}
           >
             {ann.text}

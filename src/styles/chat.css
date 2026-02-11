@@ -222,8 +222,8 @@
     top: 30%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 600px;
-    height: 600px;
+    width: clamp(250px, 50vw, 600px);
+    height: clamp(250px, 50vw, 600px);
     background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 60%);
     filter: blur(80px);
 }
@@ -1203,8 +1203,8 @@
 
 .visualizer-container {
     width: 55%;
-    height: 600px;
-    min-height: 500px;
+    height: clamp(400px, 60vh, 600px);
+    min-height: 350px;
     position: relative;
     background-color: rgba(3, 7, 18, 0.9);
     border-radius: 16px;
