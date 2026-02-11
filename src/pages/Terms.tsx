@@ -118,7 +118,7 @@ const Terms = () => {
 
               <hr className="legal-divider" />
 
-              <div className="legal-date">최종 수정일: 2025년 1월 1일</div>
+              <div className="legal-date">최종 수정일: 2026년 02월</div>
             </div>
           </div>
         </section>
