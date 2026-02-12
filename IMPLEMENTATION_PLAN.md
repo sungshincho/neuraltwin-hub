@@ -2,82 +2,50 @@
 
 > 원본 명세서 1,592줄 기반 + 7개 이슈 해결방안 반영
 > 작성일: 2026-02-12
-> 최종 수정: 2026-02-12 (임베딩 전략 → Gemini text-embedding-004)
+> 최종 수정: 2026-02-12 (임베딩 → Google AI Studio 직접 호출 확정, 6개 발견사항 반영)
 
 ---
 
 ## 이슈 해결방안 요약
 
-### 이슈 1: 임베딩 전략 — Gemini text-embedding-004
+### 이슈 1: 임베딩 전략 — Google AI Studio 직접 호출 확정
 
-**결정**: Lovable AI Gateway를 통한 Gemini 임베딩 모델 사용
+**결정**: Lovable AI Gateway 임베딩 미지원 확인 (3개 모델 모두 400 에러) → Google AI Studio 직접 호출
 
 ```
-Gateway URL: https://ai.gateway.lovable.dev/v1/embeddings
-모델: text-embedding-004 (Gemini 최신 임베딩 모델)
-차원: 768 (기본)
-인증: LOVABLE_API_KEY (기존 환경변수 그대로 사용)
-추가 비용: 없음 (기존 Gateway 경유)
+API: https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent
+모델: text-embedding-004
+차원: 768
+인증: GOOGLE_AI_API_KEY (Supabase Edge Function Secrets에 추가 완료)
+비용: 무료 (분당 1,500건)
+Lovable Gateway 미경유 — Google AI Studio 직접 호출
 ```
-
-**사전 확인**: `test-embedding` Edge Function 실행하여 Gateway 지원 확인
-- 테스트 대상: `text-embedding-004`, `gemini-embedding-exp-03-07` 등
-- 성공 시 → 768차원 벡터 DB 구성
-- 실패 시 → 폴백: OpenAI `text-embedding-3-small` (별도 API 키 필요)
 
 ```typescript
-// embeddings.ts — Gemini 임베딩 (Lovable Gateway 경유)
+// knowledge/embeddings.ts — Google AI Studio 직접 호출
 
-// 1순위: Lovable AI Gateway (Gemini text-embedding-004)
-const LOVABLE_EMBEDDING_URL = 'https://ai.gateway.lovable.dev/v1/embeddings';
-// 2순위 폴백: Lovable 채팅 Gateway의 임베딩 엔드포인트
-const LOVABLE_CHAT_EMBEDDING_URL = 'https://lovable-api.anthropic.com/v1/embeddings';
-
-// 지원되는 모델 이름 후보 (test-embedding 결과에 따라 확정)
-const EMBEDDING_MODEL_CANDIDATES = [
-  'text-embedding-004',
-  'gemini-embedding-exp-03-07',
-  'gemini/text-embedding-004',
-  'models/text-embedding-004',
-];
+const GOOGLE_EMBEDDING_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent';
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = Deno.env.get('LOVABLE_API_KEY');
-  if (!apiKey) throw new Error('LOVABLE_API_KEY not set');
+  const apiKey = Deno.env.get('GOOGLE_AI_API_KEY');
+  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not set');
 
-  // 확정된 모델명 (test-embedding 결과 반영 후 고정)
-  const model = 'text-embedding-004';
-
-  const response = await fetch(LOVABLE_EMBEDDING_URL, {
+  const response = await fetch(`${GOOGLE_EMBEDDING_URL}?key=${apiKey}`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ model, input: text })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      content: { parts: [{ text }] }
+    })
   });
 
   if (!response.ok) {
-    // 폴백: 다른 Gateway URL 시도
-    const fallbackRes = await fetch(LOVABLE_CHAT_EMBEDDING_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ model, input: text })
-    });
-
-    if (!fallbackRes.ok) {
-      throw new Error(`Embedding API error: ${response.status} / fallback: ${fallbackRes.status}`);
-    }
-
-    const fallbackData = await fallbackRes.json();
-    return fallbackData.data[0].embedding;
+    const errorBody = await response.text();
+    throw new Error(`Google Embedding API error ${response.status}: ${errorBody}`);
   }
 
   const data = await response.json();
-  return data.data[0].embedding;
+  return data.embedding.values;  // Google AI Studio 응답 형식
 }
 
 // 검색 쿼리용 임베딩 (질문 + 토픽 힌트 결합)
@@ -90,9 +58,134 @@ export async function generateQueryEmbedding(
     : question;
   return generateEmbedding(enrichedQuery);
 }
+
+// 배치 임베딩 (마이그레이션/적재 시 사용)
+export async function generateBatchEmbeddings(
+  texts: string[]
+): Promise<number[][]> {
+  const apiKey = Deno.env.get('GOOGLE_AI_API_KEY');
+  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not set');
+
+  const batchUrl =
+    'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents';
+
+  const response = await fetch(`${batchUrl}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      requests: texts.map(text => ({
+        model: 'models/text-embedding-004',
+        content: { parts: [{ text }] }
+      }))
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Google Batch Embedding API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.embeddings.map((e: { values: number[] }) => e.values);
+}
 ```
 
 **SQL 스키마**: `vector(768)` (Gemini text-embedding-004 기본 차원)
+
+### 이슈 1-B: pg_trgm — 벡터 검색 실패 시 폴백 전용
+
+**결정**: Gemini 임베딩이 주(primary) → pg_trgm은 임베딩 API 장애 시 폴백으로만 활성화
+
+```sql
+-- pg_trgm 확장 (폴백 검색용)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- 한국어 텍스트 검색용 GIN 인덱스
+CREATE INDEX idx_knowledge_trgm_title
+  ON retail_knowledge_chunks USING gin (title gin_trgm_ops);
+CREATE INDEX idx_knowledge_trgm_content
+  ON retail_knowledge_chunks USING gin (content gin_trgm_ops);
+```
+
+```typescript
+// knowledge/vectorStore.ts — pg_trgm 폴백 검색
+// 임베딩 API 실패 시에만 사용
+
+// 한국어 조사 제거 패턴 (pg_trgm 정확도 향상)
+const KOREAN_PARTICLE_PATTERN = /(은|는|이|가|을|를|의|에|에서|로|으로|와|과|도|만|까지|부터|처럼|같은|대한|위한|관한)$/g;
+
+function removeKoreanParticles(text: string): string {
+  return text.split(/\s+/)
+    .map(word => word.replace(KOREAN_PARTICLE_PATTERN, ''))
+    .join(' ');
+}
+
+async function fallbackTrgmSearch(
+  supabase: SupabaseClient,
+  query: string,
+  topicId?: string,
+  limit: number = 5
+): Promise<KnowledgeSearchResult[]> {
+  const cleanedQuery = removeKoreanParticles(query);
+
+  // threshold 0.1 (한국어 trigram은 유사도가 낮으므로)
+  const { data, error } = await supabase.rpc('search_knowledge_trgm', {
+    search_query: cleanedQuery,
+    match_threshold: 0.1,
+    match_count: limit,
+    filter_topic: topicId || null
+  });
+
+  if (error) {
+    console.error('[pg_trgm fallback] Search error:', error);
+    return [];
+  }
+
+  return data || [];
+}
+```
+
+```sql
+-- pg_trgm 폴백 RPC 함수
+CREATE OR REPLACE FUNCTION search_knowledge_trgm(
+  search_query TEXT,
+  match_threshold FLOAT DEFAULT 0.1,
+  match_count INT DEFAULT 5,
+  filter_topic TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+  id UUID,
+  topic_id TEXT,
+  chunk_type TEXT,
+  title TEXT,
+  content TEXT,
+  conditions JSONB,
+  similarity FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    rkc.id,
+    rkc.topic_id,
+    rkc.chunk_type,
+    rkc.title,
+    rkc.content,
+    rkc.conditions,
+    GREATEST(
+      similarity(rkc.title, search_query),
+      similarity(rkc.content, search_query)
+    ) AS similarity
+  FROM retail_knowledge_chunks rkc
+  WHERE
+    (similarity(rkc.title, search_query) > match_threshold
+     OR similarity(rkc.content, search_query) > match_threshold * 0.5)
+    AND (filter_topic IS NULL OR rkc.topic_id = filter_topic)
+  ORDER BY similarity DESC
+  LIMIT match_count;
+END;
+$$;
+```
 
 ---
 
@@ -201,7 +294,8 @@ Phase A: retailKnowledge.ts 자동 마이그레이션 (구현 시 즉시)
 
 Phase B: 사용자 워크시트 적재 (추후 전달 시)
   - 토픽별 실무진 관점 워크시트 수신
-  - knowledgeBuilder.ts의 batchLoadTopic() 사용
+  - seedCuratedKnowledge.ts 별도 제공 파일 + batchLoadTopic() 사용
+  - 인터페이스 매칭 확인 완료 (layout_flow, vmd_display, sales_conversion 등)
   - 토픽당 10~20개 고품질 청크 추가
 
 Phase C: 웹 검색 결과 자동 축적 (장기)
@@ -220,29 +314,32 @@ import { upsertKnowledgeChunk } from './knowledgeBuilder.ts';
 
 export async function migrateStaticKnowledge(supabase: SupabaseClient) {
   for (const topic of RETAIL_KNOWLEDGE) {
-    // context 필드를 의미 단위로 분할 (단락 기준)
+    // context 필드를 의미 단위로 분할 (단락 기준, maxLength 800자)
+    // 테이블 포함 섹션이 잘리면 의미가 깨지므로 800자 상한 적용
     const paragraphs = topic.context.split('\n\n').filter(p => p.trim().length > 50);
+    // 800자 초과 단락은 문단 경계에서 재분할
+    const chunks = splitLongParagraphs(paragraphs, 800);
 
-    // 첫 번째 단락: principle 청크
-    if (paragraphs[0]) {
+    // 첫 번째 청크: principle
+    if (chunks[0]) {
       await upsertKnowledgeChunk(supabase, {
         topicId: topic.id,
         chunkType: 'principle',
         insightId: `${topic.id}-static-principle`,
         title: `${topic.nameKo} — 핵심 원칙`,
-        content: paragraphs[0],
+        content: chunks[0],
         source: 'migration_from_static'
       });
     }
 
-    // 나머지 단락: insight 청크들
-    for (let i = 1; i < paragraphs.length; i++) {
+    // 나머지 청크: insight
+    for (let i = 1; i < chunks.length; i++) {
       await upsertKnowledgeChunk(supabase, {
         topicId: topic.id,
         chunkType: 'insight',
         insightId: `${topic.id}-static-insight-${i}`,
         title: `${topic.nameKo} — 인사이트 ${i}`,
-        content: paragraphs[i],
+        content: chunks[i],
         source: 'migration_from_static'
       });
     }
@@ -275,25 +372,19 @@ export async function migrateStaticKnowledge(supabase: SupabaseClient) {
    - 웹 검색: 3초 타임아웃 (per query)
    - 전체 pre-processing: 5초 내 완료 목표
 
-4. 프론트엔드 "검색 중" 상태 표시
-   - SSE 시작 전에 early "status" 이벤트 전송
-   - 프론트에서 "NEURALTWIN 리서치 중..." 표시
+4. 프론트엔드 "검색 중" 상태 표시 — **방법 B(meta 이벤트) 채택**
+   - 검색은 AI 호출 전에 완료되므로 SSE 스트림 내 status 이벤트는 무의미
+   - `createSSEStreamV2`의 meta 이벤트에 `knowledgeSourceCount`와 `webSearchPerformed` 포함
+   - 프론트엔드는 isLoading 상태에서 "리서치 중..." 텍스트 표시
 ```
 
 ```typescript
-// index.ts — early status event (SSE 스트리밍 전)
-if (strategy.shouldSearch) {
-  // SSE 응답 시작 전에 검색 상태 알림
-  // → 이 시점에서는 아직 SSE 스트림이 시작되지 않았으므로
-  //   검색 완료 후 SSE 시작 시 meta 이벤트에 포함
-}
-
 // createSSEStreamV2의 meta 이벤트에 검색 메타데이터 추가
 sendEvent(controller, 'meta', {
   suggestions: opts.suggestions,
   showLeadForm: opts.showLeadForm,
-  searchPerformed: opts.searchPerformed,    // 검색 수행 여부
-  searchSources: opts.searchSources,        // 검색 소스 수
+  knowledgeSourceCount: opts.knowledgeSourceCount,  // 벡터 검색 결과 수
+  webSearchPerformed: opts.webSearchPerformed,      // 웹 검색 수행 여부
   // ... 기존 필드
 });
 ```
@@ -369,8 +460,9 @@ export async function searchKnowledgeWithFallback(params: {
 ## 수정된 SQL 스키마
 
 ```sql
--- pgvector 확장 활성화
+-- pgvector + pg_trgm 확장 활성화
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;  -- 폴백 텍스트 검색용
 
 -- ═══════════════════════════════════════
 -- 지식 청크 테이블 (이슈 1, 2 반영)
@@ -391,7 +483,7 @@ CREATE TABLE retail_knowledge_chunks (
   conditions JSONB DEFAULT '{}',
   source TEXT DEFAULT 'curation',
 
-  -- 벡터 임베딩 (OpenAI text-embedding-3-small, 512차원)
+  -- 벡터 임베딩 (Google text-embedding-004, 768차원)
   embedding vector(768),
 
   -- 관리
@@ -414,7 +506,7 @@ CREATE INDEX idx_knowledge_topic
   ON retail_knowledge_chunks(topic_id, chunk_type);
 
 -- ═══════════════════════════════════════
--- RPC: 벡터 유사도 검색 (512차원)
+-- RPC: 벡터 유사도 검색 (768차원)
 -- ═══════════════════════════════════════
 CREATE OR REPLACE FUNCTION search_knowledge(
   query_embedding vector(768),
@@ -484,7 +576,7 @@ supabase/functions/retail-chatbot/
 ├── systemPrompt.ts               # [수정] 페르소나 강화 + Few-shot + 응답 구조
 │
 ├── knowledge/                    # [신규] Layer 1
-│   ├── embeddings.ts             # OpenAI text-embedding-3-small
+│   ├── embeddings.ts             # Google AI Studio text-embedding-004
 │   ├── vectorStore.ts            # pgvector 검색 + 폴백
 │   ├── knowledgeBuilder.ts       # 지식 적재 유틸
 │   ├── migrateFromStatic.ts      # retailKnowledge.ts → DB 마이그레이션
@@ -582,7 +674,10 @@ supabase/functions/retail-chatbot/
   - beginner / advanced 판정
   - 기존 코드 변경 없이 독립 모듈
 
-작업 0-2: systemPrompt.ts 수정
+작업 0-2: systemPrompt.ts 수정 (충돌 확인 필수)
+  - 교체 전에 기존 섹션 1과 3.1의 정확한 라인 범위를 먼저 확인
+  - 새 텍스트와 기존 섹션 3.0/3.5/3.6 규칙 간 충돌 여부 검증
+  - 충돌 발견 시 기존 규칙을 우선 유지하고 새 페르소나를 조정
   - 섹션 1: 실무 전문가 페르소나 강화
   - 섹션 3.1: 질문 수준별 응답 구조 추가
   - Few-shot 예시 2개 추가 (기본 + 고급)
@@ -603,7 +698,7 @@ supabase/functions/retail-chatbot/
 ### Phase 1: Layer 1 벡터 지식 DB (핵심 변화)
 
 ```
-사전 작업: OPENAI_API_KEY 환경변수 등록 (Supabase Dashboard)
+사전 작업: GOOGLE_AI_API_KEY 환경변수 등록 (Supabase Secrets — 추가 완료)
 
 작업 1-1: SQL 마이그레이션 실행
   - pgvector 확장 활성화
@@ -612,7 +707,7 @@ supabase/functions/retail-chatbot/
 
 작업 1-2: knowledge/ 디렉토리 생성
   - knowledge/types.ts
-  - knowledge/embeddings.ts (OpenAI text-embedding-3-small)
+  - knowledge/embeddings.ts (Google AI Studio text-embedding-004)
   - knowledge/vectorStore.ts (검색 + 폴백)
   - knowledge/knowledgeBuilder.ts (적재 유틸)
 
@@ -694,12 +789,13 @@ supabase/functions/retail-chatbot/
 
 | 변수 | 용도 | Phase |
 |------|------|-------|
-| LOVABLE_API_KEY | Gemini 2.5 Pro 채팅 + 임베딩 (기존) | - |
+| LOVABLE_API_KEY | Gemini 2.5 Pro/Flash 채팅 (기존) | - |
+| GOOGLE_AI_API_KEY | text-embedding-004 임베딩 (신규, Secrets 추가 완료) | Phase 1 |
 | SUPABASE_URL | Supabase (기존) | - |
 | SUPABASE_SERVICE_ROLE_KEY | DB 접근 (기존) | - |
 | SERPER_API_KEY | 웹 검색 (기존) | - |
 
-**추가 환경변수 없음** — 임베딩도 LOVABLE_API_KEY로 Gemini Gateway 경유
+**추가 환경변수 1개**: `GOOGLE_AI_API_KEY` — Google AI Studio 임베딩 직접 호출용 (무료, 분당 1,500건)
 
 ---
 
@@ -720,4 +816,4 @@ supabase/functions/retail-chatbot/
 2. **점진적 활성화** — Phase별 독립 배포 가능
 3. **폴백 필수** — 벡터 DB/검색 실패 시 100% 기존 로직으로 동작
 4. **SSE 스트리밍 보존** — createSSEStreamV2 내부 로직 변경 없음
-5. **비용 최적화** — 임베딩 512차원, 조건부 검색, 규칙 기반 우선
+5. **비용 최적화** — 임베딩 768차원 (Google AI Studio 무료), 조건부 검색, 규칙 기반 우선
