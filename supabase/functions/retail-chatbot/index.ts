@@ -14,10 +14,19 @@ import { buildEnrichedPrompt, formatClassification } from './topicRouter.ts';
 import { extractPainPoints, type PainPointResult } from './painPointExtractor.ts';
 import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } from './salesBridge.ts';
 import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
-import { routeQuery } from './queryRouter.ts';
-import { searchWeb, buildSearchQuery, dualSearch } from './webSearch.ts';
 import { analyzeQuestionDepth, getDepthInstruction } from './questionDepthAnalyzer.ts';
 import { searchKnowledge, formatSearchResultsForPrompt } from './knowledge/vectorStore.ts';
+// Phase 2: Layer 2 스마트 검색
+import { buildSearchStrategy } from './search/searchStrategyEngine.ts';
+import { executeMultiSearch } from './search/multiSourceSearch.ts';
+import { filterAndFormatResults } from './search/resultFilter.ts';
+// Phase 2: Layer 3 대화 메모리
+import { extractAndMergeProfile, formatProfileForPrompt } from './memory/profileExtractor.ts';
+import { accumulateInsight, generateConversationSummary, formatInsightsForPrompt } from './memory/insightAccumulator.ts';
+import { loadMemory, saveMemory, loadUserProfileHistory, loadSessionProfileHistory } from './memory/contextMemoryStore.ts';
+import { createEmptyProfile } from './memory/types.ts';
+// Phase 2: 컨텍스트 조립
+import { assembleContext } from './contextAssembler.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -1271,74 +1280,146 @@ serve(async (request: Request) => {
       conversationId
     );
 
-    // 6. 토픽 분류 & 시스템 프롬프트 빌드 (+ VizDirective)
+    // ═══════════════════════════════════════════
+    // 병렬 블록 1: 분석 (토픽 분류 + 깊이 분석 + Pain Point + 메모리 로드)
+    // ═══════════════════════════════════════════
+
     const historyTexts = history?.map(h => h.content) || [];
     const turnCount = conversation?.message_count || historyTexts.length;
-    let { systemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
+
+    // 동기 분석 (즉시 실행)
+    const { systemPrompt: baseSystemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
+    const depthAnalysis = analyzeQuestionDepth(message, historyTexts);
+    const depthInstruction = getDepthInstruction(depthAnalysis.depth);
+    const painPointResult: PainPointResult = extractPainPoints(message, historyTexts);
 
     console.log(`[Topic] ${formatClassification(classification)}`);
+    console.log(`[DepthAnalyzer] depth=${depthAnalysis.depth}, score=${depthAnalysis.score.toFixed(2)}, signals=${depthAnalysis.signals.length}`);
     if (vizDirective) {
       console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
     }
 
-    // 6.5. 벡터 지식 DB 검색 (Layer 1)
+    // 비동기: 대화 메모리 로드 (병렬 시작)
+    const memoryLoadPromise = conversation
+      ? loadMemory(supabase, conversation.id).catch(() => null)
+      : Promise.resolve(null);
+
+    // 비동기: 사용자 프로파일 히스토리 로드 (새 대화일 때)
+    const profileHistoryPromise = (!conversation?.message_count || conversation.message_count === 0)
+      ? (effectiveUserId
+          ? loadUserProfileHistory(supabase, effectiveUserId).catch(() => createEmptyProfile())
+          : (effectiveSessionId
+              ? loadSessionProfileHistory(supabase, effectiveSessionId).catch(() => createEmptyProfile())
+              : Promise.resolve(createEmptyProfile())))
+      : Promise.resolve(null); // 기존 대화면 메모리에서 가져옴
+
+    // ═══════════════════════════════════════════
+    // 병렬 블록 2: 지식 수집 (벡터 검색 + 파일 컨텍스트 + 메모리 로드 대기)
+    // ═══════════════════════════════════════════
+
     let knowledgeSourceCount = 0;
-    try {
-      const knowledgeResponse = await searchKnowledge({
+    let knowledgeContext = '';
+
+    // 벡터 검색 + 메모리 로드를 병렬 실행
+    const [knowledgeResult, existingMemory, profileHistory] = await Promise.all([
+      searchKnowledge({
         supabase,
         question: message,
         topicId: classification.primaryTopic,
         secondaryTopicId: classification.secondaryTopic,
-      });
+      }).catch(err => {
+        console.warn('[VectorStore] Knowledge search failed:', err);
+        return null;
+      }),
+      memoryLoadPromise,
+      profileHistoryPromise,
+    ]);
 
-      if (knowledgeResponse.results.length > 0) {
-        const knowledgeContext = formatSearchResultsForPrompt(knowledgeResponse.results);
-        if (knowledgeContext) {
-          systemPrompt += knowledgeContext;
-          knowledgeSourceCount = knowledgeResponse.results.length;
-        }
-        console.log(`[VectorStore] ${knowledgeResponse.searchMethod}: ${knowledgeResponse.results.length} results injected (fallback=${knowledgeResponse.usedFallback})`);
-      }
-    } catch (knowledgeErr) {
-      console.warn('[VectorStore] Knowledge search failed, continuing without:', knowledgeErr);
+    if (knowledgeResult && knowledgeResult.results.length > 0) {
+      knowledgeContext = formatSearchResultsForPrompt(knowledgeResult.results);
+      knowledgeSourceCount = knowledgeResult.results.length;
+      console.log(`[VectorStore] ${knowledgeResult.searchMethod}: ${knowledgeResult.results.length} results (fallback=${knowledgeResult.usedFallback})`);
     }
 
-    // 7. 웹 검색 (queryRouter가 필요하다고 판단한 경우)
-    const queryRoute = routeQuery(message, historyTexts);
+    // 메모리에서 프로파일/인사이트 복원
+    let userProfile = existingMemory?.userProfile || profileHistory || createEmptyProfile();
+    let conversationInsights = existingMemory?.conversationInsights || [];
+
+    // 프로파일 업데이트 (현재 메시지 정보 추출)
+    userProfile = extractAndMergeProfile(userProfile, {
+      message,
+      topicId: classification.primaryTopic,
+      painPointCategory: painPointResult.primaryPain,
+      questionDepth: depthAnalysis.depth,
+      turnCount,
+    });
+
+    // 인사이트 축적
+    conversationInsights = accumulateInsight(conversationInsights, {
+      message,
+      topicId: classification.primaryTopic,
+      turnCount,
+      detectedEntities: [], // searchStrategy에서 업데이트
+    });
+
+    // ═══════════════════════════════════════════
+    // 직렬: 검색 전략 판단 + 조건부 웹 검색 (벡터 결과 반영)
+    // ═══════════════════════════════════════════
+
+    const searchStrategy = buildSearchStrategy({
+      message,
+      topicId: classification.primaryTopic,
+      questionDepth: depthAnalysis.depth,
+      turnCount,
+      vectorResultCount: knowledgeSourceCount,
+      conversationHistory: historyTexts,
+    });
+
     let searchContext = '';
+    let webSearchPerformed = false;
 
-    if (queryRoute.augmentation === 'web_search') {
-      console.log(`[QueryRouter] Web search triggered: ${queryRoute.searchReason}`);
+    if (searchStrategy.shouldSearch) {
+      console.log(`[SearchStrategy] Search triggered: ${searchStrategy.reason} (${searchStrategy.queries.length} queries)`);
+      const multiSearchResult = await executeMultiSearch(searchStrategy.queries);
+      const filteredResults = filterAndFormatResults(multiSearchResult, message);
+      if (filteredResults.context) {
+        searchContext = '\n\n' + filteredResults.context;
+        webSearchPerformed = true;
+        console.log(`[MultiSearch] ${filteredResults.totalAfterFilter}/${filteredResults.totalBeforeFilter} results filtered`);
+      }
 
-      // 미지 엔티티가 있으면 → 듀얼 검색 (웹 + 소셜미디어 병렬)
-      // 트리거 패턴만 매칭이면 → 기존 단일 검색
-      if (queryRoute.detectedEntities.length > 0) {
-        const { combinedContext } = await dualSearch(message, queryRoute.detectedEntities);
-        if (combinedContext) {
-          searchContext = '\n\n' + combinedContext;
-          systemPrompt += searchContext;
-          console.log(`[DualSearch] Injected combined web+sns context`);
-        }
-      } else {
-        const searchQuery = buildSearchQuery(message, queryRoute.detectedEntities);
-        const searchResult = await searchWeb(searchQuery);
-        if (searchResult.context) {
-          searchContext = '\n\n' + searchResult.context;
-          systemPrompt += searchContext;
-          console.log(`[WebSearch] Injected ${searchResult.results.length} results into context`);
-        }
+      // 엔티티가 감지되었으면 인사이트에 반영
+      if (searchStrategy.queryRouteResult.detectedEntities.length > 0) {
+        conversationInsights = accumulateInsight(conversationInsights, {
+          message,
+          topicId: classification.primaryTopic,
+          turnCount,
+          detectedEntities: searchStrategy.queryRouteResult.detectedEntities,
+        });
       }
     } else {
-      console.log(`[QueryRouter] No search needed`);
+      console.log(`[SearchStrategy] No search needed: ${searchStrategy.reason}`);
     }
 
-    // 7.5. 질문 깊이 분석 & 시스템 프롬프트 주입
-    const depthAnalysis = analyzeQuestionDepth(message, historyTexts);
-    const depthInstruction = getDepthInstruction(depthAnalysis.depth);
-    if (depthInstruction) {
-      systemPrompt += '\n' + depthInstruction;
-    }
-    console.log(`[DepthAnalyzer] depth=${depthAnalysis.depth}, score=${depthAnalysis.score.toFixed(2)}, signals=${depthAnalysis.signals.length}`);
+    // ═══════════════════════════════════════════
+    // 컨텍스트 조립 (Layer 1~3 통합 + 토큰 예산 관리)
+    // ═══════════════════════════════════════════
+
+    const conversationSummary = generateConversationSummary(conversationInsights);
+    const profileContext = formatProfileForPrompt(userProfile);
+    const insightsContext = formatInsightsForPrompt(conversationInsights, conversationSummary);
+
+    const assembled = assembleContext({
+      systemPrompt: baseSystemPrompt,
+      knowledgeContext,
+      searchContext,
+      profileContext,
+      insightsContext,
+      depthInstruction,
+    });
+
+    const systemPrompt = assembled.finalPrompt;
+    console.log(`[ContextAssembler] ${assembled.layersIncluded.join('+')} (${assembled.tokenEstimate} tokens${assembled.truncated ? ', truncated' : ''})`);
 
     // 8. 첨부 파일 컨텍스트 구성
     let fileContext = '';
@@ -1359,18 +1440,20 @@ serve(async (request: Request) => {
     const chatMessages: ChatMessage[] = history || [];
     chatMessages.push({ role: 'user', content: message + fileContext });
 
-    // 10. 사용자 메시지 로깅 (첨부 파일 메타데이터 + 검색 정보 포함)
+    // 10. 사용자 메시지 로깅
     if (conversation) {
       await logMessage(supabase, conversation.id, 'user', message, {
         topic: classification.primaryTopic,
         confidence: classification.confidence,
         keywords: classification.detectedKeywords,
-        webSearchUsed: queryRoute.augmentation === 'web_search',
-        searchReason: queryRoute.searchReason,
-        detectedEntities: queryRoute.detectedEntities,
+        webSearchUsed: webSearchPerformed,
+        searchReason: searchStrategy.reason,
+        detectedEntities: searchStrategy.queryRouteResult.detectedEntities,
         questionDepth: depthAnalysis.depth,
         depthScore: depthAnalysis.score,
         knowledgeSourceCount,
+        contextLayers: assembled.layersIncluded,
+        tokenEstimate: assembled.tokenEstimate,
         attachments: attachments?.map(f => ({
           name: f.name,
           type: f.type,
@@ -1380,9 +1463,7 @@ serve(async (request: Request) => {
       });
     }
 
-    // 11. Pre-compute: Pain Point, Sales Bridge, Suggestions (AI 응답 전에 계산)
-    const painPointResult: PainPointResult = extractPainPoints(message, historyTexts);
-
+    // 11. Pre-compute: Sales Bridge, Suggestions (Pain Point는 병렬 블록 1에서 이미 계산)
     const salesBridgeResult: SalesBridgeResult = evaluateSalesBridge({
       turnCount: conversation?.message_count || historyTexts.length,
       painPointDetected: painPointResult.painPoints.length > 0,
@@ -1447,7 +1528,7 @@ serve(async (request: Request) => {
         isAuthenticated: auth.isAuthenticated,
         sessionId: effectiveSessionId || '',
         knowledgeSourceCount,
-        webSearchPerformed: queryRoute.augmentation === 'web_search',
+        webSearchPerformed,
         onComplete: async (fullContent: string, vizDir: VizDirective | null) => {
           // 비동기 로깅 (스트리밍 완료 후)
           const cleanedContent = cleanResponseText(fullContent);
@@ -1460,6 +1541,17 @@ serve(async (request: Request) => {
               solutionMentioned: cleanedContent.toLowerCase().includes('neuraltwin'),
               streamed: true,
             });
+
+            // Layer 3: 대화 메모리 저장 (비동기, fail-open)
+            saveMemory(supabase, {
+              conversationId: conversation.id,
+              sessionId: effectiveSessionId,
+              userId: effectiveUserId,
+              userProfile,
+              conversationInsights,
+              conversationSummary,
+              turnCount,
+            }).catch(err => console.warn('[ContextMemory] Async save failed:', err));
           }
         },
       });
@@ -1514,6 +1606,17 @@ serve(async (request: Request) => {
         solutionMentioned: assistantContent.toLowerCase().includes('neuraltwin'),
         streamed: false,
       });
+
+      // Layer 3: 대화 메모리 저장 (비동기, fail-open)
+      saveMemory(supabase, {
+        conversationId: conversation.id,
+        sessionId: effectiveSessionId,
+        userId: effectiveUserId,
+        userProfile,
+        conversationInsights,
+        conversationSummary,
+        turnCount,
+      }).catch(err => console.warn('[ContextMemory] Async save failed:', err));
     }
 
     return new Response(
@@ -1538,7 +1641,7 @@ serve(async (request: Request) => {
         },
         vizDirective: finalVizDirective,
         knowledgeSourceCount,
-        webSearchPerformed: queryRoute.augmentation === 'web_search',
+        webSearchPerformed,
       }),
       {
         status: 200,
