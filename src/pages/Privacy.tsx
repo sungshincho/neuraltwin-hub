@@ -67,7 +67,8 @@ const Privacy = () => {
           <div className="page-nav-links">
             <Link to="/about">제품 &amp; 회사소개</Link>
             <Link to="/contact">문의하기</Link>
-            <Link to="/auth" state={{ tab: "login" }}>로그인</Link>
+            {/* auth buttons hidden */}
+            {/* <Link to="/auth" state={{ tab: "login" }}>로그인</Link> */}
           </div>
           <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
             <span className="mobile-menu-bar"></span>
@@ -79,7 +80,8 @@ const Privacy = () => {
           <div className="mobile-menu-dropdown">
             <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
             <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
-            <Link to="/auth" state={{ tab: "login" }} onClick={() => setMobileMenuOpen(false)}>로그인</Link>
+            {/* auth buttons hidden */}
+            {/* <Link to="/auth" state={{ tab: "login" }} onClick={() => setMobileMenuOpen(false)}>로그인</Link> */}
           </div>
         )}
 
