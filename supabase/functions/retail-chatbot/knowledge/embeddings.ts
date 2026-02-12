@@ -1,10 +1,10 @@
 /**
  * Knowledge Layer 1 — 임베딩 생성
  *
- * Google AI Studio text-embedding-004 직접 호출
+ * Google AI Studio gemini-embedding-001 직접 호출
  * Lovable Gateway 미경유 — 임베딩은 Google AI Studio만 지원
  *
- * 모델: text-embedding-004 (768차원)
+ * 모델: gemini-embedding-001 (768차원)
  * 비용: 무료 (분당 1,500건)
  * 인증: GOOGLE_AI_API_KEY
  *
@@ -12,10 +12,10 @@
  */
 
 const GOOGLE_EMBEDDING_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent';
 
 const GOOGLE_BATCH_EMBEDDING_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents';
 
 // 임베딩 생성 타임아웃 (2초)
 const EMBEDDING_TIMEOUT_MS = 2000;
@@ -162,7 +162,7 @@ export async function generateBatchEmbeddings(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         requests: batch.map(text => ({
-          model: 'models/text-embedding-004',
+          model: 'models/gemini-embedding-001',
           content: { parts: [{ text }] }
         }))
       })
