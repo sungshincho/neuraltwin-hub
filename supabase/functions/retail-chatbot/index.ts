@@ -17,6 +17,7 @@ import { generateSuggestions, type SuggestionResult } from './suggestionGenerato
 import { routeQuery } from './queryRouter.ts';
 import { searchWeb, buildSearchQuery, dualSearch } from './webSearch.ts';
 import { analyzeQuestionDepth, getDepthInstruction } from './questionDepthAnalyzer.ts';
+import { searchKnowledge, formatSearchResultsForPrompt } from './knowledge/vectorStore.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -749,6 +750,8 @@ function createSSEStreamV2(
     showLeadForm: boolean;
     isAuthenticated: boolean;
     sessionId: string;
+    knowledgeSourceCount: number;
+    webSearchPerformed: boolean;
     onComplete: (fullContent: string, vizDirective: VizDirective | null) => void;
   }
 ): ReadableStream<Uint8Array> {
@@ -785,6 +788,8 @@ function createSSEStreamV2(
           topic: opts.classification.primaryTopic,
           confidence: opts.classification.confidence,
         },
+        knowledgeSourceCount: opts.knowledgeSourceCount,
+        webSearchPerformed: opts.webSearchPerformed,
       });
 
       const reader = upstreamResponse.body?.getReader();
@@ -1276,6 +1281,28 @@ serve(async (request: Request) => {
       console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
     }
 
+    // 6.5. 벡터 지식 DB 검색 (Layer 1)
+    let knowledgeSourceCount = 0;
+    try {
+      const knowledgeResponse = await searchKnowledge({
+        supabase,
+        question: message,
+        topicId: classification.primaryTopic,
+        secondaryTopicId: classification.secondaryTopic,
+      });
+
+      if (knowledgeResponse.results.length > 0) {
+        const knowledgeContext = formatSearchResultsForPrompt(knowledgeResponse.results);
+        if (knowledgeContext) {
+          systemPrompt += knowledgeContext;
+          knowledgeSourceCount = knowledgeResponse.results.length;
+        }
+        console.log(`[VectorStore] ${knowledgeResponse.searchMethod}: ${knowledgeResponse.results.length} results injected (fallback=${knowledgeResponse.usedFallback})`);
+      }
+    } catch (knowledgeErr) {
+      console.warn('[VectorStore] Knowledge search failed, continuing without:', knowledgeErr);
+    }
+
     // 7. 웹 검색 (queryRouter가 필요하다고 판단한 경우)
     const queryRoute = routeQuery(message, historyTexts);
     let searchContext = '';
@@ -1343,6 +1370,7 @@ serve(async (request: Request) => {
         detectedEntities: queryRoute.detectedEntities,
         questionDepth: depthAnalysis.depth,
         depthScore: depthAnalysis.score,
+        knowledgeSourceCount,
         attachments: attachments?.map(f => ({
           name: f.name,
           type: f.type,
@@ -1418,6 +1446,8 @@ serve(async (request: Request) => {
         showLeadForm: salesBridgeResult.showLeadForm,
         isAuthenticated: auth.isAuthenticated,
         sessionId: effectiveSessionId || '',
+        knowledgeSourceCount,
+        webSearchPerformed: queryRoute.augmentation === 'web_search',
         onComplete: async (fullContent: string, vizDir: VizDirective | null) => {
           // 비동기 로깅 (스트리밍 완료 후)
           const cleanedContent = cleanResponseText(fullContent);
@@ -1506,7 +1536,9 @@ serve(async (request: Request) => {
           primary: painPointResult.primaryPain,
           summary: painPointResult.summary
         },
-        vizDirective: finalVizDirective
+        vizDirective: finalVizDirective,
+        knowledgeSourceCount,
+        webSearchPerformed: queryRoute.augmentation === 'web_search',
       }),
       {
         status: 200,
