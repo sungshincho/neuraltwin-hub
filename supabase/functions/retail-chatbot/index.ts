@@ -16,6 +16,7 @@ import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } fr
 import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
 import { routeQuery } from './queryRouter.ts';
 import { searchWeb, buildSearchQuery, dualSearch } from './webSearch.ts';
+import { analyzeQuestionDepth, getDepthInstruction } from './questionDepthAnalyzer.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -1304,6 +1305,14 @@ serve(async (request: Request) => {
       console.log(`[QueryRouter] No search needed`);
     }
 
+    // 7.5. 질문 깊이 분석 & 시스템 프롬프트 주입
+    const depthAnalysis = analyzeQuestionDepth(message, historyTexts);
+    const depthInstruction = getDepthInstruction(depthAnalysis.depth);
+    if (depthInstruction) {
+      systemPrompt += '\n' + depthInstruction;
+    }
+    console.log(`[DepthAnalyzer] depth=${depthAnalysis.depth}, score=${depthAnalysis.score.toFixed(2)}, signals=${depthAnalysis.signals.length}`);
+
     // 8. 첨부 파일 컨텍스트 구성
     let fileContext = '';
     if (attachments && attachments.length > 0) {
@@ -1332,6 +1341,8 @@ serve(async (request: Request) => {
         webSearchUsed: queryRoute.augmentation === 'web_search',
         searchReason: queryRoute.searchReason,
         detectedEntities: queryRoute.detectedEntities,
+        questionDepth: depthAnalysis.depth,
+        depthScore: depthAnalysis.score,
         attachments: attachments?.map(f => ({
           name: f.name,
           type: f.type,
@@ -1358,7 +1369,8 @@ serve(async (request: Request) => {
       painPointCategory: painPointResult.primaryPain,
       conversationStage: salesBridgeResult.stage,
       detectedKeywords: classification.detectedKeywords,
-      turnCount: conversation?.message_count || 0
+      turnCount: conversation?.message_count || 0,
+      questionDepth: depthAnalysis.depth,
     });
 
     console.log(`[SalesBridge] score=${salesBridgeResult.leadScore}, stage=${salesBridgeResult.stage}, showForm=${salesBridgeResult.showLeadForm}`);
