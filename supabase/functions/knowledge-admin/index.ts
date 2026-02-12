@@ -12,8 +12,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { migrateStaticKnowledge } from '../retail-chatbot/knowledge/migrateFromStatic.ts';
-import { seedAllCuratedKnowledge } from '../retail-chatbot/knowledge/seedCuratedKnowledge.ts';
+import { migrateStaticKnowledge } from './knowledge/migrateFromStatic.ts';
+import { seedAllCuratedKnowledge } from './knowledge/seedCuratedKnowledge.ts';
 
 // deno-lint-ignore no-explicit-any
 type SupabaseClient = any;
