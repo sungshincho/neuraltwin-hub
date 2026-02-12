@@ -7,6 +7,7 @@
 
 import { type PainPointCategory } from './painPointExtractor.ts';
 import { type ConversationStage } from './salesBridge.ts';
+import { type QuestionDepth } from './questionDepthAnalyzer.ts';
 
 // ═══════════════════════════════════════════
 //  타입 정의
@@ -19,6 +20,7 @@ export interface SuggestionContext {
   detectedKeywords: string[];
   turnCount: number;
   hasRecentVizDirective?: boolean;  // VizDirective가 최근에 생성되었는지 여부
+  questionDepth?: QuestionDepth;    // 질문 깊이 (beginner/advanced)
 }
 
 export interface SuggestionResult {
@@ -114,6 +116,49 @@ const TOPIC_TEMPLATES: Record<string, string[]> = {
     '고객 경험 개선 방법이 궁금해요',
     '경쟁력 강화 전략을 알려주세요'
   ]
+};
+
+// ═══════════════════════════════════════════
+//  고급 질문자용 심화 후속 질문 템플릿
+// ═══════════════════════════════════════════
+
+const ADVANCED_TOPIC_TEMPLATES: Record<string, string[]> = {
+  layout_flow: [
+    '레이아웃 변경 전후 전환율 차이를 수치로 비교해줘',
+    '소형 매장 vs 대형 매장에서 동선 설계 원칙이 어떻게 달라져?',
+    '동선 최적화 실패 사례와 원인을 알려줘',
+    '히트맵 데이터 기반 레이아웃 A/B 테스트 방법론은?',
+  ],
+  vmd_display: [
+    '골든존 전략의 업종별 ROI 차이를 비교해줘',
+    'VMD 교체 주기별 매출 임팩트 데이터가 있나요?',
+    '엔드캡 vs 파워월 진열의 전환율 차이는?',
+    'VMD 투자 대비 수익률 계산 프레임워크를 알려줘',
+  ],
+  sales_conversion: [
+    '전환율 목표를 업종·규모별로 세분화해서 알려줘',
+    '피팅룸 전환율과 매장 크기의 상관관계가 있나요?',
+    '객단가와 전환율의 트레이드오프는 어떻게 관리해?',
+    '업셀링 전략의 실패 패턴과 대응법은?',
+  ],
+  customer_analytics: [
+    'RFM 세그먼트별 CLV 차이를 정량적으로 분석해줘',
+    '고객 이탈 예측 모델의 정확도 벤치마크는?',
+    '개인화 마케팅의 ROI를 측정하는 프레임워크가 있나요?',
+    '오프라인 고객 데이터와 온라인 행동 데이터를 어떻게 통합해?',
+  ],
+  data_kpi: [
+    'KPI 간 상관관계와 인과관계를 구분하는 방법은?',
+    '매장별 성과 비교 시 정규화 기준은 어떻게 잡나요?',
+    '데이터 기반 의사결정의 흔한 함정과 바이어스는?',
+    'GMROI와 재고 회전율의 최적 밸런스 포인트는?',
+  ],
+  general_retail: [
+    '한국 리테일 시장만의 특수한 성공 패턴이 있나요?',
+    '글로벌 트렌드 중 한국에서 실패한 사례와 원인은?',
+    '오프라인 매장의 온라인 대비 경쟁 우위를 정량화할 수 있나요?',
+    '리테일 테크 도입 ROI를 업종별로 비교해줘',
+  ],
 };
 
 // ═══════════════════════════════════════════
@@ -319,7 +364,11 @@ export function generateSuggestions(context: SuggestionContext): SuggestionResul
     candidates.push(...PAIN_POINT_TEMPLATES[context.painPointCategory]);
   }
 
-  // ── 5. 토픽별 템플릿 ──
+  // ── 5. 토픽별 템플릿 (깊이 인식) ──
+  if (context.questionDepth === 'advanced') {
+    const advancedTemplates = ADVANCED_TOPIC_TEMPLATES[context.topicCategory] || ADVANCED_TOPIC_TEMPLATES['general_retail'];
+    if (advancedTemplates) candidates.push(...advancedTemplates);
+  }
   const topicTemplates = TOPIC_TEMPLATES[context.topicCategory] || TOPIC_TEMPLATES['general_retail'];
   candidates.push(...topicTemplates);
 
