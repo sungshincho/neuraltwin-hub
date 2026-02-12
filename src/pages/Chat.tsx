@@ -637,6 +637,7 @@ const Chat = () => {
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
     const msgText = inputValue.trim();
     setInputValue("");
+    if (inputRef.current) inputRef.current.style.height = 'auto';
     await sendChatMessage(msgText, currentFiles);
   };
 
@@ -719,6 +720,8 @@ const Chat = () => {
     setShowTurnLimitModal(false);
     setInputValue("");
     setFsInputValue("");
+    if (inputRef.current) inputRef.current.style.height = 'auto';
+    if (fsInputRef.current) fsInputRef.current.style.height = 'auto';
     setPendingFiles([]);
     setExpandedOldMessages(false);
     setLeadSubmitted(false);
@@ -1010,6 +1013,7 @@ const Chat = () => {
 
     const currentFiles = pendingFiles.length > 0 ? [...pendingFiles] : undefined;
     setFsInputValue("");
+    if (fsInputRef.current) fsInputRef.current.style.height = 'auto';
     await sendChatMessage(msgText, currentFiles);
   };
 
@@ -1490,7 +1494,12 @@ const Chat = () => {
                   className="chat-fs-input"
                   placeholder={isGuestLimitReached ? "대화 횟수를 모두 사용했습니다" : PLACEHOLDERS[placeholderIndex]}
                   value={fsInputValue}
-                  onChange={(e) => setFsInputValue(e.target.value)}
+                  onChange={(e) => {
+                    setFsInputValue(e.target.value);
+                    const ta = e.target;
+                    ta.style.height = 'auto';
+                    ta.style.height = `${Math.min(ta.scrollHeight, 150)}px`;
+                  }}
                   onKeyDown={handleFsKeyDown}
                   rows={1}
                   disabled={isGuestLimitReached}
@@ -1582,7 +1591,8 @@ const Chat = () => {
             <div className="hero-nav-links">
               <Link to="/about">제품 &amp; 회사소개</Link>
               <Link to="/contact">문의하기</Link>
-              {isAuthenticated ? (
+              {/* auth buttons hidden
+            {isAuthenticated ? (
                 <>
                   <span className="nav-user-name">{user?.user_metadata?.name || user?.email?.split('@')[0] || '사용자'}</span>
                   <button className="nav-auth-btn" onClick={() => signOut()}>로그아웃</button>
@@ -1593,6 +1603,7 @@ const Chat = () => {
                   <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
                 </>
               )}
+            */}
             </div>
             <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
               <span className="mobile-menu-bar"></span>
@@ -1604,6 +1615,7 @@ const Chat = () => {
             <div className="mobile-menu-dropdown">
               <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
               <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
+              {/* auth buttons hidden
               {isAuthenticated ? (
                 <button className="mobile-auth-btn" onClick={() => { signOut(); setMobileMenuOpen(false); }}>로그아웃</button>
               ) : (
@@ -1612,6 +1624,7 @@ const Chat = () => {
                   <Link to="/auth" state={{ tab: "signup" }} onClick={() => setMobileMenuOpen(false)}>회원가입</Link>
                 </>
               )}
+              */}
             </div>
           )}
 
@@ -1752,7 +1765,12 @@ const Chat = () => {
                     className="chat-input"
                     placeholder={isGuestLimitReached ? "대화 횟수를 모두 사용했습니다" : PLACEHOLDERS[placeholderIndex]}
                     value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    onChange={(e) => {
+                      setInputValue(e.target.value);
+                      const ta = e.target;
+                      ta.style.height = 'auto';
+                      ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
+                    }}
                     onKeyDown={handleKeyDown}
                     rows={1}
                     disabled={isGuestLimitReached}

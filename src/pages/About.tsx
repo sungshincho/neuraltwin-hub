@@ -186,6 +186,7 @@ const About = () => {
           <div className="page-nav-links">
             <Link to="/about" className="active">제품 &amp; 회사소개</Link>
             <Link to="/contact">문의하기</Link>
+            {/* auth buttons hidden
             {isAuthenticated ? (
               <>
                 <span className="nav-user-name">{user?.user_metadata?.name || user?.email?.split('@')[0] || '사용자'}</span>
@@ -197,6 +198,7 @@ const About = () => {
                 <Link to="/auth" state={{ tab: "signup" }}>회원가입</Link>
               </>
             )}
+            */}
           </div>
           <button className={`mobile-menu-btn${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="메뉴">
             <span className="mobile-menu-bar"></span>
@@ -208,6 +210,7 @@ const About = () => {
           <div className="mobile-menu-dropdown">
             <Link to="/about" onClick={() => setMobileMenuOpen(false)}>제품 &amp; 회사소개</Link>
             <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>문의하기</Link>
+            {/* auth buttons hidden
             {isAuthenticated ? (
               <button className="mobile-auth-btn" onClick={() => { signOut(); setMobileMenuOpen(false); }}>로그아웃</button>
             ) : (
@@ -216,6 +219,7 @@ const About = () => {
                 <Link to="/auth" state={{ tab: "signup" }} onClick={() => setMobileMenuOpen(false)}>회원가입</Link>
               </>
             )}
+            */}
           </div>
         )}
 
