@@ -7,6 +7,7 @@
 
 import { type PainPointCategory } from './painPointExtractor.ts';
 import { type ConversationStage } from './salesBridge.ts';
+import { type QuestionDepth } from './questionDepthAnalyzer.ts';
 
 // ═══════════════════════════════════════════
 //  타입 정의
@@ -19,6 +20,7 @@ export interface SuggestionContext {
   detectedKeywords: string[];
   turnCount: number;
   hasRecentVizDirective?: boolean;  // VizDirective가 최근에 생성되었는지 여부
+  questionDepth?: QuestionDepth;     // 질문 수준 (beginner | advanced)
 }
 
 export interface SuggestionResult {
@@ -218,6 +220,82 @@ const VIZ_RELEVANT_TOPICS = [
 ];
 
 // ═══════════════════════════════════════════
+//  고급 질문자용 심화 후속 질문 템플릿 (Phase 0)
+// ═══════════════════════════════════════════
+
+const ADVANCED_TOPIC_TEMPLATES: Record<string, string[]> = {
+  layout_flow: [
+    'Grid vs Loop 레이아웃의 업종별 전환율 차이가 궁금해요',
+    '매장 면적별 최적 동선 설계 기준이 있나요?',
+    'Power Path 대비 Dead Zone 매출 비율을 벤치마크하고 싶어요',
+    '동선 최적화 ROI를 정량적으로 측정하는 방법은?',
+  ],
+  vmd_display: [
+    '골든존 배치 전후 매출 변화를 A/B 테스트하는 방법은?',
+    '페이싱 수 대비 매출 탄력성 데이터가 있나요?',
+    'VMD 리셋 주기별 매출 효과 비교가 궁금해요',
+    '플라노그램 컴플라이언스율과 매출 상관관계는?',
+  ],
+  sales_conversion: [
+    '전환율 퍼널 단계별 이탈 원인을 분석하고 싶어요',
+    '피팅룸 전환율과 조명/거울 조건의 상관관계 데이터가 있나요?',
+    '업셀링 vs 크로스셀링, 어떤 전략이 객단가에 더 효과적인가요?',
+    'ATV와 UPT를 동시에 올리는 복합 전략이 있나요?',
+  ],
+  inventory_supply: [
+    'ABC 분석 기반 안전재고 차등 설정 방법이 궁금해요',
+    '수요예측 모델별 정확도 비교 (이동평균 vs AI)가 있나요?',
+    'Sell-Through Rate와 재고회전율의 최적 균형점은?',
+    '시즌 상품 초도 물량 결정 프레임워크가 있나요?',
+  ],
+  customer_analytics: [
+    'RFM 세그먼트별 최적 마케팅 전략이 궁금해요',
+    'CLV 대비 CAC 비율의 업종별 건전 기준은?',
+    '코호트 분석으로 리텐션 개선 효과를 측정하는 방법은?',
+    'At-Risk 고객 재활성화 전략과 기대 효과는?',
+  ],
+  staff_productivity: [
+    '트래픽 기반 스케줄링의 매출 효과를 정량화하는 방법은?',
+    'SPLH 업종별 벤치마크 대비 우리 매장 진단법이 있나요?',
+    '직원 인게이지먼트와 전환율의 상관관계 데이터가 궁금해요',
+    '크로스 트레이닝 도입 전후 ROI 측정 방법은?',
+  ],
+  data_kpi: [
+    '업종별 핵심 KPI 우선순위 매트릭스가 있나요?',
+    '리테일 대시보드에서 리딩 지표 vs 래깅 지표 구분 기준은?',
+    'GMROI와 Sell-Through를 결합한 카테고리 성과 분석법은?',
+    '데이터 기반 의사결정 성숙도를 진단하는 프레임워크가 있나요?',
+  ],
+  pricing_promotion: [
+    '프로모션 피로도를 정량적으로 측정하는 방법이 있나요?',
+    'Price Elasticity를 활용한 최적 할인율 계산법이 궁금해요',
+    'EDLP vs High-Low 전략의 장기 수익성 비교가 있나요?',
+    '번들 프라이싱에서 카니발리제이션 리스크를 관리하는 방법은?',
+  ],
+  retail_tech: [
+    'RFID 도입 단계별 ROI 브레이크이븐 포인트는?',
+    '컴퓨터 비전 vs IoT 센서, 매장 분석에 어떤 것이 효과적인가요?',
+    '디지털 사이니지의 매출 영향을 A/B 테스트하는 방법은?',
+    '옴니채널 통합 시 풀필먼트 비용 절감 효과를 측정하는 방법은?',
+  ],
+  digital_twin: [
+    '디지털 트윈 시뮬레이션의 예측 정확도 검증 방법이 있나요?',
+    '시뮬레이션 기반 레이아웃 최적화 vs 실제 A/B 테스트 비교가 궁금해요',
+    '디지털 트윈 도입 ROI를 정량화하는 프레임워크가 있나요?',
+  ],
+  neuraltwin_solution: [
+    'NEURALTWIN의 시뮬레이션 정확도 검증 방법론이 궁금해요',
+    '기존 POS/ERP 시스템과의 통합 방식이 궁금해요',
+    '도입 후 ROI 측정 기준과 기대 타임라인은?',
+  ],
+  general_retail: [
+    '리테일 성과 개선의 80/20 법칙 적용 방법이 궁금해요',
+    '매출 공식(Traffic x CVR x ATV) 각 변수별 개선 우선순위는?',
+    '업종 전환 시 기존 리테일 역량 활용 방법이 있나요?',
+  ],
+};
+
+// ═══════════════════════════════════════════
 //  세일즈 브릿지 후속 질문 템플릿
 //  consideration/decision 단계에서 리드 전환 유도
 // ═══════════════════════════════════════════
@@ -319,9 +397,20 @@ export function generateSuggestions(context: SuggestionContext): SuggestionResul
     candidates.push(...PAIN_POINT_TEMPLATES[context.painPointCategory]);
   }
 
-  // ── 5. 토픽별 템플릿 ──
-  const topicTemplates = TOPIC_TEMPLATES[context.topicCategory] || TOPIC_TEMPLATES['general_retail'];
-  candidates.push(...topicTemplates);
+  // ── 5. 토픽별 템플릿 (질문 수준에 따라 선택) ──
+  if (context.questionDepth === 'advanced') {
+    // 고급 질문자: 심화 템플릿 우선, 기본 템플릿도 후보로 추가
+    const advancedTemplates = ADVANCED_TOPIC_TEMPLATES[context.topicCategory] || ADVANCED_TOPIC_TEMPLATES['general_retail'];
+    if (advancedTemplates) {
+      candidates.push(...advancedTemplates);
+    }
+    // 기본 템플릿도 후보풀에 포함 (심화가 부족할 경우 보충)
+    const basicTemplates = TOPIC_TEMPLATES[context.topicCategory] || TOPIC_TEMPLATES['general_retail'];
+    candidates.push(...basicTemplates);
+  } else {
+    const topicTemplates = TOPIC_TEMPLATES[context.topicCategory] || TOPIC_TEMPLATES['general_retail'];
+    candidates.push(...topicTemplates);
+  }
 
   // ── 6. awareness/interest 단계 템플릿 (후순위) ──
   if (context.conversationStage === 'awareness' || context.conversationStage === 'interest') {

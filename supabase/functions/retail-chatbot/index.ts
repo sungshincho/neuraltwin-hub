@@ -16,6 +16,8 @@ import { evaluateSalesBridge, checkExplicitInterest, type SalesBridgeResult } fr
 import { generateSuggestions, type SuggestionResult } from './suggestionGenerator.ts';
 import { routeQuery } from './queryRouter.ts';
 import { searchWeb, buildSearchQuery, dualSearch } from './webSearch.ts';
+import { analyzeQuestionDepth, type DepthAnalysisResult } from './questionDepthAnalyzer.ts';
+import { buildDepthMarker } from './systemPrompt.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -1270,7 +1272,12 @@ serve(async (request: Request) => {
     const turnCount = conversation?.message_count || historyTexts.length;
     let { systemPrompt, classification, vizDirective } = buildEnrichedPrompt(message, historyTexts, turnCount);
 
+    // 6-b. 질문 수준 감지 (Phase 0)
+    const depthAnalysis: DepthAnalysisResult = analyzeQuestionDepth(message, historyTexts);
+    systemPrompt += buildDepthMarker(depthAnalysis.depth, depthAnalysis.signals);
+
     console.log(`[Topic] ${formatClassification(classification)}`);
+    console.log(`[QuestionDepth] ${depthAnalysis.depth} (confidence=${depthAnalysis.confidence.toFixed(2)}, signals=[${depthAnalysis.signals.join(', ')}])`);
     if (vizDirective) {
       console.log(`[VizDirective] state=${vizDirective.vizState}, highlights=[${vizDirective.highlights.join(',')}]`);
     }
@@ -1358,7 +1365,8 @@ serve(async (request: Request) => {
       painPointCategory: painPointResult.primaryPain,
       conversationStage: salesBridgeResult.stage,
       detectedKeywords: classification.detectedKeywords,
-      turnCount: conversation?.message_count || 0
+      turnCount: conversation?.message_count || 0,
+      questionDepth: depthAnalysis.depth,
     });
 
     console.log(`[SalesBridge] score=${salesBridgeResult.leadScore}, stage=${salesBridgeResult.stage}, showForm=${salesBridgeResult.showLeadForm}`);
