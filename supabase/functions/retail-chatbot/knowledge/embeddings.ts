@@ -4,7 +4,7 @@
  * Google AI Studio gemini-embedding-001 직접 호출
  * Lovable Gateway 미경유 — 임베딩은 Google AI Studio만 지원
  *
- * 모델: gemini-embedding-001 (768차원)
+ * 모델: gemini-embedding-001 (네이티브 3072차원 → outputDimensionality: 768로 truncate)
  * 비용: 무료 (분당 1,500건)
  * 인증: GOOGLE_AI_API_KEY
  *
@@ -82,7 +82,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: { parts: [{ text }] }
+        content: { parts: [{ text }] },
+        outputDimensionality: 768,
       }),
       signal: controller.signal,
     });
@@ -163,7 +164,8 @@ export async function generateBatchEmbeddings(
       body: JSON.stringify({
         requests: batch.map(text => ({
           model: 'models/gemini-embedding-001',
-          content: { parts: [{ text }] }
+          content: { parts: [{ text }] },
+          outputDimensionality: 768,
         }))
       })
     });
