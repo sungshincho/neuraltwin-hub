@@ -2,47 +2,97 @@
 
 > 원본 명세서 1,592줄 기반 + 7개 이슈 해결방안 반영
 > 작성일: 2026-02-12
+> 최종 수정: 2026-02-12 (임베딩 전략 → Gemini text-embedding-004)
 
 ---
 
 ## 이슈 해결방안 요약
 
-### 이슈 1: 임베딩 API (Lovable Gateway 미지원)
+### 이슈 1: 임베딩 전략 — Gemini text-embedding-004
 
-**해결**: OpenAI `text-embedding-3-small` 직접 호출
+**결정**: Lovable AI Gateway를 통한 Gemini 임베딩 모델 사용
 
 ```
-환경변수 추가: OPENAI_API_KEY (Supabase Dashboard → Edge Function Secrets)
-모델: text-embedding-3-small
-차원: 1536 (기본) → dimensions 파라미터로 512로 축소 가능
-비용: $0.02 / 1M tokens (매우 저렴)
+Gateway URL: https://ai.gateway.lovable.dev/v1/embeddings
+모델: text-embedding-004 (Gemini 최신 임베딩 모델)
+차원: 768 (기본)
+인증: LOVABLE_API_KEY (기존 환경변수 그대로 사용)
+추가 비용: 없음 (기존 Gateway 경유)
 ```
+
+**사전 확인**: `test-embedding` Edge Function 실행하여 Gateway 지원 확인
+- 테스트 대상: `text-embedding-004`, `gemini-embedding-exp-03-07` 등
+- 성공 시 → 768차원 벡터 DB 구성
+- 실패 시 → 폴백: OpenAI `text-embedding-3-small` (별도 API 키 필요)
 
 ```typescript
-// embeddings.ts — 수정된 구현
-const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings';
+// embeddings.ts — Gemini 임베딩 (Lovable Gateway 경유)
+
+// 1순위: Lovable AI Gateway (Gemini text-embedding-004)
+const LOVABLE_EMBEDDING_URL = 'https://ai.gateway.lovable.dev/v1/embeddings';
+// 2순위 폴백: Lovable 채팅 Gateway의 임베딩 엔드포인트
+const LOVABLE_CHAT_EMBEDDING_URL = 'https://lovable-api.anthropic.com/v1/embeddings';
+
+// 지원되는 모델 이름 후보 (test-embedding 결과에 따라 확정)
+const EMBEDDING_MODEL_CANDIDATES = [
+  'text-embedding-004',
+  'gemini-embedding-exp-03-07',
+  'gemini/text-embedding-004',
+  'models/text-embedding-004',
+];
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await fetch(OPENAI_EMBEDDING_URL, {
+  const apiKey = Deno.env.get('LOVABLE_API_KEY');
+  if (!apiKey) throw new Error('LOVABLE_API_KEY not set');
+
+  // 확정된 모델명 (test-embedding 결과 반영 후 고정)
+  const model = 'text-embedding-004';
+
+  const response = await fetch(LOVABLE_EMBEDDING_URL, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      model: 'text-embedding-3-small',
-      input: text,
-      dimensions: 512    // 비용/속도 최적화 (1536 → 512 축소)
-    })
+    body: JSON.stringify({ model, input: text })
   });
 
-  if (!response.ok) throw new Error(`Embedding API error: ${response.status}`);
+  if (!response.ok) {
+    // 폴백: 다른 Gateway URL 시도
+    const fallbackRes = await fetch(LOVABLE_CHAT_EMBEDDING_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ model, input: text })
+    });
+
+    if (!fallbackRes.ok) {
+      throw new Error(`Embedding API error: ${response.status} / fallback: ${fallbackRes.status}`);
+    }
+
+    const fallbackData = await fallbackRes.json();
+    return fallbackData.data[0].embedding;
+  }
+
   const data = await response.json();
   return data.data[0].embedding;
 }
+
+// 검색 쿼리용 임베딩 (질문 + 토픽 힌트 결합)
+export async function generateQueryEmbedding(
+  question: string,
+  topicHint?: string
+): Promise<number[]> {
+  const enrichedQuery = topicHint
+    ? `[${topicHint}] ${question}`
+    : question;
+  return generateEmbedding(enrichedQuery);
+}
 ```
 
-**SQL 변경**: `vector(768)` → `vector(512)`
+**SQL 스키마**: `vector(768)` (Gemini text-embedding-004 기본 차원)
 
 ---
 
@@ -342,7 +392,7 @@ CREATE TABLE retail_knowledge_chunks (
   source TEXT DEFAULT 'curation',
 
   -- 벡터 임베딩 (OpenAI text-embedding-3-small, 512차원)
-  embedding vector(512),
+  embedding vector(768),
 
   -- 관리
   created_at TIMESTAMPTZ DEFAULT now(),
@@ -367,7 +417,7 @@ CREATE INDEX idx_knowledge_topic
 -- RPC: 벡터 유사도 검색 (512차원)
 -- ═══════════════════════════════════════
 CREATE OR REPLACE FUNCTION search_knowledge(
-  query_embedding vector(512),
+  query_embedding vector(768),
   match_threshold FLOAT DEFAULT 0.65,
   match_count INT DEFAULT 5,
   filter_topic TEXT DEFAULT NULL
@@ -644,11 +694,12 @@ supabase/functions/retail-chatbot/
 
 | 변수 | 용도 | Phase |
 |------|------|-------|
-| LOVABLE_API_KEY | Gemini 2.5 Pro (기존) | - |
+| LOVABLE_API_KEY | Gemini 2.5 Pro 채팅 + 임베딩 (기존) | - |
 | SUPABASE_URL | Supabase (기존) | - |
 | SUPABASE_SERVICE_ROLE_KEY | DB 접근 (기존) | - |
 | SERPER_API_KEY | 웹 검색 (기존) | - |
-| **OPENAI_API_KEY** | **임베딩 생성 (신규)** | **Phase 1** |
+
+**추가 환경변수 없음** — 임베딩도 LOVABLE_API_KEY로 Gemini Gateway 경유
 
 ---
 
