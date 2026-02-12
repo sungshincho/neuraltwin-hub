@@ -1284,6 +1284,7 @@ serve(async (request: Request) => {
     // 병렬 블록 1: 분석 (토픽 분류 + 깊이 분석 + Pain Point + 메모리 로드)
     // ═══════════════════════════════════════════
 
+    const pipelineStartTime = Date.now();
     const historyTexts = history?.map(h => h.content) || [];
     const turnCount = conversation?.message_count || historyTexts.length;
 
@@ -1320,6 +1321,7 @@ serve(async (request: Request) => {
     let knowledgeSourceCount = 0;
     let knowledgeContext = '';
 
+    const block2StartTime = Date.now();
     // 벡터 검색 + 메모리 로드를 병렬 실행
     const [knowledgeResult, existingMemory, profileHistory] = await Promise.all([
       searchKnowledge({
@@ -1334,6 +1336,8 @@ serve(async (request: Request) => {
       memoryLoadPromise,
       profileHistoryPromise,
     ]);
+
+    console.log(`[Timing] Block 2 (vector+memory): ${Date.now() - block2StartTime}ms`);
 
     if (knowledgeResult && knowledgeResult.results.length > 0) {
       knowledgeContext = formatSearchResultsForPrompt(knowledgeResult.results);
@@ -1379,13 +1383,14 @@ serve(async (request: Request) => {
     let webSearchPerformed = false;
 
     if (searchStrategy.shouldSearch) {
+      const searchStartTime = Date.now();
       console.log(`[SearchStrategy] Search triggered: ${searchStrategy.reason} (${searchStrategy.queries.length} queries)`);
       const multiSearchResult = await executeMultiSearch(searchStrategy.queries);
       const filteredResults = filterAndFormatResults(multiSearchResult, message);
       if (filteredResults.context) {
         searchContext = '\n\n' + filteredResults.context;
         webSearchPerformed = true;
-        console.log(`[MultiSearch] ${filteredResults.totalAfterFilter}/${filteredResults.totalBeforeFilter} results filtered`);
+        console.log(`[MultiSearch] ${filteredResults.totalAfterFilter}/${filteredResults.totalBeforeFilter} results filtered (${Date.now() - searchStartTime}ms)`);
       }
 
       // 엔티티가 감지되었으면 인사이트에 반영
@@ -1419,7 +1424,9 @@ serve(async (request: Request) => {
     });
 
     const systemPrompt = assembled.finalPrompt;
+    const preprocessMs = Date.now() - pipelineStartTime;
     console.log(`[ContextAssembler] ${assembled.layersIncluded.join('+')} (${assembled.tokenEstimate} tokens${assembled.truncated ? ', truncated' : ''})`);
+    console.log(`[Timing] Total pre-processing: ${preprocessMs}ms`);
 
     // 8. 첨부 파일 컨텍스트 구성
     let fileContext = '';

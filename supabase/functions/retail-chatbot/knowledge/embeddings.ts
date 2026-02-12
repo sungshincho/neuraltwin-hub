@@ -7,6 +7,8 @@
  * 모델: text-embedding-004 (768차원)
  * 비용: 무료 (분당 1,500건)
  * 인증: GOOGLE_AI_API_KEY
+ *
+ * Phase 3 추가: LRU 캐시 (검색 쿼리용, 100개)
  */
 
 const GOOGLE_EMBEDDING_URL =
@@ -17,6 +19,53 @@ const GOOGLE_BATCH_EMBEDDING_URL =
 
 // 임베딩 생성 타임아웃 (2초)
 const EMBEDDING_TIMEOUT_MS = 2000;
+
+// ═══════════════════════════════════════════
+//  LRU 캐시 — 검색 쿼리 임베딩용
+//  Deno Edge Function은 cold start 간 메모리 유지 (warm instance)
+// ═══════════════════════════════════════════
+
+const CACHE_MAX_SIZE = 100;
+
+interface CacheEntry {
+  embedding: number[];
+  accessedAt: number;
+}
+
+const embeddingCache = new Map<string, CacheEntry>();
+
+function getCachedEmbedding(key: string): number[] | null {
+  const entry = embeddingCache.get(key);
+  if (!entry) return null;
+  // LRU: 접근 시간 갱신
+  entry.accessedAt = Date.now();
+  return entry.embedding;
+}
+
+function setCachedEmbedding(key: string, embedding: number[]): void {
+  // 용량 초과 시 가장 오래된 항목 제거
+  if (embeddingCache.size >= CACHE_MAX_SIZE) {
+    let oldestKey = '';
+    let oldestTime = Infinity;
+    for (const [k, v] of embeddingCache) {
+      if (v.accessedAt < oldestTime) {
+        oldestTime = v.accessedAt;
+        oldestKey = k;
+      }
+    }
+    if (oldestKey) embeddingCache.delete(oldestKey);
+  }
+  embeddingCache.set(key, { embedding, accessedAt: Date.now() });
+}
+
+/** 캐시 통계 (디버깅용) */
+export function getEmbeddingCacheStats(): { size: number; maxSize: number } {
+  return { size: embeddingCache.size, maxSize: CACHE_MAX_SIZE };
+}
+
+// ═══════════════════════════════════════════
+//  단일 임베딩 생성
+// ═══════════════════════════════════════════
 
 /**
  * 단일 텍스트 임베딩 생성
@@ -50,9 +99,13 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 }
 
+// ═══════════════════════════════════════════
+//  검색 쿼리용 임베딩 (LRU 캐시 적용)
+// ═══════════════════════════════════════════
+
 /**
  * 검색 쿼리용 임베딩 (질문 + 토픽 힌트 결합)
- * 토픽 힌트를 앞에 붙여 검색 정확도를 높임
+ * LRU 캐시 적용: 동일/유사 질문 재검색 시 API 호출 없이 즉시 반환
  */
 export async function generateQueryEmbedding(
   question: string,
@@ -61,8 +114,27 @@ export async function generateQueryEmbedding(
   const enrichedQuery = topicHint
     ? `[${topicHint}] ${question}`
     : question;
-  return generateEmbedding(enrichedQuery);
+
+  // 캐시 확인
+  const cached = getCachedEmbedding(enrichedQuery);
+  if (cached) {
+    console.log(`[Embedding] Cache HIT (size=${embeddingCache.size})`);
+    return cached;
+  }
+
+  // 캐시 미스 → API 호출
+  const embedding = await generateEmbedding(enrichedQuery);
+
+  // 캐시 저장
+  setCachedEmbedding(enrichedQuery, embedding);
+  console.log(`[Embedding] Cache MISS → stored (size=${embeddingCache.size})`);
+
+  return embedding;
 }
+
+// ═══════════════════════════════════════════
+//  배치 임베딩 (적재용, 캐시 미적용)
+// ═══════════════════════════════════════════
 
 /**
  * 배치 임베딩 생성 (마이그레이션/적재 시 사용)

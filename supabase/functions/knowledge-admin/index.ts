@@ -5,6 +5,7 @@
  * - migrate_static: retailKnowledge.ts → 벡터 DB 마이그레이션
  * - seed_curated: seedCuratedKnowledge.ts 큐레이션 데이터 적재
  * - stats: 지식 DB 통계 조회
+ * - validate: 임베딩 품질 검증 (시딩 후 확인)
  *
  * 인증: SUPABASE_SERVICE_ROLE_KEY 필수 (관리자 전용)
  */
@@ -39,6 +40,7 @@ async function getStats(supabase: SupabaseClient) {
     byType: {} as Record<string, number>,
     bySource: {} as Record<string, number>,
     withEmbedding: 0,
+    withoutEmbedding: 0,
   };
 
   for (const chunk of chunks) {
@@ -48,14 +50,64 @@ async function getStats(supabase: SupabaseClient) {
   }
 
   // 임베딩 유무 통계
-  const { count } = await supabase
+  const { count: withEmbedding } = await supabase
     .from('retail_knowledge_chunks')
     .select('id', { count: 'exact', head: true })
     .not('embedding', 'is', null);
 
-  stats.withEmbedding = count || 0;
+  stats.withEmbedding = withEmbedding || 0;
+  stats.withoutEmbedding = stats.totalChunks - stats.withEmbedding;
 
   return stats;
+}
+
+/**
+ * 임베딩 품질 검증: 임베딩 없는 청크 목록 + 토픽별 커버리지
+ */
+async function validateEmbeddings(supabase: SupabaseClient) {
+  // 임베딩 없는 청크
+  const { data: noEmbedding, error: noEmbErr } = await supabase
+    .from('retail_knowledge_chunks')
+    .select('id, topic_id, chunk_type, title')
+    .is('embedding', null)
+    .limit(50);
+
+  if (noEmbErr) throw noEmbErr;
+
+  // 토픽별 통계
+  const { data: allChunks, error: allErr } = await supabase
+    .from('retail_knowledge_chunks')
+    .select('topic_id, chunk_type, source, embedding');
+
+  if (allErr) throw allErr;
+
+  const topicCoverage: Record<string, { total: number; withEmbedding: number; types: Set<string> }> = {};
+
+  for (const chunk of allChunks) {
+    if (!topicCoverage[chunk.topic_id]) {
+      topicCoverage[chunk.topic_id] = { total: 0, withEmbedding: 0, types: new Set() };
+    }
+    topicCoverage[chunk.topic_id].total++;
+    if (chunk.embedding) topicCoverage[chunk.topic_id].withEmbedding++;
+    topicCoverage[chunk.topic_id].types.add(chunk.chunk_type);
+  }
+
+  // Set → Array 변환
+  const coverage = Object.entries(topicCoverage).map(([topicId, data]) => ({
+    topicId,
+    total: data.total,
+    withEmbedding: data.withEmbedding,
+    coverage: data.total > 0 ? Math.round((data.withEmbedding / data.total) * 100) : 0,
+    chunkTypes: [...data.types],
+  }));
+
+  return {
+    missingEmbeddings: noEmbedding || [],
+    topicCoverage: coverage.sort((a, b) => a.coverage - b.coverage),
+    overallCoverage: allChunks.length > 0
+      ? Math.round((allChunks.filter((c: { embedding: unknown }) => c.embedding).length / allChunks.length) * 100)
+      : 0,
+  };
 }
 
 serve(async (request: Request) => {
@@ -85,14 +137,24 @@ serve(async (request: Request) => {
     switch (action) {
       case 'migrate_static': {
         console.log('[KnowledgeAdmin] Starting static knowledge migration...');
+        const startTime = Date.now();
         result = await migrateStaticKnowledge(supabase);
+        console.log(`[KnowledgeAdmin] Migration completed in ${Date.now() - startTime}ms`);
         break;
       }
 
       case 'seed_curated': {
         console.log('[KnowledgeAdmin] Starting curated knowledge seeding...');
+        const startTime = Date.now();
         await seedAllCuratedKnowledge(supabase);
-        result = { success: true, message: 'Curated knowledge seeded' };
+        const elapsed = Date.now() - startTime;
+        const stats = await getStats(supabase);
+        result = {
+          success: true,
+          message: 'Curated knowledge seeded',
+          elapsedMs: elapsed,
+          stats,
+        };
         break;
       }
 
@@ -102,11 +164,17 @@ serve(async (request: Request) => {
         break;
       }
 
+      case 'validate': {
+        console.log('[KnowledgeAdmin] Validating embeddings...');
+        result = await validateEmbeddings(supabase);
+        break;
+      }
+
       default:
         return new Response(
           JSON.stringify({
             error: 'Unknown action',
-            validActions: ['migrate_static', 'seed_curated', 'stats'],
+            validActions: ['migrate_static', 'seed_curated', 'stats', 'validate'],
           }),
           { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
         );

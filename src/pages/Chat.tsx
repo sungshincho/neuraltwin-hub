@@ -28,6 +28,10 @@ interface Message {
   showLeadForm?: boolean;
   feedback?: "positive" | "negative" | null;
   attachments?: FileAttachment[];
+  searchSourceInfo?: {
+    knowledgeSourceCount: number;
+    webSearchPerformed: boolean;
+  };
 }
 
 // 파일 첨부 타입
@@ -132,6 +136,12 @@ const Chat = () => {
 
   // SSE 스트리밍: 현재 어시스턴트 메시지 ID (점진적 업데이트용)
   const streamingMessageIdRef = useRef<string | null>(null);
+
+  // Phase 3: 검색 소스 정보 (meta 이벤트에서 수신)
+  const [searchSourceInfo, setSearchSourceInfo] = useState<{
+    knowledgeSourceCount: number;
+    webSearchPerformed: boolean;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fsMessagesEndRef = useRef<HTMLDivElement>(null);
@@ -302,6 +312,13 @@ const Chat = () => {
                 if (parsed.showLeadForm && !leadSubmitted) {
                   setShowLeadForm(true);
                 }
+                // Phase 3: 검색 소스 정보 저장
+                if (parsed.knowledgeSourceCount !== undefined || parsed.webSearchPerformed !== undefined) {
+                  setSearchSourceInfo({
+                    knowledgeSourceCount: parsed.knowledgeSourceCount || 0,
+                    webSearchPerformed: parsed.webSearchPerformed || false,
+                  });
+                }
                 // 어시스턴트 메시지에 meta 첨부
                 setMessages((prev) =>
                   prev.map((msg) =>
@@ -310,6 +327,12 @@ const Chat = () => {
                           ...msg,
                           suggestions: parsed.suggestions,
                           showLeadForm: parsed.showLeadForm,
+                          searchSourceInfo: parsed.knowledgeSourceCount !== undefined
+                            ? {
+                                knowledgeSourceCount: parsed.knowledgeSourceCount || 0,
+                                webSearchPerformed: parsed.webSearchPerformed || false,
+                              }
+                            : undefined,
                         }
                       : msg
                   )
@@ -384,6 +407,14 @@ const Chat = () => {
       });
     }
 
+    // Phase 3: 검색 소스 정보 저장
+    if (data.knowledgeSourceCount !== undefined || data.webSearchPerformed !== undefined) {
+      setSearchSourceInfo({
+        knowledgeSourceCount: (data.knowledgeSourceCount as number) || 0,
+        webSearchPerformed: (data.webSearchPerformed as boolean) || false,
+      });
+    }
+
     const content = data.content as string | undefined;
     if (content) {
       setMessages((prev) =>
@@ -394,6 +425,12 @@ const Chat = () => {
                 content,
                 suggestions,
                 showLeadForm: data.showLeadForm as boolean | undefined,
+                searchSourceInfo: data.knowledgeSourceCount !== undefined
+                  ? {
+                      knowledgeSourceCount: (data.knowledgeSourceCount as number) || 0,
+                      webSearchPerformed: (data.webSearchPerformed as boolean) || false,
+                    }
+                  : undefined,
               }
             : msg
         )
@@ -432,6 +469,7 @@ const Chat = () => {
     setPendingFiles([]);
     pendingFileDataRef.current.clear();
     setVizDirective(null);  // 새 질문 시 이전 비주얼라이저 데이터 리셋
+    setSearchSourceInfo(null);  // 검색 소스 정보 리셋
     setIsLoading(true);
 
     abortControllerRef.current = new AbortController();
@@ -1052,6 +1090,20 @@ const Chat = () => {
                 {msg.role === 'user' && renderAttachments(msg.attachments)}
                 {msg.content}
               </div>
+              {msg.role === 'assistant' && msg.searchSourceInfo && (
+                msg.searchSourceInfo.knowledgeSourceCount > 0 || msg.searchSourceInfo.webSearchPerformed
+              ) && (
+                <div className="chat-search-sources compact">
+                  {msg.searchSourceInfo.knowledgeSourceCount > 0 && (
+                    <span className="chat-source-badge knowledge">
+                      지식 {msg.searchSourceInfo.knowledgeSourceCount}건
+                    </span>
+                  )}
+                  {msg.searchSourceInfo.webSearchPerformed && (
+                    <span className="chat-source-badge web">웹 검색</span>
+                  )}
+                </div>
+              )}
               {renderMessageActions(msg, 'inline')}
             </div>
           );
@@ -1278,11 +1330,27 @@ const Chat = () => {
               {isLoading && !streamingMessageIdRef.current && (
                 <div className="chat-fs-message assistant">
                   <div className="chat-fs-loading">
-                    <span className="chat-fs-loading-text">NEURALTWIN 생각 중</span>
+                    <span className="chat-fs-loading-text">
+                      {searchSourceInfo
+                        ? `리서치 완료 — 답변 생성 중`
+                        : 'NEURALTWIN 리서치 중'}
+                    </span>
                     <div className="chat-fs-loading-dot"></div>
                     <div className="chat-fs-loading-dot"></div>
                     <div className="chat-fs-loading-dot"></div>
                   </div>
+                  {searchSourceInfo && (
+                    <div className="chat-search-sources">
+                      {searchSourceInfo.knowledgeSourceCount > 0 && (
+                        <span className="chat-source-badge knowledge">
+                          지식 {searchSourceInfo.knowledgeSourceCount}건
+                        </span>
+                      )}
+                      {searchSourceInfo.webSearchPerformed && (
+                        <span className="chat-source-badge web">웹 검색</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1586,11 +1654,27 @@ const Chat = () => {
                   {isLoading && !streamingMessageIdRef.current && (
                     <div className="chat-message assistant">
                       <div className="chat-loading">
-                        <span className="chat-loading-text">NEURALTWIN 생각 중</span>
+                        <span className="chat-loading-text">
+                          {searchSourceInfo
+                            ? `리서치 완료 — 답변 생성 중`
+                            : 'NEURALTWIN 리서치 중'}
+                        </span>
                         <div className="chat-loading-dot"></div>
                         <div className="chat-loading-dot"></div>
                         <div className="chat-loading-dot"></div>
                       </div>
+                      {searchSourceInfo && (
+                        <div className="chat-search-sources">
+                          {searchSourceInfo.knowledgeSourceCount > 0 && (
+                            <span className="chat-source-badge knowledge">
+                              지식 {searchSourceInfo.knowledgeSourceCount}건
+                            </span>
+                          )}
+                          {searchSourceInfo.webSearchPerformed && (
+                            <span className="chat-source-badge web">웹 검색</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
