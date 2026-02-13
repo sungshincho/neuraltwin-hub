@@ -31,7 +31,7 @@ export interface SearchStrategyInput {
 
 export interface SearchQuery {
   query: string;
-  type: 'web' | 'sns';
+  type: 'web' | 'sns' | 'news';
   priority: number;       // 1 = 최우선, 3 = 낮음
 }
 
@@ -57,6 +57,15 @@ const ADVANCED_SEARCH_BOOST_PATTERNS = [
   /(글로벌|해외|미국|유럽|일본)\s*(사례|트렌드|현황)/,
   /(리서치|조사|검색)\s*해/,
   /(데이터|통계|수치|근거)/,
+];
+
+// 뉴스 검색 트리거 — 최신 정보/트렌드 요청 시
+const NEWS_TRIGGER_PATTERNS = [
+  /(최신|최근|올해|이번\s*달|금주|이번\s*주)/,
+  /(뉴스|기사|보도|언론|미디어)/,
+  /(트렌드|전망|예측|동향)/,
+  /(출시|오픈|론칭|발표|공개)/,
+  /(2024|2025|2026)/,
 ];
 
 // 다양성 보충 검색 트리거 — 벡터 충분해도 외부 관점 보충
@@ -200,9 +209,21 @@ function buildQueriesFromRoute(
       // SNS 검색은 낮은 우선순위로 항상 추가
       queries.push({ query: `${entity} 인스타그램 리뷰 후기`, type: 'sns', priority: 3 });
     }
+
+    // 뉴스 검색 (최신/트렌드 패턴 감지 시)
+    const isNewsQuery = NEWS_TRIGGER_PATTERNS.some(p => p.test(message));
+    if (isNewsQuery) {
+      queries.push({ query: `${entity} 리테일 최신 뉴스`, type: 'news', priority: 2 });
+    }
   } else {
     // 엔티티 없이 트리거 패턴만 매칭
     queries.push({ query: message.slice(0, 100), type: 'web', priority: 1 });
+
+    // 뉴스 검색 (엔티티 없이도 최신 패턴 감지 시)
+    const isNewsQuery = NEWS_TRIGGER_PATTERNS.some(p => p.test(message));
+    if (isNewsQuery) {
+      queries.push({ query: `${message.slice(0, 60)} 리테일 뉴스`, type: 'news', priority: 2 });
+    }
   }
 
   return queries;

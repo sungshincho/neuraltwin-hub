@@ -10,7 +10,7 @@
  * - 실패한 쿼리는 결과 없이 건너뜀 (fail-open)
  */
 
-import { searchWeb, type WebSearchResult } from '../webSearch.ts';
+import { searchWeb, searchNews, type WebSearchResult } from '../webSearch.ts';
 import type { SearchQuery } from './searchStrategyEngine.ts';
 
 // ═══════════════════════════════════════════
@@ -19,7 +19,7 @@ import type { SearchQuery } from './searchStrategyEngine.ts';
 
 export interface MultiSearchResultItem {
   query: string;
-  type: 'web' | 'sns';
+  type: 'web' | 'sns' | 'news';
   priority: number;
   results: Array<{
     title: string;
@@ -44,6 +44,7 @@ const SEARCH_TIMEOUT_MS = 3000;   // 개별 검색 타임아웃 (3초)
 const MAX_CONCURRENT = 3;         // 최대 동시 검색 수
 const WEB_RESULT_COUNT = 5;       // 웹 검색 결과 수
 const SNS_RESULT_COUNT = 3;       // SNS 검색 결과 수
+const NEWS_RESULT_COUNT = 3;      // 뉴스 검색 결과 수
 
 // ═══════════════════════════════════════════
 //  메인 실행 함수
@@ -114,10 +115,25 @@ export async function executeMultiSearch(
 async function executeSearchWithTimeout(
   query: SearchQuery
 ): Promise<WebSearchResult> {
-  const numResults = query.type === 'sns' ? SNS_RESULT_COUNT : WEB_RESULT_COUNT;
+  let numResults: number;
+  let searchFn: (q: string, n: number) => Promise<WebSearchResult>;
+
+  switch (query.type) {
+    case 'news':
+      numResults = NEWS_RESULT_COUNT;
+      searchFn = searchNews;
+      break;
+    case 'sns':
+      numResults = SNS_RESULT_COUNT;
+      searchFn = searchWeb;
+      break;
+    default:
+      numResults = WEB_RESULT_COUNT;
+      searchFn = searchWeb;
+  }
 
   return Promise.race([
-    searchWeb(query.query, numResults),
+    searchFn(query.query, numResults),
     new Promise<WebSearchResult>((_, reject) =>
       setTimeout(() => reject(new Error(`Search timeout: ${query.query}`)), SEARCH_TIMEOUT_MS)
     ),

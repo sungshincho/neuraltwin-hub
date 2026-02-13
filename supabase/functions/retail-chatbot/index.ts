@@ -20,6 +20,9 @@ import { searchKnowledge, formatSearchResultsForPrompt } from './knowledge/vecto
 import { buildSearchStrategy } from './search/searchStrategyEngine.ts';
 import { executeMultiSearch } from './search/multiSourceSearch.ts';
 import { filterAndFormatResults } from './search/resultFilter.ts';
+import { crossVerifyResults } from './search/crossVerifier.ts';
+// Phase 5: Jina Reader (풀페이지 콘텐츠 추출)
+import { fetchMultiplePages, formatJinaResultsForContext } from './jinaReader.ts';
 // Phase 2: Layer 3 대화 메모리
 import { extractAndMergeProfile, formatProfileForPrompt } from './memory/profileExtractor.ts';
 import { accumulateInsight, generateConversationSummary, formatInsightsForPrompt } from './memory/insightAccumulator.ts';
@@ -1464,6 +1467,29 @@ serve(async (request: Request) => {
           .slice(0, 5)
           .map(r => ({ title: r.title, url: r.url }));
         console.log(`[MultiSearch] ${filteredResults.totalAfterFilter}/${filteredResults.totalBeforeFilter} results filtered (${Date.now() - searchStartTime}ms)`);
+
+        // Phase 5: Jina Reader — 고급 질문 시 상위 URL 풀페이지 추출
+        if (depthAnalysis.depth === 'advanced' && filteredResults.results.length > 0) {
+          try {
+            const topUrls = filteredResults.results.slice(0, 2).map(r => r.url);
+            const jinaResults = await fetchMultiplePages(topUrls, 2);
+            if (jinaResults.length > 0) {
+              searchContext += formatJinaResultsForContext(jinaResults);
+              console.log(`[JinaReader] ${jinaResults.length}/${topUrls.length} pages extracted (${Date.now() - searchStartTime}ms)`);
+            }
+          } catch (jinaErr) {
+            console.warn('[JinaReader] Failed (non-blocking):', jinaErr);
+          }
+        }
+
+        // Phase 5: 교차 검증 — 검색 결과 수치 신뢰도 확인
+        if (filteredResults.results.length >= 2) {
+          const verification = crossVerifyResults(filteredResults.results);
+          if (verification.contextAnnotation) {
+            searchContext += verification.contextAnnotation;
+            console.log(`[CrossVerifier] ${verification.verifiedFacts.length} facts verified`);
+          }
+        }
       }
 
       // 엔티티가 감지되었으면 인사이트에 반영

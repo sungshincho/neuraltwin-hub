@@ -176,6 +176,17 @@ export default function StoreVisualizer({
   );
   const cameraTargetFov = useRef<number>(CAMERA_PRESETS.overview.fov);
 
+  // 존 클릭 팝업 상태
+  const [clickedZone, setClickedZone] = useState<{
+    id: string; label: string; color: string;
+    x: number; y: number;
+    w: number; d: number;
+    annotation?: string;
+  } | null>(null);
+  const raycasterRef = useRef(new THREE.Raycaster());
+  const mouseRef = useRef(new THREE.Vector2());
+  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+
   // 어노테이션 스크린 좌표
   const [annotationPositions, setAnnotationPositions] = useState<AnnotationPosition[]>([]);
 
@@ -453,6 +464,61 @@ export default function StoreVisualizer({
 
     controlsRef.current = controls;
 
+    // 존 클릭 핸들러 (raycasting)
+    const onMouseDown = (e: MouseEvent) => {
+      mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onMouseUp = (e: MouseEvent) => {
+      // 드래그 vs 클릭 구분 — 5px 이상 이동이면 드래그로 판정
+      if (mouseDownPosRef.current) {
+        const dx = e.clientX - mouseDownPosRef.current.x;
+        const dy = e.clientY - mouseDownPosRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) {
+          mouseDownPosRef.current = null;
+          return;
+        }
+      }
+      mouseDownPosRef.current = null;
+
+      if (!sceneRef.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      mouseRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycasterRef.current.setFromCamera(mouseRef.current, sceneRef.current.camera);
+      const planes = Object.values(sceneRef.current.zonePlanes).map(zp => zp.plane);
+      const intersects = raycasterRef.current.intersectObjects(planes);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const zoneId = hit.userData.zoneId as string;
+        if (!zoneId) return;
+
+        // 동적 존 또는 하드코딩 존에서 라벨/색상 조회
+        const dynZone = zones?.find(z => z.id === zoneId);
+        const label = dynZone?.label || ZONE_LABELS_KO[zoneId] || zoneId;
+        const color = dynZone?.color || getZoneColorHex(zoneId);
+        const w = dynZone?.w || 6;
+        const d = dynZone?.d || 6;
+
+        // 해당 존의 어노테이션 조회
+        const ann = annotations.find(a => a.zone === zoneId);
+
+        setClickedZone({
+          id: zoneId, label, color,
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+          w, d,
+          annotation: ann?.text,
+        });
+      } else {
+        setClickedZone(null);
+      }
+    };
+
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mouseup', onMouseUp);
+
     // 애니메이션 시작
     animationFrameRef.current = requestAnimationFrame(animate);
 
@@ -474,6 +540,8 @@ export default function StoreVisualizer({
 
     // 정리
     return () => {
+      canvas.removeEventListener('mousedown', onMouseDown);
+      canvas.removeEventListener('mouseup', onMouseUp);
       cancelAnimationFrame(animationFrameRef.current);
       resizeObserver.disconnect();
 
@@ -623,6 +691,77 @@ export default function StoreVisualizer({
             {zl.label}
           </div>
         ) : null
+      )}
+
+      {/* 존 클릭 팝업 */}
+      {clickedZone && (
+        <div
+          className="absolute z-20 animate-fade-in-up"
+          style={{
+            left: Math.min(clickedZone.x, (containerRef.current?.clientWidth || 300) - 180),
+            top: Math.max(clickedZone.y - 10, 10),
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <div
+            className="rounded-lg backdrop-blur-md border shadow-lg"
+            style={{
+              backgroundColor: '#0a0f1aee',
+              borderColor: `${clickedZone.color}55`,
+              padding: 'clamp(8px, 1.2vw, 14px)',
+              minWidth: '140px',
+              maxWidth: '200px',
+            }}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <div
+                  className="rounded-full"
+                  style={{ width: 8, height: 8, backgroundColor: clickedZone.color }}
+                />
+                <span
+                  className="font-semibold"
+                  style={{
+                    color: clickedZone.color,
+                    fontSize: 'clamp(10px, 1.6vw, 13px)',
+                    fontFamily: "'Noto Sans KR', sans-serif",
+                  }}
+                >
+                  {clickedZone.label}
+                </span>
+              </div>
+              <button
+                onClick={() => setClickedZone(null)}
+                className="text-[#64748b] hover:text-white transition-colors"
+                style={{ fontSize: '14px', lineHeight: 1, padding: '0 2px' }}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              className="text-[#94a3b8]"
+              style={{
+                fontSize: 'clamp(9px, 1.3vw, 11px)',
+                fontFamily: "'Fira Code', monospace",
+              }}
+            >
+              {clickedZone.w}m × {clickedZone.d}m ({(clickedZone.w * clickedZone.d).toFixed(0)}㎡)
+            </div>
+            {clickedZone.annotation && (
+              <div
+                className="mt-1 pt-1 border-t border-[#1e293b] text-[#cbd5e1]"
+                style={{
+                  fontSize: 'clamp(9px, 1.3vw, 11px)',
+                  fontFamily: "'Noto Sans KR', sans-serif",
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {clickedZone.annotation}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* 어노테이션 오버레이 */}
