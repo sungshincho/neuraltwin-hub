@@ -590,6 +590,12 @@ interface WebChatRequest {
   history?: ChatMessage[];    // 클라이언트 측 히스토리 (선택적)
   attachments?: FileAttachmentData[];  // 첨부 파일 데이터
   stream?: boolean;           // 클라이언트 SSE 스트리밍 요청 (default: true, 모바일은 false)
+  // A-2: 현재 3D 매장 상태 (연속 대화 시 AI에 맥락 전달)
+  currentVizState?: {
+    vizState: string;
+    zones?: Array<{ id: string; label: string }>;
+    highlights?: string[];
+  };
   // TASK 9: Action 분기
   action?: 'chat' | 'capture_lead' | 'handover_session' | 'log_reaction';
   lead?: LeadFormData;
@@ -1605,10 +1611,17 @@ serve(async (request: Request) => {
     // PI: 점진적 품질 향상 지시문 생성
     const progressiveInstruction = buildProgressiveInstruction(conversationSearchCtx);
 
+    // A-2: 현재 3D 매장 상태를 시스템 프롬프트에 주입
+    let vizStateContext = '';
+    if (body.currentVizState?.zones && body.currentVizState.zones.length > 0) {
+      const zoneList = body.currentVizState.zones.map(z => `${z.id}(${z.label})`).join(', ');
+      vizStateContext = `\n\n[현재 3D 매장 상태]\n뷰: ${body.currentVizState.vizState}\n존: ${zoneList}\n하이라이트: ${(body.currentVizState.highlights || []).join(', ') || '없음'}\n이 상태를 기반으로 연속적인 3D 업데이트를 생성하세요. 동일한 존 ID를 유지하고 변경 사항만 반영하세요.`;
+    }
+
     const assembled = assembleContext({
       systemPrompt: baseSystemPrompt,
       knowledgeContext,
-      searchContext,
+      searchContext: searchContext + vizStateContext,
       profileContext,
       insightsContext,
       depthInstruction,
