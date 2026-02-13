@@ -1484,6 +1484,21 @@ serve(async (request: Request) => {
       detectedEntities: [], // searchStrategy에서 업데이트
     });
 
+    // 첨부 파일 컨텍스트 구성 (PI에서 파일 키워드 추출에 필요하므로 검색 전에 구성)
+    let fileContext = '';
+    if (attachments && attachments.length > 0) {
+      const parts: string[] = [];
+      for (const file of attachments) {
+        if (file.textContent) {
+          parts.push(`[파일: ${file.name}]\n${file.textContent}`);
+        } else {
+          parts.push(`[첨부 파일: ${file.name} (${file.type}, ${Math.round(file.size / 1024)}KB)]`);
+        }
+      }
+      fileContext = '\n\n' + parts.join('\n\n');
+      console.log(`[Attachments] ${attachments.length}개 파일, 텍스트 ${parts.filter((_, i) => attachments[i].textContent).length}개`);
+    }
+
     // ═══════════════════════════════════════════
     // PI: 대화 컨텍스트 → 검색 전략 연결 (Progressive Intelligence)
     // ═══════════════════════════════════════════
@@ -1605,22 +1620,7 @@ serve(async (request: Request) => {
     console.log(`[ContextAssembler] ${assembled.layersIncluded.join('+')} (${assembled.tokenEstimate} tokens${assembled.truncated ? ', truncated' : ''})`);
     console.log(`[Timing] Total pre-processing: ${preprocessMs}ms`);
 
-    // 8. 첨부 파일 컨텍스트 구성
-    let fileContext = '';
-    if (attachments && attachments.length > 0) {
-      const parts: string[] = [];
-      for (const file of attachments) {
-        if (file.textContent) {
-          parts.push(`[파일: ${file.name}]\n${file.textContent}`);
-        } else {
-          parts.push(`[첨부 파일: ${file.name} (${file.type}, ${Math.round(file.size / 1024)}KB)]`);
-        }
-      }
-      fileContext = '\n\n' + parts.join('\n\n');
-      console.log(`[Attachments] ${attachments.length}개 파일, 텍스트 ${parts.filter((_, i) => attachments[i].textContent).length}개`);
-    }
-
-    // 9. 메시지 히스토리 구성
+    // 8. 메시지 히스토리 구성
     const chatMessages: ChatMessage[] = history || [];
     chatMessages.push({ role: 'user', content: message + fileContext });
 
