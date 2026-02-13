@@ -21,7 +21,7 @@ export interface FilteredResult {
   title: string;
   snippet: string;
   url: string;
-  source: 'web' | 'sns';
+  source: 'web' | 'sns' | 'news';
   relevanceScore: number;
 }
 
@@ -235,6 +235,21 @@ function buildContextText(
     if (charCount + line.length > MAX_CONTEXT_CHARS) break;
     parts.push(line);
     charCount += line.length;
+  }
+
+  // 뉴스 결과 (별도 섹션, URL 포함)
+  const newsResults = results.filter(r => r.source === 'news');
+  if (newsResults.length > 0) {
+    const header = '\n[최신 뉴스 검색 결과]';
+    parts.push(header);
+    charCount += header.length;
+
+    for (const r of newsResults) {
+      const line = `- ${r.title} (${r.url}): ${r.snippet}`;
+      if (charCount + line.length > MAX_CONTEXT_CHARS) break;
+      parts.push(line);
+      charCount += line.length;
+    }
   }
 
   // SNS 결과 (별도 섹션, URL 포함)

@@ -129,6 +129,64 @@ export async function searchWeb(query: string, numResults: number = 5): Promise<
 }
 
 // ═══════════════════════════════════════════
+//  뉴스 검색 (Serper /news 엔드포인트)
+// ═══════════════════════════════════════════
+
+const SERPER_NEWS_URL = 'https://google.serper.dev/news';
+
+export async function searchNews(query: string, numResults: number = 3): Promise<WebSearchResult> {
+  const apiKey = Deno.env.get('SERPER_API_KEY');
+
+  if (!apiKey) {
+    console.warn('[NewsSearch] SERPER_API_KEY not configured');
+    return { query, results: [], context: '' };
+  }
+
+  try {
+    const response = await fetch(SERPER_NEWS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apiKey,
+      },
+      body: JSON.stringify({
+        q: query,
+        gl: 'kr',
+        hl: 'ko',
+        num: numResults,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`[NewsSearch] Serper News API error: ${response.status}`);
+      return { query, results: [], context: '' };
+    }
+
+    const data = await response.json();
+
+    // 뉴스 결과 정리
+    const results = (data.news || []).slice(0, numResults).map((r: { title: string; link: string; snippet: string; date?: string; source?: string }) => ({
+      title: r.source ? `[${r.source}] ${r.title}` : r.title,
+      snippet: r.date ? `(${r.date}) ${r.snippet}` : r.snippet,
+      url: r.link,
+    }));
+
+    const contextParts: string[] = ['[뉴스 검색 결과]'];
+    for (const r of results) {
+      contextParts.push(`- ${r.title}: ${r.snippet}`);
+    }
+
+    const context = contextParts.join('\n');
+    console.log(`[NewsSearch] query="${query}", results=${results.length}`);
+
+    return { query, results, context };
+  } catch (err) {
+    console.error('[NewsSearch] Error:', err);
+    return { query, results: [], context: '' };
+  }
+}
+
+// ═══════════════════════════════════════════
 //  검색 쿼리 생성 (브랜드/기업 + 리테일 컨텍스트)
 // ═══════════════════════════════════════════
 
