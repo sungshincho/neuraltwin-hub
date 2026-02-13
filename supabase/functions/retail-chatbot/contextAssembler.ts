@@ -41,6 +41,9 @@ export interface AssemblyInput {
 
   // 질문 깊이 지시
   depthInstruction: string;         // getDepthInstruction 결과
+
+  // PI: 점진적 품질 향상 지시 (대화 진행 단계별)
+  progressiveInstruction?: string;  // buildProgressiveInstruction 결과
 }
 
 export interface AssemblyResult {
@@ -111,6 +114,7 @@ export function assembleContext(input: AssemblyInput): AssemblyResult {
     profileContext,
     insightsContext,
     depthInstruction,
+    progressiveInstruction,
   } = input;
 
   const layersIncluded: string[] = ['system_prompt'];
@@ -170,6 +174,18 @@ export function assembleContext(input: AssemblyInput): AssemblyResult {
       assembled += '\n' + depthInstruction;
       usedTokens += depthTokens;
       layersIncluded.push('depth_instruction');
+    } else {
+      truncated = true;
+    }
+  }
+
+  // 7. PI: 점진적 품질 향상 지시 (대화 단계별)
+  if (progressiveInstruction) {
+    const piTokens = estimateTokens(progressiveInstruction);
+    if (usedTokens + piTokens <= MAX_TOTAL_TOKENS + 500) { // 약간의 여유 허용
+      assembled += '\n' + progressiveInstruction;
+      usedTokens += piTokens;
+      layersIncluded.push('progressive_intelligence');
     } else {
       truncated = true;
     }
