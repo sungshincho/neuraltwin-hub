@@ -99,14 +99,33 @@ function dynamicZonesToRecord(zones: DynamicZone[]): Record<string, ZoneConfig> 
 
 /**
  * DynamicZone[] → 동적 동선 포인트 생성
- * 존들을 입구(z가 큰 것)부터 안쪽(z가 작은 것) 순으로 연결
+ * flowOrder가 string[]이면 해당 순서로 존 연결 (비선형 동선)
+ * 아니면 z가 큰 것부터 작은 것 순으로 연결 (기본 선형 동선)
  */
-function generateFlowFromZones(zones: DynamicZone[]): [number, number, number][] {
+function generateFlowFromZones(
+  zones: DynamicZone[],
+  flowOrder?: string[]
+): [number, number, number][] {
   if (zones.length < 2) {
     return [[0, 0.3, 9], [0, 0.3, -5]];
   }
 
-  // z가 큰 순서 (입구 가까운 쪽)부터 작은 순서 (안쪽)로 정렬
+  const zoneMap = new Map(zones.map(z => [z.id, z]));
+
+  // 비선형 동선: AI가 지정한 존 ID 순서로 연결
+  if (flowOrder && flowOrder.length >= 2) {
+    const points: [number, number, number][] = [];
+    for (const id of flowOrder) {
+      const zone = zoneMap.get(id);
+      if (zone) {
+        points.push([zone.x, 0.3, zone.z]);
+      }
+    }
+    if (points.length >= 2) return points;
+    // 매칭 실패 시 아래 기본 로직으로 폴백
+  }
+
+  // 기본 선형 동선: z가 큰 순서 (입구)부터 작은 순서 (안쪽)
   const sorted = [...zones].sort((a, b) => b.z - a.z);
 
   const points: [number, number, number][] = [];
@@ -230,7 +249,8 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
 export function applyParamsToConfig(
   storeParams?: StoreParams,
   zoneScale?: ZoneScale,
-  dynamicZones?: DynamicZone[]
+  dynamicZones?: DynamicZone[],
+  flowOrder?: string[]
 ): SceneConfig {
   const baseConfig = createDefaultSceneConfig();
 
@@ -238,7 +258,7 @@ export function applyParamsToConfig(
   if (dynamicZones && dynamicZones.length > 0) {
     baseConfig.zones = dynamicZonesToRecord(dynamicZones);
     baseConfig.furniture = generateFurnitureForZones(dynamicZones);
-    baseConfig.flowCurvePoints = generateFlowFromZones(dynamicZones);
+    baseConfig.flowCurvePoints = generateFlowFromZones(dynamicZones, flowOrder);
   }
 
   // storeParams 적용

@@ -107,6 +107,9 @@ export interface DynamicZone {
 //  메인 VizDirective 타입
 // ═══════════════════════════════════════════
 
+/** 카메라 앵글 힌트 */
+export type CameraAngle = 'front' | 'side' | 'top' | 'perspective';
+
 export interface VizDirective {
   /** 카메라 프리셋 (overview, entry, exploration, purchase, topdown) */
   vizState: VizState;
@@ -120,8 +123,8 @@ export interface VizDirective {
   /** 존 위 어노테이션 (선택) */
   annotations?: VizAnnotation[];
 
-  /** 고객 동선 표시 여부 */
-  flowPath?: boolean;
+  /** 고객 동선 표시 여부 또는 존 ID 순서 배열 (비선형 동선) */
+  flowPath?: boolean | string[];
 
   /** KPI 바 데이터 (선택) */
   kpis?: VizKPI[];
@@ -134,6 +137,18 @@ export interface VizDirective {
 
   /** 존별 크기 조정 (PHASE H) */
   zoneScale?: ZoneScale;
+
+  /** 카메라가 포커싱할 존 ID (동적 카메라) */
+  focusZone?: string;
+
+  /** 카메라 앵글 힌트 (focusZone과 함께 사용) */
+  cameraAngle?: CameraAngle;
+
+  /** 전체 교체 vs 부분 업데이트 */
+  updateMode?: 'full' | 'partial';
+
+  /** 변경된 존 ID 목록 (애니메이션 대상) */
+  changedZones?: string[];
 }
 
 // ═══════════════════════════════════════════
