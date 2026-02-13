@@ -280,7 +280,7 @@ function identifyInformationGaps(
     insights.map(i => i.keyPoint.toLowerCase())
   );
 
-  for (const [topicId] of topicFrequency.slice(0, 2)) {
+  for (const { topicId } of topicFrequency.slice(0, 2)) {
     const relatedGaps = TOPIC_RELATED_GAPS[topicId] || [];
     for (const gap of relatedGaps) {
       // 이미 논의된 내용인지 간단 체크
