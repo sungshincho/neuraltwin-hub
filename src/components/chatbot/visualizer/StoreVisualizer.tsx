@@ -72,9 +72,25 @@ interface LabelRect {
  * 모든 라벨의 추정 바운딩 박스를 계산하고
  * 겹치는 쌍을 수직으로 분리시킴
  */
+/**
+ * 한글/영문 혼합 텍스트의 실제 렌더링 너비를 추정
+ * 한글(AC00~D7AF, 3130~318F)은 영문 대비 ~1.7배 넓음
+ */
+function estimateTextWidth(text: string): number {
+  let width = 0;
+  for (const char of text) {
+    const code = char.charCodeAt(0);
+    if ((code >= 0xAC00 && code <= 0xD7AF) || (code >= 0x3130 && code <= 0x318F)) {
+      width += 12; // 한글 ~12px
+    } else {
+      width += 7;  // 영문/숫자/기호 ~7px
+    }
+  }
+  return width;
+}
+
 function resolveTextOverlaps(
   items: Array<{ x: number; y: number; text: string; visible: boolean }>,
-  charWidth = 7,
   lineHeight = 18,
   padX = 16,
   padY = 8,
@@ -86,8 +102,8 @@ function resolveTextOverlaps(
     if (!items[i].visible) continue;
     const text = items[i].text;
     const lines = text.split('\n');
-    const maxLineLen = Math.max(...lines.map(l => l.length));
-    const w = maxLineLen * charWidth + padX;
+    const maxLineWidth = Math.max(...lines.map(l => estimateTextWidth(l)));
+    const w = maxLineWidth + padX;
     const h = lines.length * lineHeight + padY;
     rects.push({ idx: i, x: items[i].x, y: items[i].y, w, h });
   }
