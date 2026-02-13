@@ -99,14 +99,33 @@ function dynamicZonesToRecord(zones: DynamicZone[]): Record<string, ZoneConfig> 
 
 /**
  * DynamicZone[] → 동적 동선 포인트 생성
- * 존들을 입구(z가 큰 것)부터 안쪽(z가 작은 것) 순으로 연결
+ * flowOrder가 string[]이면 해당 순서로 존 연결 (비선형 동선)
+ * 아니면 z가 큰 것부터 작은 것 순으로 연결 (기본 선형 동선)
  */
-function generateFlowFromZones(zones: DynamicZone[]): [number, number, number][] {
+function generateFlowFromZones(
+  zones: DynamicZone[],
+  flowOrder?: string[]
+): [number, number, number][] {
   if (zones.length < 2) {
     return [[0, 0.3, 9], [0, 0.3, -5]];
   }
 
-  // z가 큰 순서 (입구 가까운 쪽)부터 작은 순서 (안쪽)로 정렬
+  const zoneMap = new Map(zones.map(z => [z.id, z]));
+
+  // 비선형 동선: AI가 지정한 존 ID 순서로 연결
+  if (flowOrder && flowOrder.length >= 2) {
+    const points: [number, number, number][] = [];
+    for (const id of flowOrder) {
+      const zone = zoneMap.get(id);
+      if (zone) {
+        points.push([zone.x, 0.3, zone.z]);
+      }
+    }
+    if (points.length >= 2) return points;
+    // 매칭 실패 시 아래 기본 로직으로 폴백
+  }
+
+  // 기본 선형 동선: z가 큰 순서 (입구)부터 작은 순서 (안쪽)
   const sorted = [...zones].sort((a, b) => b.z - a.z);
 
   const points: [number, number, number][] = [];
@@ -123,11 +142,22 @@ function generateFlowFromZones(zones: DynamicZone[]): [number, number, number][]
 /**
  * 존 라벨로부터 업종별 집기 타입 추론
  */
-function inferFixtureType(label: string): 'rack' | 'shelf' | 'table' | 'counter' | 'mannequin' | 'display_case' {
+type FixtureType = 'rack' | 'shelf' | 'table' | 'counter' | 'mannequin' | 'display_case' | 'refrigerator' | 'gondola' | 'seating_set' | 'kiosk' | 'showcase';
+
+function inferFixtureType(label: string, zoneType?: string): FixtureType {
   const lc = label.toLowerCase();
+  // 존 타입 기반 추론 (우선순위 높음)
+  if (zoneType === 'checkout') return 'counter';
+  if (zoneType === 'seating') return 'seating_set';
+  // 라벨 기반 추론
   if (/행거|의류|패션|옷|rack/.test(lc)) return 'rack';
+  if (/냉장|음료|refrigerat/.test(lc)) return 'refrigerator';
+  if (/곤돌라|대형|마트|gondola/.test(lc)) return 'gondola';
+  if (/좌석|seating|카페|소파|의자/.test(lc)) return 'seating_set';
+  if (/키오스크|kiosk|주문/.test(lc)) return 'kiosk';
+  if (/쇼케이스|showcase|전시|갤러리/.test(lc)) return 'showcase';
   if (/선반|진열|식료|grocery|shelf/.test(lc)) return 'shelf';
-  if (/테이블|시식|tasting|table|좌석|seating/.test(lc)) return 'table';
+  if (/테이블|시식|tasting|table/.test(lc)) return 'table';
   if (/카운터|계산|checkout|counter|바|bar/.test(lc)) return 'counter';
   if (/마네킹|mannequin|피팅|fitting/.test(lc)) return 'mannequin';
   return 'display_case';
@@ -138,13 +168,18 @@ function inferFixtureType(label: string): 'rack' | 'shelf' | 'table' | 'counter'
  */
 function getFixtureDimensions(type: string, rand: () => number): { w: number; h: number; d: number } {
   switch (type) {
-    case 'rack':      return { w: 2.0 + rand() * 1.0, h: 1.8 + rand() * 0.4, d: 0.5 + rand() * 0.3 };
-    case 'shelf':     return { w: 1.5 + rand() * 1.0, h: 1.5 + rand() * 0.8, d: 0.6 + rand() * 0.4 };
-    case 'table':     return { w: 1.8 + rand() * 1.2, h: 0.7 + rand() * 0.2, d: 1.0 + rand() * 0.8 };
-    case 'counter':   return { w: 2.5 + rand() * 1.5, h: 0.9 + rand() * 0.2, d: 0.6 + rand() * 0.3 };
-    case 'mannequin': return { w: 0.4 + rand() * 0.2, h: 1.6 + rand() * 0.3, d: 0.3 + rand() * 0.15 };
+    case 'rack':         return { w: 2.0 + rand() * 1.0, h: 1.8 + rand() * 0.4, d: 0.5 + rand() * 0.3 };
+    case 'shelf':        return { w: 1.5 + rand() * 1.0, h: 1.5 + rand() * 0.8, d: 0.6 + rand() * 0.4 };
+    case 'table':        return { w: 1.8 + rand() * 1.2, h: 0.7 + rand() * 0.2, d: 1.0 + rand() * 0.8 };
+    case 'counter':      return { w: 2.5 + rand() * 1.5, h: 0.9 + rand() * 0.2, d: 0.6 + rand() * 0.3 };
+    case 'mannequin':    return { w: 0.4 + rand() * 0.2, h: 1.6 + rand() * 0.3, d: 0.3 + rand() * 0.15 };
+    case 'refrigerator': return { w: 1.8 + rand() * 0.8, h: 2.0 + rand() * 0.3, d: 0.7 + rand() * 0.3 };
+    case 'gondola':      return { w: 3.0 + rand() * 2.0, h: 1.6 + rand() * 0.4, d: 0.8 + rand() * 0.4 };
+    case 'seating_set':  return { w: 1.2 + rand() * 0.8, h: 0.8 + rand() * 0.2, d: 1.2 + rand() * 0.8 };
+    case 'kiosk':        return { w: 0.6 + rand() * 0.3, h: 1.4 + rand() * 0.3, d: 0.5 + rand() * 0.2 };
+    case 'showcase':     return { w: 1.5 + rand() * 1.0, h: 1.0 + rand() * 0.5, d: 0.6 + rand() * 0.4 };
     case 'display_case':
-    default:          return { w: 1.2 + rand() * 1.0, h: 1.2 + rand() * 0.6, d: 0.8 + rand() * 0.6 };
+    default:             return { w: 1.2 + rand() * 1.0, h: 1.2 + rand() * 0.6, d: 0.8 + rand() * 0.6 };
   }
 }
 
@@ -162,13 +197,24 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
   };
 
   for (const zone of zones) {
+    // entrance/corridor 타입은 비어있어야 하므로 가구 생성 스킵
+    const zoneType = (zone as { type?: string }).type;
+    if (zoneType === 'entrance' || zoneType === 'corridor') continue;
+
+    // 라벨 기반 추가 스킵 판단 (type 미설정 시 라벨로 추론)
+    const labelLc = zone.label.toLowerCase();
+    if (!zoneType && /입구|감압|통로|복도|entrance|corridor|decompression/.test(labelLc)) continue;
+
     const zw = Math.max(2, Math.min(15, zone.w));
     const zd = Math.max(2, Math.min(15, zone.d));
     const seed = zone.id.length * 7 + zone.x * 13 + zone.z * 17;
 
-    // 존 크기에 따라 집기 개수 결정 (넉넉하게: 작은 존 3개, 큰 존 5개)
+    // 존 크기에 따라 집기 개수 결정
     const area = zw * zd;
-    const count = area < 10 ? 3 : area < 20 ? 4 : 5;
+    // seating/experience는 가구 밀도 낮게, display는 높게
+    const densityFactor = (zoneType === 'seating' || zoneType === 'experience') ? 0.6 : 1;
+    const baseCount = area < 10 ? 3 : area < 20 ? 4 : 5;
+    const count = Math.max(1, Math.round(baseCount * densityFactor));
 
     for (let i = 0; i < count; i++) {
       const s = seed + i * 31;
@@ -178,8 +224,8 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
       const fx = zone.x + (seededRandom(s) - 0.5) * (zw - marginX * 2);
       const fz = zone.z + (seededRandom(s + 1) - 0.5) * (zd - marginZ * 2);
 
-      // 업종별 집기 타입 추론 → 타입별 크기 프리셋 적용
-      const fixtureType = inferFixtureType(zone.label);
+      // 존 타입 + 라벨 기반 집기 타입 추론
+      const fixtureType = inferFixtureType(zone.label, zoneType);
       const fixtureRand = () => seededRandom(s + 3 + furniture.length);
       const { w: fw, h: fh, d: fd } = getFixtureDimensions(fixtureType, fixtureRand);
 
@@ -203,7 +249,8 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
 export function applyParamsToConfig(
   storeParams?: StoreParams,
   zoneScale?: ZoneScale,
-  dynamicZones?: DynamicZone[]
+  dynamicZones?: DynamicZone[],
+  flowOrder?: string[]
 ): SceneConfig {
   const baseConfig = createDefaultSceneConfig();
 
@@ -211,7 +258,7 @@ export function applyParamsToConfig(
   if (dynamicZones && dynamicZones.length > 0) {
     baseConfig.zones = dynamicZonesToRecord(dynamicZones);
     baseConfig.furniture = generateFurnitureForZones(dynamicZones);
-    baseConfig.flowCurvePoints = generateFlowFromZones(dynamicZones);
+    baseConfig.flowCurvePoints = generateFlowFromZones(dynamicZones, flowOrder);
   }
 
   // storeParams 적용

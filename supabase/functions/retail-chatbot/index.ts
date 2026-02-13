@@ -61,6 +61,9 @@ interface ZoneScale {
   };
 }
 
+// 존 용도 타입 — 가구 생성 및 시각 표현 제어
+type ZoneType = 'display' | 'entrance' | 'corridor' | 'checkout' | 'seating' | 'storage' | 'experience';
+
 // 동적 존 정의 (AI가 대화 맥락에 맞게 생성)
 interface DynamicZone {
   id: string;
@@ -70,6 +73,7 @@ interface DynamicZone {
   w: number;
   d: number;
   color: string;
+  type?: ZoneType;
 }
 
 interface VizDirective {
@@ -77,11 +81,15 @@ interface VizDirective {
   highlights: string[];
   zones?: DynamicZone[];    // AI 동적 생성 존
   annotations?: VizAnnotation[];
-  flowPath?: boolean;
+  flowPath?: boolean | string[];  // boolean 또는 존 ID 순서 배열
   kpis?: VizKPI[];
   stage?: 'entry' | 'exploration' | 'purchase';
   storeParams?: StoreParams;  // PHASE H
   zoneScale?: ZoneScale;      // PHASE H
+  focusZone?: string;         // 카메라가 포커싱할 존 ID
+  cameraAngle?: 'front' | 'side' | 'top' | 'perspective';
+  updateMode?: 'full' | 'partial';
+  changedZones?: string[];    // 변경된 존 ID 목록
 }
 
 const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
@@ -421,11 +429,58 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       }
     }
 
+    // flowPath 검증: boolean 또는 string[] (비선형 동선)
+    let validatedFlowPath: boolean | string[] | undefined = undefined;
+    if (Array.isArray(parsed.flowPath)) {
+      // string[] — 존 ID 배열로만 허용
+      const ids = parsed.flowPath.filter((id: unknown) => typeof id === 'string');
+      if (ids.length >= 2) {
+        validatedFlowPath = ids;
+      }
+    } else if (typeof parsed.flowPath === 'boolean') {
+      validatedFlowPath = parsed.flowPath;
+    }
+
+    // focusZone 검증: 존재하는 존 ID여야 함
+    let validatedFocusZone: string | undefined = undefined;
+    if (typeof parsed.focusZone === 'string' && parsed.focusZone.length > 0) {
+      // validatedZones가 있으면 해당 존 ID 존재 확인
+      if (validatedZones) {
+        const zoneIds = validatedZones.map((z: { id: string }) => z.id);
+        if (zoneIds.includes(parsed.focusZone)) {
+          validatedFocusZone = parsed.focusZone;
+        }
+      } else {
+        // 동적 존이 없으면 그냥 통과 (하드코딩 존 사용 가능)
+        validatedFocusZone = parsed.focusZone;
+      }
+    }
+
+    // cameraAngle 검증
+    const VALID_CAMERA_ANGLES = ['front', 'side', 'top', 'perspective'];
+    const validatedCameraAngle = VALID_CAMERA_ANGLES.includes(parsed.cameraAngle)
+      ? parsed.cameraAngle
+      : undefined;
+
+    // updateMode 검증
+    const validatedUpdateMode = (parsed.updateMode === 'full' || parsed.updateMode === 'partial')
+      ? parsed.updateMode
+      : undefined;
+
+    // changedZones 검증
+    let validatedChangedZones: string[] | undefined = undefined;
+    if (Array.isArray(parsed.changedZones)) {
+      const ids = parsed.changedZones.filter((id: unknown) => typeof id === 'string');
+      if (ids.length > 0) {
+        validatedChangedZones = ids;
+      }
+    }
+
     const result: VizDirective = {
       vizState: parsed.vizState,
       highlights: parsed.highlights,
       annotations: parsed.annotations?.length ? parsed.annotations : undefined,
-      flowPath: parsed.flowPath,
+      flowPath: validatedFlowPath,
       kpis: validatedKpis?.length ? validatedKpis : undefined,
       stage: validatedStage,
       storeParams: validatedStoreParams,
@@ -437,6 +492,17 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       result.zones = validatedZones;
       console.log(`[VizDirective] Dynamic zones: ${validatedZones.length}개 (${validatedZones.map(z => z.id).join(', ')})`);
     }
+
+    // 동적 카메라 필드
+    if (validatedFocusZone) {
+      result.focusZone = validatedFocusZone;
+      if (validatedCameraAngle) result.cameraAngle = validatedCameraAngle;
+      console.log(`[VizDirective] Focus: ${validatedFocusZone}, angle: ${validatedCameraAngle || 'default'}`);
+    }
+
+    // 부분 업데이트 필드
+    if (validatedUpdateMode) result.updateMode = validatedUpdateMode;
+    if (validatedChangedZones) result.changedZones = validatedChangedZones;
 
     return result;
   } catch (err) {

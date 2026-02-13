@@ -398,17 +398,34 @@ export function generateSuggestions(context: SuggestionContext): SuggestionResul
 //  유틸리티 함수
 // ═══════════════════════════════════════════
 
+// 역질문 / 되묻기 패턴 (사용자가 하지 않을 법한 형태)
+const REVERSE_QUESTION_PATTERNS = [
+  /어떤\s*(부분|주제|분야|점).*궁금/,
+  /가장\s*큰\s*(고민|어려움|문제|과제)/,
+  /더\s*자세히\s*알고\s*싶은/,
+  /어떤\s*(업종|매장|분야).*관심/,
+  /무엇.*도움.*드릴/,
+  /어떤.*도움.*필요/,
+  /궁금.*있으세요/,
+  /알려드릴까요/,
+  /말씀해\s*주세요/,
+  /어떠세요\?$/,
+];
+
 function filterSuggestions(candidates: string[], detectedKeywords: string[]): string[] {
   // 중복 제거
   const unique = [...new Set(candidates)];
 
-  // 이미 대화에서 언급된 키워드와 너무 유사한 제안 필터링
-  // (사용자가 이미 물어본 것과 유사한 제안 제외)
-  if (detectedKeywords.length === 0) return unique;
-
   return unique.filter(suggestion => {
     const suggestionLower = suggestion.toLowerCase();
-    // 키워드 중 2개 이상이 제안에 포함되면 제외 (너무 유사)
+
+    // 1. 역질문 패턴 필터링 — 되묻는 형태의 프리셋 제거
+    if (REVERSE_QUESTION_PATTERNS.some(p => p.test(suggestion))) {
+      return false;
+    }
+
+    // 2. 이미 대화에서 언급된 키워드와 너무 유사한 제안 필터링
+    if (detectedKeywords.length === 0) return true;
     const matchCount = detectedKeywords.filter(kw =>
       suggestionLower.includes(kw.toLowerCase())
     ).length;

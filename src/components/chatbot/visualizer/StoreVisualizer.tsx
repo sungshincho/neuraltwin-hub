@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildScene, disposeScene, lerpVector3, applyParamsToConfig, type SceneObjects } from './sceneBuilder';
 import { CAMERA_PRESETS, STORE, getZoneColorHex, ZONE_LABELS_KO } from './storeData';
-import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale, DynamicZone } from './vizDirectiveTypes';
+import type { VizState, VizAnnotation, VizKPI, CustomerStage, StoreParams, ZoneScale, DynamicZone, CameraAngle } from './vizDirectiveTypes';
 import KPIBar from './KPIBar';
 import StageProgress from './StageProgress';
 import { computeZoneDiff, describeDiff } from './sceneDiff';
@@ -23,7 +23,7 @@ interface StoreVisualizerProps {
   vizState: VizState;
   highlights: string[];
   annotations: VizAnnotation[];
-  showFlow: boolean;
+  showFlow: boolean | string[];
   className?: string;
 
   /** AI가 대화 맥락에 맞게 생성한 동적 존 배열 */
@@ -40,6 +40,12 @@ interface StoreVisualizerProps {
 
   /** 존별 크기 조정 (PHASE H) */
   zoneScale?: ZoneScale;
+
+  /** 카메라가 포커싱할 존 ID (동적 카메라) */
+  focusZone?: string;
+
+  /** 카메라 앵글 힌트 (focusZone과 함께 사용) */
+  cameraAngle?: CameraAngle;
 }
 
 // ═══════════════════════════════════════════
@@ -72,9 +78,25 @@ interface LabelRect {
  * 모든 라벨의 추정 바운딩 박스를 계산하고
  * 겹치는 쌍을 수직으로 분리시킴
  */
+/**
+ * 한글/영문 혼합 텍스트의 실제 렌더링 너비를 추정
+ * 한글(AC00~D7AF, 3130~318F)은 영문 대비 ~1.7배 넓음
+ */
+function estimateTextWidth(text: string): number {
+  let width = 0;
+  for (const char of text) {
+    const code = char.charCodeAt(0);
+    if ((code >= 0xAC00 && code <= 0xD7AF) || (code >= 0x3130 && code <= 0x318F)) {
+      width += 12; // 한글 ~12px
+    } else {
+      width += 7;  // 영문/숫자/기호 ~7px
+    }
+  }
+  return width;
+}
+
 function resolveTextOverlaps(
   items: Array<{ x: number; y: number; text: string; visible: boolean }>,
-  charWidth = 7,
   lineHeight = 18,
   padX = 16,
   padY = 8,
@@ -86,8 +108,8 @@ function resolveTextOverlaps(
     if (!items[i].visible) continue;
     const text = items[i].text;
     const lines = text.split('\n');
-    const maxLineLen = Math.max(...lines.map(l => l.length));
-    const w = maxLineLen * charWidth + padX;
+    const maxLineWidth = Math.max(...lines.map(l => estimateTextWidth(l)));
+    const w = maxLineWidth + padX;
     const h = lines.length * lineHeight + padY;
     rects.push({ idx: i, x: items[i].x, y: items[i].y, w, h });
   }
@@ -132,7 +154,9 @@ export default function StoreVisualizer({
   kpis,
   stage,
   storeParams,
-  zoneScale
+  zoneScale,
+  focusZone,
+  cameraAngle
 }: StoreVisualizerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -385,8 +409,9 @@ export default function StoreVisualizer({
     }
 
     // 파라메트릭 설정 적용 (PHASE H + 동적 존)
+    const flowOrder = Array.isArray(showFlow) ? showFlow : undefined;
     const sceneConfig = (storeParams || zoneScale || (zones && zones.length > 0))
-      ? applyParamsToConfig(storeParams, zoneScale, zones)
+      ? applyParamsToConfig(storeParams, zoneScale, zones, flowOrder)
       : undefined;
 
     // 씬 빌드 (파라메트릭 config 전달)
@@ -466,16 +491,51 @@ export default function StoreVisualizer({
   }, [animate, sceneConfigKey]);
 
   // ─────────────────────────────────────────
-  // vizState 변경 시 카메라 업데이트
+  // vizState / focusZone 변경 시 카메라 업데이트
   // ─────────────────────────────────────────
   useEffect(() => {
+    // focusZone이 있으면 해당 존 중심으로 동적 카메라 계산
+    if (focusZone && zones && zones.length > 0) {
+      const targetZone = zones.find(z => z.id === focusZone);
+      if (targetZone) {
+        const zx = targetZone.x;
+        const zz = targetZone.z;
+        const zoneSize = Math.max(targetZone.w, targetZone.d);
+        const dist = zoneSize * 1.2 + 5; // 존 크기에 비례한 카메라 거리
+
+        // cameraAngle에 따라 카메라 위치 결정
+        let camPos: [number, number, number];
+        switch (cameraAngle) {
+          case 'front':
+            camPos = [zx, dist * 0.6, zz + dist];
+            break;
+          case 'side':
+            camPos = [zx + dist, dist * 0.6, zz];
+            break;
+          case 'top':
+            camPos = [zx, dist * 1.5, zz + 0.1]; // 약간 오프셋 (정상향 방지)
+            break;
+          case 'perspective':
+          default:
+            camPos = [zx + dist * 0.7, dist * 0.8, zz + dist * 0.7];
+            break;
+        }
+
+        cameraTargetPos.current = new THREE.Vector3(...camPos);
+        cameraTargetLookAt.current = new THREE.Vector3(zx, 0, zz);
+        cameraTargetFov.current = 45;
+        return;
+      }
+    }
+
+    // focusZone이 없으면 기존 프리셋 사용
     const preset = CAMERA_PRESETS[vizState];
     if (preset) {
       cameraTargetPos.current = new THREE.Vector3(...preset.pos);
       cameraTargetLookAt.current = new THREE.Vector3(...preset.target);
       cameraTargetFov.current = preset.fov;
     }
-  }, [vizState]);
+  }, [vizState, focusZone, cameraAngle, zones]);
 
   // ─────────────────────────────────────────
 
@@ -516,11 +576,13 @@ export default function StoreVisualizer({
 
   // ─────────────────────────────────────────
   // showFlow 변경 시 동선 표시 업데이트
+  // boolean이면 그대로, string[]이면 true (동선 표시 + 순서는 씬 빌드 시 반영)
   // ─────────────────────────────────────────
   useEffect(() => {
     if (!sceneRef.current) return;
 
-    sceneRef.current.flowLine.userData.showFlow = showFlow;
+    const shouldShow = Array.isArray(showFlow) ? showFlow.length >= 2 : showFlow;
+    sceneRef.current.flowLine.userData.showFlow = shouldShow;
   }, [showFlow]);
 
   // ─────────────────────────────────────────

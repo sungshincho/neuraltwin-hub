@@ -1447,6 +1447,8 @@ const Chat = () => {
                 stage={vizDirective.stage}
                 storeParams={vizDirective.storeParams}
                 zoneScale={vizDirective.zoneScale}
+                focusZone={vizDirective.focusZone}
+                cameraAngle={vizDirective.cameraAngle}
               />
             </div>
           )}
@@ -1860,6 +1862,8 @@ const Chat = () => {
                   stage={vizDirective.stage}
                   storeParams={vizDirective.storeParams}
                   zoneScale={vizDirective.zoneScale}
+                  focusZone={vizDirective.focusZone}
+                  cameraAngle={vizDirective.cameraAngle}
                 />
               </div>
             )}

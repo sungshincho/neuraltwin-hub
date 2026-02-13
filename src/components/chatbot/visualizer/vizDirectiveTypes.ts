@@ -81,6 +81,9 @@ export interface ZoneScale {
  * AI가 대화 맥락에 맞게 동적으로 생성하는 존 정의
  * 패션 매장뿐 아니라 F&B, 화장품, 전자제품 등 모든 업종에 대응
  */
+/** 존 용도 타입 — 가구 생성 및 시각 표현 제어에 사용 */
+export type ZoneType = 'display' | 'entrance' | 'corridor' | 'checkout' | 'seating' | 'storage' | 'experience';
+
 export interface DynamicZone {
   /** 존 고유 ID (예: "entrance", "kitchen", "display") */
   id: string;
@@ -96,11 +99,16 @@ export interface DynamicZone {
   d: number;
   /** CSS hex 색상 (예: "#0ea5e9") */
   color: string;
+  /** 존 용도 타입 — entrance/corridor는 가구 미생성 */
+  type?: ZoneType;
 }
 
 // ═══════════════════════════════════════════
 //  메인 VizDirective 타입
 // ═══════════════════════════════════════════
+
+/** 카메라 앵글 힌트 */
+export type CameraAngle = 'front' | 'side' | 'top' | 'perspective';
 
 export interface VizDirective {
   /** 카메라 프리셋 (overview, entry, exploration, purchase, topdown) */
@@ -115,8 +123,8 @@ export interface VizDirective {
   /** 존 위 어노테이션 (선택) */
   annotations?: VizAnnotation[];
 
-  /** 고객 동선 표시 여부 */
-  flowPath?: boolean;
+  /** 고객 동선 표시 여부 또는 존 ID 순서 배열 (비선형 동선) */
+  flowPath?: boolean | string[];
 
   /** KPI 바 데이터 (선택) */
   kpis?: VizKPI[];
@@ -129,6 +137,18 @@ export interface VizDirective {
 
   /** 존별 크기 조정 (PHASE H) */
   zoneScale?: ZoneScale;
+
+  /** 카메라가 포커싱할 존 ID (동적 카메라) */
+  focusZone?: string;
+
+  /** 카메라 앵글 힌트 (focusZone과 함께 사용) */
+  cameraAngle?: CameraAngle;
+
+  /** 전체 교체 vs 부분 업데이트 */
+  updateMode?: 'full' | 'partial';
+
+  /** 변경된 존 ID 목록 (애니메이션 대상) */
+  changedZones?: string[];
 }
 
 // ═══════════════════════════════════════════
