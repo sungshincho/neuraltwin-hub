@@ -15,6 +15,8 @@
 
 import { routeQuery, type QueryRouteResult, type AugmentationType } from '../queryRouter.ts';
 import type { QuestionDepth } from '../questionDepthAnalyzer.ts';
+import type { ConversationSearchContext, ContextualSearchQuery } from './conversationSearchContext.ts';
+import { generateContextualQueries } from './conversationSearchContext.ts';
 
 // ═══════════════════════════════════════════
 //  타입 정의
@@ -27,6 +29,8 @@ export interface SearchStrategyInput {
   turnCount: number;
   vectorResultCount: number;
   conversationHistory?: string[];
+  /** PI: 대화 컨텍스트 기반 점진적 검색 강화 */
+  conversationSearchContext?: ConversationSearchContext;
 }
 
 export interface SearchQuery {
@@ -89,14 +93,26 @@ export function buildSearchStrategy(input: SearchStrategyInput): SearchStrategy 
     turnCount,
     vectorResultCount,
     conversationHistory,
+    conversationSearchContext: ctx,
   } = input;
 
   // 1. 기존 queryRouter 호출 (엔티티 감지 + 트리거 패턴)
   const queryRoute = routeQuery(message, conversationHistory);
 
+  // PI: 대화 진행 단계에 따른 검색 임계값 동적 조정
+  // deepening/cross_referencing 단계에서는 벡터만으론 부족 → 웹 검색 적극 활용
+  const phaseThresholdBoost = ctx?.searchPhase === 'cross_referencing' ? 3
+    : ctx?.searchPhase === 'deepening' ? 1 : 0;
+  const effectiveSufficientThreshold = VECTOR_SUFFICIENT_THRESHOLD + phaseThresholdBoost;
+
   // 2. queryRouter가 검색 필요하다고 판단한 경우 → 무조건 검색
   if (queryRoute.augmentation === 'web_search') {
     const queries = buildQueriesFromRoute(message, queryRoute);
+    // PI: 대화 컨텍스트 기반 추가 쿼리 병합
+    if (ctx) {
+      const contextQueries = generateContextualQueries(ctx, message, topicId);
+      appendContextualQueries(queries, contextQueries);
+    }
     return {
       shouldSearch: true,
       queries,
@@ -109,6 +125,10 @@ export function buildSearchStrategy(input: SearchStrategyInput): SearchStrategy 
   const needsDiversity = DIVERSITY_SEARCH_PATTERNS.some(p => p.test(message));
   if (needsDiversity && vectorResultCount >= 1) {
     const queries = buildAdvancedSupplementQueries(message, topicId);
+    if (ctx) {
+      const contextQueries = generateContextualQueries(ctx, message, topicId);
+      appendContextualQueries(queries, contextQueries);
+    }
     return {
       shouldSearch: true,
       queries,
@@ -117,12 +137,36 @@ export function buildSearchStrategy(input: SearchStrategyInput): SearchStrategy 
     };
   }
 
+  // PI: deepening/cross_referencing 단계에서 정보 갭이 있으면 검색 트리거
+  if (ctx && ctx.searchPhase !== 'discovery' && ctx.informationGaps.length > 0 && vectorResultCount < effectiveSufficientThreshold) {
+    const queries: SearchQuery[] = [];
+    // 프로필 힌트 기반 심화 검색
+    const profileHint = ctx.profileSearchHints[0] || '';
+    if (ctx.accumulatedEntities.length > 0) {
+      queries.push({
+        query: `${ctx.accumulatedEntities[0]} ${profileHint} ${message.slice(0, 40)}`.trim(),
+        type: 'web',
+        priority: 1,
+      });
+    }
+    const contextQueries = generateContextualQueries(ctx, message, topicId);
+    appendContextualQueries(queries, contextQueries);
+    if (queries.length > 0) {
+      return {
+        shouldSearch: true,
+        queries,
+        reason: `progressive_${ctx.searchPhase} (gaps=${ctx.informationGaps.length}, entities=${ctx.accumulatedEntities.length})`,
+        queryRouteResult: queryRoute,
+      };
+    }
+  }
+
   // 4. 벡터 결과가 매우 충분하면 검색 생략
-  if (vectorResultCount >= VECTOR_SUFFICIENT_THRESHOLD) {
+  if (vectorResultCount >= effectiveSufficientThreshold) {
     return {
       shouldSearch: false,
       queries: [],
-      reason: `vector_sufficient (${vectorResultCount} results)`,
+      reason: `vector_sufficient (${vectorResultCount} results, threshold=${effectiveSufficientThreshold})`,
       queryRouteResult: queryRoute,
     };
   }
@@ -130,6 +174,10 @@ export function buildSearchStrategy(input: SearchStrategyInput): SearchStrategy 
   // 5. 고급 질문 + 벡터 중간 수준 → 다양성 보충 검색
   if (questionDepth === 'advanced' && vectorResultCount >= VECTOR_DIVERSE_THRESHOLD) {
     const queries = buildAdvancedSupplementQueries(message, topicId);
+    if (ctx) {
+      const contextQueries = generateContextualQueries(ctx, message, topicId);
+      appendContextualQueries(queries, contextQueries);
+    }
     return {
       shouldSearch: true,
       queries,
@@ -143,6 +191,10 @@ export function buildSearchStrategy(input: SearchStrategyInput): SearchStrategy 
     const needsBoost = ADVANCED_SEARCH_BOOST_PATTERNS.some(p => p.test(message));
     if (needsBoost) {
       const queries = buildAdvancedSupplementQueries(message, topicId);
+      if (ctx) {
+        const contextQueries = generateContextualQueries(ctx, message, topicId);
+        appendContextualQueries(queries, contextQueries);
+      }
       return {
         shouldSearch: true,
         queries,
@@ -150,6 +202,17 @@ export function buildSearchStrategy(input: SearchStrategyInput): SearchStrategy 
         queryRouteResult: queryRoute,
       };
     }
+  }
+
+  // PI: 파일 키워드가 있고 discovery 단계이면 파일 관련 검색 추가
+  if (ctx && ctx.fileKeywords.length > 0 && vectorResultCount < VECTOR_DIVERSE_THRESHOLD) {
+    const fileQuery = ctx.fileKeywords.slice(0, 3).join(' ') + ' ' + message.slice(0, 30);
+    return {
+      shouldSearch: true,
+      queries: [{ query: fileQuery.trim(), type: 'web', priority: 2 }],
+      reason: `file_context_search (${ctx.fileKeywords.length} keywords)`,
+      queryRouteResult: queryRoute,
+    };
   }
 
   // 7. 기본: 검색 불필요
@@ -245,6 +308,29 @@ const TOPIC_SEARCH_HINTS: Record<string, string> = {
   retail_tech: '리테일 테크 도입 사례 ROI',
   neuraltwin_solution: 'NEURALTWIN 리테일 솔루션',
 };
+
+// ═══════════════════════════════════════════
+//  PI: 컨텍스트 쿼리 병합 유틸리티
+// ═══════════════════════════════════════════
+
+function appendContextualQueries(
+  target: SearchQuery[],
+  contextQueries: ContextualSearchQuery[]
+): void {
+  for (const cq of contextQueries) {
+    // 중복 방지: 같은 타입의 비슷한 쿼리가 이미 있으면 스킵
+    const isDuplicate = target.some(
+      t => t.type === cq.type && t.query.slice(0, 15) === cq.query.slice(0, 15)
+    );
+    if (!isDuplicate && target.length < 6) {
+      target.push({
+        query: cq.query,
+        type: cq.type,
+        priority: cq.priority,
+      });
+    }
+  }
+}
 
 function buildAdvancedSupplementQueries(
   message: string,

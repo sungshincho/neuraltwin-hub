@@ -22,6 +22,8 @@ import { executeMultiSearch } from './search/multiSourceSearch.ts';
 import { filterAndFormatResults } from './search/resultFilter.ts';
 import { crossVerifyResults } from './search/crossVerifier.ts';
 import { summarizeFacts } from './search/factSummarizer.ts';
+// Progressive Intelligence: 대화 컨텍스트 → 검색 전략 연결
+import { buildConversationSearchContext, buildProgressiveInstruction } from './search/conversationSearchContext.ts';
 // Phase 5: Jina Reader (풀페이지 콘텐츠 추출)
 import { fetchMultiplePages, formatJinaResultsForContext } from './jinaReader.ts';
 // Phase 2: Layer 3 대화 메모리
@@ -1483,6 +1485,19 @@ serve(async (request: Request) => {
     });
 
     // ═══════════════════════════════════════════
+    // PI: 대화 컨텍스트 → 검색 전략 연결 (Progressive Intelligence)
+    // ═══════════════════════════════════════════
+
+    const conversationSearchCtx = buildConversationSearchContext(
+      conversationInsights,
+      userProfile,
+      turnCount,
+      fileContext || undefined,
+      // previousSearchQueries는 이번 턴에서는 아직 없음 (추후 확장 가능)
+    );
+    console.log(`[PI] phase=${conversationSearchCtx.searchPhase}, entities=${conversationSearchCtx.accumulatedEntities.length}, gaps=${conversationSearchCtx.informationGaps.length}, fileKw=${conversationSearchCtx.fileKeywords.length}`);
+
+    // ═══════════════════════════════════════════
     // 직렬: 검색 전략 판단 + 조건부 웹 검색 (벡터 결과 반영)
     // ═══════════════════════════════════════════
 
@@ -1493,6 +1508,7 @@ serve(async (request: Request) => {
       turnCount,
       vectorResultCount: knowledgeSourceCount,
       conversationHistory: historyTexts,
+      conversationSearchContext: conversationSearchCtx,
     });
 
     let searchContext = '';
@@ -1571,6 +1587,9 @@ serve(async (request: Request) => {
     const profileContext = formatProfileForPrompt(userProfile);
     const insightsContext = formatInsightsForPrompt(conversationInsights, conversationSummary);
 
+    // PI: 점진적 품질 향상 지시문 생성
+    const progressiveInstruction = buildProgressiveInstruction(conversationSearchCtx);
+
     const assembled = assembleContext({
       systemPrompt: baseSystemPrompt,
       knowledgeContext,
@@ -1578,6 +1597,7 @@ serve(async (request: Request) => {
       profileContext,
       insightsContext,
       depthInstruction,
+      progressiveInstruction,
     });
 
     const systemPrompt = assembled.finalPrompt;
