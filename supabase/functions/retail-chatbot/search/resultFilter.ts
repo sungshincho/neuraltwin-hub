@@ -228,16 +228,16 @@ function buildContextText(
     charCount += line.length;
   }
 
-  // 웹 결과
+  // 웹 결과 (URL 포함)
   const webResults = results.filter(r => r.source === 'web');
   for (const r of webResults) {
-    const line = `- ${r.title}: ${r.snippet}`;
+    const line = `- ${r.title} (${r.url}): ${r.snippet}`;
     if (charCount + line.length > MAX_CONTEXT_CHARS) break;
     parts.push(line);
     charCount += line.length;
   }
 
-  // SNS 결과 (별도 섹션)
+  // SNS 결과 (별도 섹션, URL 포함)
   const snsResults = results.filter(r => r.source === 'sns');
   if (snsResults.length > 0) {
     const header = '\n[소셜미디어 검색 결과]';
@@ -245,14 +245,14 @@ function buildContextText(
     charCount += header.length;
 
     for (const r of snsResults) {
-      const line = `- ${r.title}: ${r.snippet}`;
+      const line = `- ${r.title} (${r.url}): ${r.snippet}`;
       if (charCount + line.length > MAX_CONTEXT_CHARS) break;
       parts.push(line);
       charCount += line.length;
     }
   }
 
-  parts.push('\n위 검색 결과를 참고하여 정확한 정보 기반으로 답변하세요. 검색 결과와 다른 내용을 지어내지 마세요.');
+  parts.push('\n위 검색 결과를 참고하여 정확한 정보 기반으로 답변하세요. 검색 결과와 다른 내용을 지어내지 마세요. 가능하면 검색 결과의 새로운 사례를 인용하고, 동일 브랜드 반복을 피하세요.');
 
   return parts.join('\n');
 }
