@@ -534,6 +534,12 @@ const Chat = () => {
           history,
           attachments,
           stream: !isMobileDevice, // 모바일: JSON, 데스크톱: SSE
+          // A-2: 현재 3D 상태를 AI에 전달 → 연속 대화 시 맥락 인지
+          currentVizState: vizDirective ? {
+            vizState: vizDirective.vizState,
+            zones: vizDirective.zones?.map(z => ({ id: z.id, label: z.label })),
+            highlights: vizDirective.highlights,
+          } : undefined,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -721,6 +727,12 @@ const Chat = () => {
   const handleLeadFormClose = () => {
     setShowLeadForm(false);
   };
+
+  // A-7: 3D 존 클릭 → 채팅 입력에 자동 질문 삽입
+  const handleZoneClick = useCallback((zoneId: string, zoneLabel: string) => {
+    const question = `${zoneLabel} 존에 대해 더 자세히 알려주세요`;
+    setInputValue(question);
+  }, []);
 
   // 비회원 세션 초기화 (턴 제한 후 새 대화)
   const handleResetSession = useCallback(() => {
@@ -1531,6 +1543,7 @@ const Chat = () => {
                   zoneScale={vizDirective.zoneScale}
                   focusZone={vizDirective.focusZone}
                   cameraAngle={vizDirective.cameraAngle}
+                  onZoneClick={handleZoneClick}
                 />
               )}
             </div>
@@ -1921,6 +1934,7 @@ const Chat = () => {
                     zoneScale={vizDirective.zoneScale}
                     focusZone={vizDirective.focusZone}
                     cameraAngle={vizDirective.cameraAngle}
+                    onZoneClick={handleZoneClick}
                   />
                 )}
               </div>

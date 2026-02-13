@@ -46,6 +46,9 @@ interface StoreVisualizerProps {
 
   /** 카메라 앵글 힌트 (focusZone과 함께 사용) */
   cameraAngle?: CameraAngle;
+
+  /** A-7: 존 클릭 시 콜백 (Chat에서 자동 질문 삽입용) */
+  onZoneClick?: (zoneId: string, zoneLabel: string) => void;
 }
 
 // ═══════════════════════════════════════════
@@ -156,7 +159,8 @@ export default function StoreVisualizer({
   storeParams,
   zoneScale,
   focusZone,
-  cameraAngle
+  cameraAngle,
+  onZoneClick,
 }: StoreVisualizerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -515,6 +519,8 @@ export default function StoreVisualizer({
           w, d,
           annotation: ann?.text,
         });
+        // A-7: 외부 콜백 호출 (Chat에서 자동 질문 삽입)
+        onZoneClick?.(zoneId, label);
       } else {
         setClickedZone(null);
       }

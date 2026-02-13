@@ -146,14 +146,19 @@ export function assembleContext(input: AssemblyInput): AssemblyResult {
   }
 
   // 5. Layer 2: 웹 검색 (큰, 예산 초과 시 축소)
+  // C-6: 레퍼런스/사례 질문 시 웹 검색 결과를 "최신 사례"로 우선 배치
+  const isReferenceQuery = /레퍼런스|사례|케이스|case study|best practice|benchmark|글로벌.*사례|해외.*사례/i.test(searchContext);
   if (searchContext) {
-    const searchTokens = estimateTokens(searchContext);
+    const effectiveSearchContext = isReferenceQuery && knowledgeContext
+      ? searchContext + '\n[참고: 위 검색 결과가 최신 사례이며 우선 인용하세요. 벡터 지식은 보충 참고용입니다.]'
+      : searchContext;
+    const searchTokens = estimateTokens(effectiveSearchContext);
     const remainingBudget = MAX_TOTAL_TOKENS - usedTokens - estimateTokens(depthInstruction);
 
     if (searchTokens <= remainingBudget && searchTokens <= MAX_SEARCH_CONTEXT_TOKENS) {
-      assembled += searchContext;
+      assembled += effectiveSearchContext;
       usedTokens += searchTokens;
-      layersIncluded.push('web_search');
+      layersIncluded.push(isReferenceQuery ? 'web_search_priority' : 'web_search');
     } else {
       // 예산 맞춰 축소
       const budget = Math.min(remainingBudget, MAX_SEARCH_CONTEXT_TOKENS);
