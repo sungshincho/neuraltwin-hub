@@ -31,6 +31,7 @@ interface Message {
   searchSourceInfo?: {
     knowledgeSourceCount: number;
     webSearchPerformed: boolean;
+    searchSources?: Array<{ title: string; url: string }>;
   };
 }
 
@@ -141,6 +142,7 @@ const Chat = () => {
   const [searchSourceInfo, setSearchSourceInfo] = useState<{
     knowledgeSourceCount: number;
     webSearchPerformed: boolean;
+    searchSources?: Array<{ title: string; url: string }>;
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -317,6 +319,7 @@ const Chat = () => {
                   setSearchSourceInfo({
                     knowledgeSourceCount: parsed.knowledgeSourceCount || 0,
                     webSearchPerformed: parsed.webSearchPerformed || false,
+                    searchSources: parsed.searchSources,
                   });
                 }
                 // 어시스턴트 메시지에 meta 첨부
@@ -331,6 +334,7 @@ const Chat = () => {
                             ? {
                                 knowledgeSourceCount: parsed.knowledgeSourceCount || 0,
                                 webSearchPerformed: parsed.webSearchPerformed || false,
+                                searchSources: parsed.searchSources,
                               }
                             : undefined,
                         }
@@ -412,6 +416,7 @@ const Chat = () => {
       setSearchSourceInfo({
         knowledgeSourceCount: (data.knowledgeSourceCount as number) || 0,
         webSearchPerformed: (data.webSearchPerformed as boolean) || false,
+        searchSources: data.searchSources as Array<{ title: string; url: string }> | undefined,
       });
     }
 
@@ -429,6 +434,7 @@ const Chat = () => {
                   ? {
                       knowledgeSourceCount: (data.knowledgeSourceCount as number) || 0,
                       webSearchPerformed: (data.webSearchPerformed as boolean) || false,
+                      searchSources: data.searchSources as Array<{ title: string; url: string }> | undefined,
                     }
                   : undefined,
               }
@@ -468,7 +474,7 @@ const Chat = () => {
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
     setPendingFiles([]);
     pendingFileDataRef.current.clear();
-    setVizDirective(null);  // 새 질문 시 이전 비주얼라이저 데이터 리셋
+    // vizDirective는 유지 — 새 viz 이벤트가 오면 자동 교체됨 (깜빡임 방지)
     setSearchSourceInfo(null);  // 검색 소스 정보 리셋
     setIsLoading(true);
 
@@ -1105,6 +1111,22 @@ const Chat = () => {
                   )}
                   {msg.searchSourceInfo.webSearchPerformed && (
                     <span className="chat-source-badge web">웹 검색</span>
+                  )}
+                  {msg.searchSourceInfo.searchSources && msg.searchSourceInfo.searchSources.length > 0 && (
+                    <div className="chat-source-links">
+                      {msg.searchSourceInfo.searchSources.map((src, i) => (
+                        <a
+                          key={i}
+                          href={src.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="chat-source-link"
+                          title={src.url}
+                        >
+                          {src.title.length > 30 ? src.title.slice(0, 30) + '…' : src.title}
+                        </a>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}

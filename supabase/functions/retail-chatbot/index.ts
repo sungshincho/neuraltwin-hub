@@ -827,6 +827,7 @@ function createSSEStreamV2(
     sessionId: string;
     knowledgeSourceCount: number;
     webSearchPerformed: boolean;
+    searchSources: Array<{ title: string; url: string }>;
     onComplete: (fullContent: string, vizDirective: VizDirective | null) => void;
   }
 ): ReadableStream<Uint8Array> {
@@ -865,6 +866,7 @@ function createSSEStreamV2(
         },
         knowledgeSourceCount: opts.knowledgeSourceCount,
         webSearchPerformed: opts.webSearchPerformed,
+        searchSources: opts.searchSources.length > 0 ? opts.searchSources : undefined,
       });
 
       const reader = upstreamResponse.body?.getReader();
@@ -1447,6 +1449,7 @@ serve(async (request: Request) => {
 
     let searchContext = '';
     let webSearchPerformed = false;
+    let searchSources: Array<{ title: string; url: string }> = [];
 
     if (searchStrategy.shouldSearch) {
       const searchStartTime = Date.now();
@@ -1456,6 +1459,10 @@ serve(async (request: Request) => {
       if (filteredResults.context) {
         searchContext = '\n\n' + filteredResults.context;
         webSearchPerformed = true;
+        // 소스 URL 추출 (상위 5개만)
+        searchSources = filteredResults.results
+          .slice(0, 5)
+          .map(r => ({ title: r.title, url: r.url }));
         console.log(`[MultiSearch] ${filteredResults.totalAfterFilter}/${filteredResults.totalBeforeFilter} results filtered (${Date.now() - searchStartTime}ms)`);
       }
 
@@ -1602,6 +1609,7 @@ serve(async (request: Request) => {
         sessionId: effectiveSessionId || '',
         knowledgeSourceCount,
         webSearchPerformed,
+        searchSources,
         onComplete: async (fullContent: string, vizDir: VizDirective | null) => {
           // 비동기 로깅 (스트리밍 완료 후)
           const cleanedContent = cleanResponseText(fullContent);
@@ -1715,6 +1723,7 @@ serve(async (request: Request) => {
         vizDirective: finalVizDirective,
         knowledgeSourceCount,
         webSearchPerformed,
+        searchSources: searchSources.length > 0 ? searchSources : undefined,
       }),
       {
         status: 200,
