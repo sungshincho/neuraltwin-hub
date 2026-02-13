@@ -929,6 +929,12 @@
     border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
+.chat-source-badge.fact {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
 .chat-search-sources.compact {
     padding: 2px 0 0;
     opacity: 0.7;

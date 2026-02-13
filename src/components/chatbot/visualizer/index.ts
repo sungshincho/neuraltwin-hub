@@ -8,6 +8,7 @@ export { default as StoreVisualizer } from './StoreVisualizer';
 // 오버레이 컴포넌트
 export { default as KPIBar } from './KPIBar';
 export { default as StageProgress } from './StageProgress';
+export { default as CompareVisualizer } from './CompareVisualizer';
 
 // 타입 내보내기
 export type {

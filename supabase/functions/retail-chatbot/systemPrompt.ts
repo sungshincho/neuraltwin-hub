@@ -1565,6 +1565,25 @@ flowPath를 존 ID 배열로 지정하면 해당 순서대로 동선을 그림:
 - "네/아니요" 등 단답 질문
 - 이전 viz와 완전히 동일한 시각화가 필요할 때 → viz 생략 (클라이언트가 이전 viz 유지)
 
+[Before/After 비교 모드]
+레이아웃 변경 전후를 비교해야 할 때 compare 필드를 사용하세요:
+- "이 레이아웃을 바꾸면 어떨까?", "현재 vs 제안" 같은 비교 요청 시
+- zones: After(제안) 레이아웃 존 배열
+- compare.beforeZones: Before(현재) 레이아웃 존 배열
+- compare.beforeLabel / compare.afterLabel: 좌우 라벨
+
+예시:
+{
+  "vizState": "overview",
+  "highlights": [],
+  "zones": [제안 레이아웃 존 배열],
+  "compare": {
+    "beforeLabel": "현재",
+    "afterLabel": "제안",
+    "beforeZones": [현재 레이아웃 존 배열]
+  }
+}
+
 ═══════════════════════════════════════════
   6. 답변 품질 가이드: Few-shot 예시
 ═══════════════════════════════════════════

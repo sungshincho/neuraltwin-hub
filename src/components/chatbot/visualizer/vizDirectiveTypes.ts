@@ -30,6 +30,8 @@ export interface VizKPI {
   sub: string;            // "패션 리테일"
   alert?: boolean;        // 경고 스타일 (빨간색 강조)
   highlight?: boolean;    // 포인트 스타일 (보라색 강조)
+  gauge?: number;         // 0~100 게이지 (퍼센트 값이면 자동 표시)
+  trend?: 'up' | 'down' | 'flat'; // 트렌드 화살표
 }
 
 // ═══════════════════════════════════════════
@@ -149,6 +151,16 @@ export interface VizDirective {
 
   /** 변경된 존 ID 목록 (애니메이션 대상) */
   changedZones?: string[];
+
+  /** Before/After 비교 모드 (A-8) */
+  compare?: {
+    /** 비교 라벨 (예: "현재 레이아웃") */
+    beforeLabel?: string;
+    /** 비교 라벨 (예: "제안 레이아웃") */
+    afterLabel?: string;
+    /** Before 존 배열 (After는 메인 zones 사용) */
+    beforeZones: DynamicZone[];
+  };
 }
 
 // ═══════════════════════════════════════════
@@ -181,6 +193,7 @@ export function mergeVizDirective(
     annotations: updates.annotations ?? current.annotations,
     kpis: updates.kpis ?? current.kpis,
     zones: updates.zones ?? current.zones,
+    compare: updates.compare ?? current.compare,
   };
 }
 

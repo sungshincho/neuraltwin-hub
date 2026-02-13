@@ -8,7 +8,7 @@ import { Link, useLocation } from "react-router-dom";
 import "@/styles/chat.css";
 
 // 3D Visualizer 컴포넌트
-import { StoreVisualizer } from "@/components/chatbot/visualizer";
+import { StoreVisualizer, CompareVisualizer } from "@/components/chatbot/visualizer";
 import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
 import { mergeVizDirective } from "@/components/chatbot/visualizer";
 
@@ -31,6 +31,7 @@ interface Message {
     knowledgeSourceCount: number;
     webSearchPerformed: boolean;
     searchSources?: Array<{ title: string; url: string }>;
+    factCount?: number;
   };
 }
 
@@ -89,6 +90,8 @@ const Chat = () => {
 
   // TASK C: VizDirective 상태 (3D Visualizer)
   const [vizDirective, setVizDirective] = useState<VizDirective | null>(null);
+  // Phase 6 B-7: 채팅에서 존 클릭 시 추가 하이라이트
+  const [chatHighlightZones, setChatHighlightZones] = useState<string[]>([]);
   // 모바일 탭 토글 (채팅 ↔ 3D뷰)
   const [mobileActiveTab, setMobileActiveTab] = useState<"chat" | "viz">("chat");
   const [leadFormData, setLeadFormData] = useState<LeadFormData>({
@@ -141,6 +144,7 @@ const Chat = () => {
     knowledgeSourceCount: number;
     webSearchPerformed: boolean;
     searchSources?: Array<{ title: string; url: string }>;
+    factCount?: number;
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -318,6 +322,7 @@ const Chat = () => {
                     knowledgeSourceCount: parsed.knowledgeSourceCount || 0,
                     webSearchPerformed: parsed.webSearchPerformed || false,
                     searchSources: parsed.searchSources,
+                    factCount: parsed.factCount,
                   });
                 }
                 // 어시스턴트 메시지에 meta 첨부
@@ -333,6 +338,7 @@ const Chat = () => {
                                 knowledgeSourceCount: parsed.knowledgeSourceCount || 0,
                                 webSearchPerformed: parsed.webSearchPerformed || false,
                                 searchSources: parsed.searchSources,
+                                factCount: parsed.factCount,
                               }
                             : undefined,
                         }
@@ -433,6 +439,7 @@ const Chat = () => {
                       knowledgeSourceCount: (data.knowledgeSourceCount as number) || 0,
                       webSearchPerformed: (data.webSearchPerformed as boolean) || false,
                       searchSources: data.searchSources as Array<{ title: string; url: string }> | undefined,
+                      factCount: data.factCount as number | undefined,
                     }
                   : undefined,
               }
@@ -1040,6 +1047,52 @@ const Chat = () => {
     return turns;
   };
 
+  // Phase 6 B-7: 어시스턴트 메시지에서 존 이름을 감지하고 클릭 가능한 링크로 변환
+  const renderMessageWithZoneLinks = useCallback((content: string) => {
+    if (!vizDirective?.zones || vizDirective.zones.length === 0) {
+      return content;
+    }
+    // 존 라벨 → ID 맵 생성
+    const zoneLabels = vizDirective.zones.map(z => ({
+      label: z.label,
+      id: z.id,
+      color: z.color,
+    }));
+    // 라벨 길이 내림차순 정렬 (긴 라벨 우선 매칭)
+    zoneLabels.sort((a, b) => b.label.length - a.label.length);
+
+    // 라벨을 정규식으로 찾아서 분할
+    const pattern = zoneLabels.map(z => z.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    if (!pattern) return content;
+
+    const regex = new RegExp(`(${pattern})`, 'g');
+    const parts = content.split(regex);
+
+    return parts.map((part, i) => {
+      const zone = zoneLabels.find(z => z.label === part);
+      if (zone) {
+        return (
+          <span
+            key={i}
+            className="chat-zone-link"
+            style={{ color: zone.color, cursor: 'pointer', borderBottom: `1px dashed ${zone.color}55` }}
+            onMouseEnter={() => setChatHighlightZones([zone.id])}
+            onMouseLeave={() => setChatHighlightZones([])}
+            onClick={() => {
+              // 존 클릭 시 해당 존으로 카메라 포커스
+              if (vizDirective) {
+                setVizDirective(prev => prev ? { ...prev, focusZone: zone.id, cameraAngle: 'perspective' as const } : prev);
+              }
+            }}
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  }, [vizDirective]);
+
   // 인라인 채팅 메시지 렌더링 (collapsible turns)
   const renderCollapsibleMessages = () => {
     if (messages.length === 0 && !isLoading) {
@@ -1092,7 +1145,7 @@ const Chat = () => {
             <div key={msg.id} className="chat-message-wrapper">
               <div className={`chat-message ${msg.role}`}>
                 {msg.role === 'user' && renderAttachments(msg.attachments)}
-                {msg.content}
+                {msg.role === 'assistant' ? renderMessageWithZoneLinks(msg.content) : msg.content}
               </div>
               {msg.role === 'assistant' && msg.searchSourceInfo && (
                 msg.searchSourceInfo.knowledgeSourceCount > 0 || msg.searchSourceInfo.webSearchPerformed
@@ -1105,6 +1158,9 @@ const Chat = () => {
                   )}
                   {msg.searchSourceInfo.webSearchPerformed && (
                     <span className="chat-source-badge web">웹 검색</span>
+                  )}
+                  {msg.searchSourceInfo.factCount && msg.searchSourceInfo.factCount > 0 && (
+                    <span className="chat-source-badge fact">팩트 {msg.searchSourceInfo.factCount}건</span>
                   )}
                   {msg.searchSourceInfo.searchSources && msg.searchSourceInfo.searchSources.length > 0 && (
                     <div className="chat-source-links">
@@ -1184,7 +1240,7 @@ const Chat = () => {
             <div key={msg.id} className="chat-fs-message-wrapper">
               <div className={`chat-fs-message ${msg.role}`}>
                 {msg.role === 'user' && renderAttachments(msg.attachments)}
-                {msg.content}
+                {msg.role === 'assistant' ? renderMessageWithZoneLinks(msg.content) : msg.content}
               </div>
               {renderMessageActions(msg, 'fullscreen')}
             </div>
@@ -1369,6 +1425,9 @@ const Chat = () => {
                       {searchSourceInfo.webSearchPerformed && (
                         <span className="chat-source-badge web">웹 검색</span>
                       )}
+                      {searchSourceInfo.factCount && searchSourceInfo.factCount > 0 && (
+                        <span className="chat-source-badge fact">팩트 {searchSourceInfo.factCount}건</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1453,19 +1512,23 @@ const Chat = () => {
           {/* 우측: 3D Visualizer — 모바일에서 채팅 탭 선택 시 숨김 */}
           {vizDirective && (
             <div className={`chat-fs-viz${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}>
-              <StoreVisualizer
-                vizState={vizDirective.vizState}
-                highlights={vizDirective.highlights || []}
-                annotations={vizDirective.annotations || []}
-                showFlow={vizDirective.flowPath || false}
-                zones={vizDirective.zones}
-                kpis={vizDirective.kpis}
-                stage={vizDirective.stage}
-                storeParams={vizDirective.storeParams}
-                zoneScale={vizDirective.zoneScale}
-                focusZone={vizDirective.focusZone}
-                cameraAngle={vizDirective.cameraAngle}
-              />
+              {vizDirective.compare ? (
+                <CompareVisualizer vizDirective={vizDirective} chatHighlightZones={chatHighlightZones} />
+              ) : (
+                <StoreVisualizer
+                  vizState={vizDirective.vizState}
+                  highlights={[...(vizDirective.highlights || []), ...chatHighlightZones]}
+                  annotations={vizDirective.annotations || []}
+                  showFlow={vizDirective.flowPath || false}
+                  zones={vizDirective.zones}
+                  kpis={vizDirective.kpis}
+                  stage={vizDirective.stage}
+                  storeParams={vizDirective.storeParams}
+                  zoneScale={vizDirective.zoneScale}
+                  focusZone={vizDirective.focusZone}
+                  cameraAngle={vizDirective.cameraAngle}
+                />
+              )}
             </div>
           )}
         </div>
@@ -1677,6 +1740,9 @@ const Chat = () => {
                           {searchSourceInfo.webSearchPerformed && (
                             <span className="chat-source-badge web">웹 검색</span>
                           )}
+                          {searchSourceInfo.factCount && searchSourceInfo.factCount > 0 && (
+                            <span className="chat-source-badge fact">팩트 {searchSourceInfo.factCount}건</span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1836,19 +1902,23 @@ const Chat = () => {
                 className={`visualizer-container${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}
               >
                 {/* 3D Store Visualizer — KPI/Stage는 내부 오버레이로 렌더링 */}
-                <StoreVisualizer
-                  vizState={vizDirective.vizState}
-                  highlights={vizDirective.highlights || []}
-                  annotations={vizDirective.annotations || []}
-                  showFlow={vizDirective.flowPath || false}
-                  zones={vizDirective.zones}
-                  kpis={vizDirective.kpis}
-                  stage={vizDirective.stage}
-                  storeParams={vizDirective.storeParams}
-                  zoneScale={vizDirective.zoneScale}
-                  focusZone={vizDirective.focusZone}
-                  cameraAngle={vizDirective.cameraAngle}
-                />
+                {vizDirective.compare ? (
+                  <CompareVisualizer vizDirective={vizDirective} chatHighlightZones={chatHighlightZones} />
+                ) : (
+                  <StoreVisualizer
+                    vizState={vizDirective.vizState}
+                    highlights={[...(vizDirective.highlights || []), ...chatHighlightZones]}
+                    annotations={vizDirective.annotations || []}
+                    showFlow={vizDirective.flowPath || false}
+                    zones={vizDirective.zones}
+                    kpis={vizDirective.kpis}
+                    stage={vizDirective.stage}
+                    storeParams={vizDirective.storeParams}
+                    zoneScale={vizDirective.zoneScale}
+                    focusZone={vizDirective.focusZone}
+                    cameraAngle={vizDirective.cameraAngle}
+                  />
+                )}
               </div>
             )}
           </div>

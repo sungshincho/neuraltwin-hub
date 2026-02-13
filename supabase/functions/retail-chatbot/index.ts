@@ -21,6 +21,7 @@ import { buildSearchStrategy } from './search/searchStrategyEngine.ts';
 import { executeMultiSearch } from './search/multiSourceSearch.ts';
 import { filterAndFormatResults } from './search/resultFilter.ts';
 import { crossVerifyResults } from './search/crossVerifier.ts';
+import { summarizeFacts } from './search/factSummarizer.ts';
 // Phase 5: Jina Reader (풀페이지 콘텐츠 추출)
 import { fetchMultiplePages, formatJinaResultsForContext } from './jinaReader.ts';
 // Phase 2: Layer 3 대화 메모리
@@ -47,6 +48,8 @@ interface VizKPI {
   sub: string;
   alert?: boolean;
   highlight?: boolean;
+  gauge?: number;        // 0~100 게이지 (미니 바 표시)
+  trend?: 'up' | 'down' | 'flat'; // 트렌드 화살표
 }
 
 // PHASE H: 파라메트릭 스토어 설정
@@ -93,6 +96,11 @@ interface VizDirective {
   cameraAngle?: 'front' | 'side' | 'top' | 'perspective';
   updateMode?: 'full' | 'partial';
   changedZones?: string[];    // 변경된 존 ID 목록
+  compare?: {                 // Before/After 비교 모드
+    beforeLabel?: string;
+    afterLabel?: string;
+    beforeZones: DynamicZone[];
+  };
 }
 
 const VALID_VIZ_STATES = ['overview', 'entry', 'exploration', 'purchase', 'topdown'];
@@ -359,13 +367,24 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
       validatedKpis = parsed.kpis
         .filter((k: VizKPI) => k.label && k.value)
         .slice(0, 4)  // 최대 4개
-        .map((k: VizKPI) => ({
-          label: String(k.label).slice(0, 15),
-          value: String(k.value),
-          sub: k.sub ? String(k.sub).slice(0, 20) : '',
-          alert: !!k.alert,
-          highlight: !!k.highlight
-        }));
+        .map((k: VizKPI) => {
+          const kpi: VizKPI = {
+            label: String(k.label).slice(0, 15),
+            value: String(k.value),
+            sub: k.sub ? String(k.sub).slice(0, 20) : '',
+            alert: !!k.alert,
+            highlight: !!k.highlight,
+          };
+          // gauge: 0~100 범위 제한
+          if (typeof k.gauge === 'number') {
+            kpi.gauge = Math.min(100, Math.max(0, k.gauge));
+          }
+          // trend: 유효값만 통과
+          if (k.trend === 'up' || k.trend === 'down' || k.trend === 'flat') {
+            kpi.trend = k.trend;
+          }
+          return kpi;
+        });
     }
 
     // PHASE G: stage 유효성 검증
@@ -506,6 +525,30 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
     // 부분 업데이트 필드
     if (validatedUpdateMode) result.updateMode = validatedUpdateMode;
     if (validatedChangedZones) result.changedZones = validatedChangedZones;
+
+    // Before/After 비교 모드 검증
+    if (parsed.compare && typeof parsed.compare === 'object' && Array.isArray(parsed.compare.beforeZones)) {
+      const beforeZones = parsed.compare.beforeZones
+        .filter((z: unknown) => z && typeof z === 'object' && typeof (z as DynamicZone).id === 'string')
+        .map((z: DynamicZone) => ({
+          id: z.id,
+          label: z.label || z.id,
+          x: Number(z.x) || 0,
+          z: Number(z.z) || 0,
+          w: Number(z.w) || 3,
+          d: Number(z.d) || 3,
+          color: typeof z.color === 'string' ? z.color : '#64748b',
+          type: z.type,
+        }));
+      if (beforeZones.length >= 2) {
+        result.compare = {
+          beforeLabel: typeof parsed.compare.beforeLabel === 'string' ? parsed.compare.beforeLabel : undefined,
+          afterLabel: typeof parsed.compare.afterLabel === 'string' ? parsed.compare.afterLabel : undefined,
+          beforeZones,
+        };
+        console.log(`[VizDirective] Compare mode: ${beforeZones.length} before zones`);
+      }
+    }
 
     return result;
   } catch (err) {
@@ -831,6 +874,7 @@ function createSSEStreamV2(
     knowledgeSourceCount: number;
     webSearchPerformed: boolean;
     searchSources: Array<{ title: string; url: string }>;
+    factCount: number;
     onComplete: (fullContent: string, vizDirective: VizDirective | null) => void;
   }
 ): ReadableStream<Uint8Array> {
@@ -870,6 +914,7 @@ function createSSEStreamV2(
         knowledgeSourceCount: opts.knowledgeSourceCount,
         webSearchPerformed: opts.webSearchPerformed,
         searchSources: opts.searchSources.length > 0 ? opts.searchSources : undefined,
+        factCount: opts.factCount > 0 ? opts.factCount : undefined,
       });
 
       const reader = upstreamResponse.body?.getReader();
@@ -1453,6 +1498,7 @@ serve(async (request: Request) => {
     let searchContext = '';
     let webSearchPerformed = false;
     let searchSources: Array<{ title: string; url: string }> = [];
+    let factCount = 0;
 
     if (searchStrategy.shouldSearch) {
       const searchStartTime = Date.now();
@@ -1483,11 +1529,23 @@ serve(async (request: Request) => {
         }
 
         // Phase 5: 교차 검증 — 검색 결과 수치 신뢰도 확인
+        let verifiedFacts: import('./search/crossVerifier.ts').VerifiedFact[] | undefined;
         if (filteredResults.results.length >= 2) {
           const verification = crossVerifyResults(filteredResults.results);
           if (verification.contextAnnotation) {
             searchContext += verification.contextAnnotation;
+            verifiedFacts = verification.verifiedFacts;
             console.log(`[CrossVerifier] ${verification.verifiedFacts.length} facts verified`);
+          }
+        }
+
+        // Phase 6: 팩트 요약 — 핵심 수치/사례/트렌드 추출
+        if (filteredResults.results.length >= 2) {
+          const factSummary = summarizeFacts(filteredResults.results, verifiedFacts);
+          if (factSummary.summaryText) {
+            searchContext += factSummary.summaryText;
+            factCount = factSummary.factCount;
+            console.log(`[FactSummarizer] ${factSummary.factCount} facts extracted`);
           }
         }
       }
@@ -1636,6 +1694,7 @@ serve(async (request: Request) => {
         knowledgeSourceCount,
         webSearchPerformed,
         searchSources,
+        factCount,
         onComplete: async (fullContent: string, vizDir: VizDirective | null) => {
           // 비동기 로깅 (스트리밍 완료 후)
           const cleanedContent = cleanResponseText(fullContent);
@@ -1750,6 +1809,7 @@ serve(async (request: Request) => {
         knowledgeSourceCount,
         webSearchPerformed,
         searchSources: searchSources.length > 0 ? searchSources : undefined,
+        factCount: factCount > 0 ? factCount : undefined,
       }),
       {
         status: 200,
