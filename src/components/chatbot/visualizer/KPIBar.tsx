@@ -64,6 +64,10 @@ function KPICard({ kpi, index }: { kpi: VizKPI; index: number }) {
   const numericVal = extractNumeric(kpi.value);
   const animatedVal = useCountUp(numericVal);
 
+  // 게이지 값: 명시적 gauge 필드 또는 % 값이면 자동 추출
+  const gaugeValue = kpi.gauge ?? (kpi.value.includes('%') && numericVal !== null ? Math.min(100, numericVal) : null);
+  const animatedGauge = useCountUp(gaugeValue, 1000);
+
   // 표시할 값: 숫자면 애니메이션, 아니면 원본 그대로
   const displayValue = numericVal !== null
     ? kpi.value.replace(
@@ -114,18 +118,52 @@ function KPICard({ kpi, index }: { kpi: VizKPI; index: number }) {
         {kpi.label}
       </div>
 
-      {/* 값 */}
-      <div
-        className="font-bold leading-tight"
-        style={{
-          fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
-          fontSize: 'clamp(13px, 2.8vw, 20px)',
-          color: valueColor,
-          textShadow: kpi.alert || kpi.highlight ? `0 0 8px ${valueColor}44` : 'none',
-        }}
-      >
-        {displayValue}
+      {/* 값 + 트렌드 */}
+      <div className="flex items-center gap-1">
+        <div
+          className="font-bold leading-tight"
+          style={{
+            fontFamily: "'Fira Code', 'Noto Sans KR', monospace",
+            fontSize: 'clamp(13px, 2.8vw, 20px)',
+            color: valueColor,
+            textShadow: kpi.alert || kpi.highlight ? `0 0 8px ${valueColor}44` : 'none',
+          }}
+        >
+          {displayValue}
+        </div>
+        {kpi.trend && (
+          <span style={{
+            fontSize: 'clamp(10px, 1.8vw, 14px)',
+            color: kpi.trend === 'up' ? '#22c55e' : kpi.trend === 'down' ? '#ef4444' : '#94a3b8',
+          }}>
+            {kpi.trend === 'up' ? '▲' : kpi.trend === 'down' ? '▼' : '—'}
+          </span>
+        )}
       </div>
+
+      {/* 미니 게이지 바 */}
+      {gaugeValue !== null && (
+        <div
+          style={{
+            width: '100%',
+            height: '3px',
+            borderRadius: '2px',
+            backgroundColor: 'rgba(100, 116, 139, 0.2)',
+            marginTop: '4px',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${Math.min(100, animatedGauge)}%`,
+              height: '100%',
+              borderRadius: '2px',
+              backgroundColor: kpi.alert ? '#ef4444' : kpi.highlight ? '#8b5cf6' : '#22c55e',
+              transition: 'width 0.6s ease-out',
+            }}
+          />
+        </div>
+      )}
 
       {/* 서브텍스트 */}
       {kpi.sub && (
