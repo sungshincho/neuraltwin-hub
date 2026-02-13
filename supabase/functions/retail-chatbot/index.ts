@@ -309,7 +309,8 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
           z: Math.min(10, Math.max(-10, z.z)),
           w: Math.min(15, Math.max(2, z.w || 4)),
           d: Math.min(15, Math.max(2, z.d || 4)),
-          color: typeof z.color === 'string' && z.color.startsWith('#') ? z.color : '#64748b'
+          color: typeof z.color === 'string' && z.color.startsWith('#') ? z.color : '#64748b',
+          ...(z.type ? { type: z.type } : {}),
         }));
 
       // 겹침 방지: 존들이 서로 너무 많이 겹치면 자동으로 밀어냄

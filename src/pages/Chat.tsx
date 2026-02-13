@@ -1068,13 +1068,17 @@ const Chat = () => {
     if (!vizDirective?.zones || vizDirective.zones.length === 0) {
       return content;
     }
-    // 존 라벨 → ID 맵 생성
-    const zoneLabels = vizDirective.zones.map(z => ({
-      label: z.label,
-      id: z.id,
-      color: z.color,
-    }));
-    // 라벨 길이 내림차순 정렬 (긴 라벨 우선 매칭)
+    // 존 라벨 → ID 맵 생성 (풀 라벨 + 괄호 제거 기본 이름 모두 포함)
+    const zoneLabels: Array<{ label: string; id: string; color: string }> = [];
+    for (const z of vizDirective.zones) {
+      zoneLabels.push({ label: z.label, id: z.id, color: z.color });
+      // 괄호 부분 제거한 기본 이름도 매칭 대상에 추가 (예: "파워 월 (봄 신상)" → "파워 월")
+      const baseName = z.label.replace(/\s*\(.*?\)\s*$/, '').trim();
+      if (baseName && baseName !== z.label && baseName.length >= 2) {
+        zoneLabels.push({ label: baseName, id: z.id, color: z.color });
+      }
+    }
+    // 라벨 길이 내림차순 정렬 (긴 라벨 우선 매칭 — 풀 라벨이 기본 이름보다 먼저 매칭)
     zoneLabels.sort((a, b) => b.label.length - a.label.length);
 
     // 라벨을 정규식으로 찾아서 분할
@@ -1258,6 +1262,39 @@ const Chat = () => {
                 {msg.role === 'user' && renderAttachments(msg.attachments)}
                 {msg.role === 'assistant' ? renderMessageWithZoneLinks(msg.content) : msg.content}
               </div>
+              {msg.role === 'assistant' && msg.searchSourceInfo && (
+                msg.searchSourceInfo.knowledgeSourceCount > 0 || msg.searchSourceInfo.webSearchPerformed
+              ) && (
+                <div className="chat-search-sources compact">
+                  {msg.searchSourceInfo.knowledgeSourceCount > 0 && (
+                    <span className="chat-source-badge knowledge">
+                      지식 {msg.searchSourceInfo.knowledgeSourceCount}건
+                    </span>
+                  )}
+                  {msg.searchSourceInfo.webSearchPerformed && (
+                    <span className="chat-source-badge web">웹 검색</span>
+                  )}
+                  {msg.searchSourceInfo.factCount && msg.searchSourceInfo.factCount > 0 && (
+                    <span className="chat-source-badge fact">팩트 {msg.searchSourceInfo.factCount}건</span>
+                  )}
+                  {msg.searchSourceInfo.searchSources && msg.searchSourceInfo.searchSources.length > 0 && (
+                    <div className="chat-source-links">
+                      {msg.searchSourceInfo.searchSources.map((src, i) => (
+                        <a
+                          key={i}
+                          href={src.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="chat-source-link"
+                          title={src.url}
+                        >
+                          {src.title.length > 30 ? src.title.slice(0, 30) + '…' : src.title}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {renderMessageActions(msg, 'fullscreen')}
             </div>
           );
@@ -1443,6 +1480,22 @@ const Chat = () => {
                       )}
                       {searchSourceInfo.factCount && searchSourceInfo.factCount > 0 && (
                         <span className="chat-source-badge fact">팩트 {searchSourceInfo.factCount}건</span>
+                      )}
+                      {searchSourceInfo.searchSources && searchSourceInfo.searchSources.length > 0 && (
+                        <div className="chat-source-links">
+                          {searchSourceInfo.searchSources.map((src, i) => (
+                            <a
+                              key={i}
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="chat-source-link"
+                              title={src.url}
+                            >
+                              {src.title.length > 30 ? src.title.slice(0, 30) + '…' : src.title}
+                            </a>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )}
@@ -1759,6 +1812,22 @@ const Chat = () => {
                           )}
                           {searchSourceInfo.factCount && searchSourceInfo.factCount > 0 && (
                             <span className="chat-source-badge fact">팩트 {searchSourceInfo.factCount}건</span>
+                          )}
+                          {searchSourceInfo.searchSources && searchSourceInfo.searchSources.length > 0 && (
+                            <div className="chat-source-links">
+                              {searchSourceInfo.searchSources.map((src, i) => (
+                                <a
+                                  key={i}
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="chat-source-link"
+                                  title={src.url}
+                                >
+                                  {src.title.length > 30 ? src.title.slice(0, 30) + '…' : src.title}
+                                </a>
+                              ))}
+                            </div>
                           )}
                         </div>
                       )}
