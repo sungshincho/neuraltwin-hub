@@ -299,10 +299,12 @@ const Chat = () => {
               }
 
               case 'viz': {
-                // VizDirective 업데이트 — 부분 이벤트 병합 (zones, kpis 등 별도 도착 대응)
+                // VizDirective 업데이트
+                // vizState가 있으면 완전한 새 directive → full replace (이전 대화의 stale zones 방지)
+                // vizState가 없으면 부분 업데이트 → merge
                 console.log('[Chat:SSE] viz event received:', parsed);
                 setVizDirective((prev) => {
-                  if (!prev) return parsed as VizDirective;
+                  if (!prev || parsed.vizState) return parsed as VizDirective;
                   return mergeVizDirective(prev, parsed as Partial<VizDirective>);
                 });
                 break;
@@ -412,8 +414,10 @@ const Chat = () => {
 
     if (data.vizDirective) {
       setVizDirective((prev) => {
-        if (!prev) return data.vizDirective as VizDirective;
-        return mergeVizDirective(prev, data.vizDirective as Partial<VizDirective>);
+        const viz = data.vizDirective as VizDirective;
+        // vizState가 있으면 완전한 새 directive → full replace
+        if (!prev || viz.vizState) return viz;
+        return mergeVizDirective(prev, viz as Partial<VizDirective>);
       });
     }
 
