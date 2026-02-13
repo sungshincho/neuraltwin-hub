@@ -61,6 +61,9 @@ interface ZoneScale {
   };
 }
 
+// 존 용도 타입 — 가구 생성 및 시각 표현 제어
+type ZoneType = 'display' | 'entrance' | 'corridor' | 'checkout' | 'seating' | 'storage' | 'experience';
+
 // 동적 존 정의 (AI가 대화 맥락에 맞게 생성)
 interface DynamicZone {
   id: string;
@@ -70,6 +73,7 @@ interface DynamicZone {
   w: number;
   d: number;
   color: string;
+  type?: ZoneType;
 }
 
 interface VizDirective {

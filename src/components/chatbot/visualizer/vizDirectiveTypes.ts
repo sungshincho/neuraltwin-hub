@@ -81,6 +81,9 @@ export interface ZoneScale {
  * AI가 대화 맥락에 맞게 동적으로 생성하는 존 정의
  * 패션 매장뿐 아니라 F&B, 화장품, 전자제품 등 모든 업종에 대응
  */
+/** 존 용도 타입 — 가구 생성 및 시각 표현 제어에 사용 */
+export type ZoneType = 'display' | 'entrance' | 'corridor' | 'checkout' | 'seating' | 'storage' | 'experience';
+
 export interface DynamicZone {
   /** 존 고유 ID (예: "entrance", "kitchen", "display") */
   id: string;
@@ -96,6 +99,8 @@ export interface DynamicZone {
   d: number;
   /** CSS hex 색상 (예: "#0ea5e9") */
   color: string;
+  /** 존 용도 타입 — entrance/corridor는 가구 미생성 */
+  type?: ZoneType;
 }
 
 // ═══════════════════════════════════════════
