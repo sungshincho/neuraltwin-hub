@@ -208,11 +208,12 @@ export default function StoreVisualizer({
   // Scene diff: 이전 존 상태 추적
   const prevZonesRef = useRef<DynamicZone[] | undefined>(undefined);
 
-  // 파라메트릭 설정 메모이제이션 (불필요한 씬 재빌드 방지)
+  // 파라메트릭 설정 메모이제이션 (씬 재빌드 트리거)
+  // zone ID뿐 아니라 위치/크기/라벨까지 포함하여 대화 주제 전환 시 씬 재빌드 보장
   const sceneConfigKey = useMemo(() => {
-    const zoneIds = zones?.map(z => z.id).join(',') || '';
-    if (!storeParams && !zoneScale && !zoneIds) return 'default';
-    return JSON.stringify({ storeParams, zoneScale, zoneIds });
+    const zoneKey = zones?.map(z => `${z.id}:${z.x},${z.z},${z.w},${z.d}`).join('|') || '';
+    if (!storeParams && !zoneScale && !zoneKey) return 'default';
+    return JSON.stringify({ storeParams, zoneScale, zoneKey });
   }, [storeParams, zoneScale, zones]);
 
   // ─────────────────────────────────────────
@@ -426,10 +427,13 @@ export default function StoreVisualizer({
       : undefined;
 
     // 씬 빌드 (파라메트릭 config 전달)
+    // 컨테이너가 숨겨져 있어 크기가 0이면 최소값 사용 (전체화면 뒤 인라인 뷰 보호)
+    const w = container.clientWidth || 400;
+    const h = container.clientHeight || 300;
     const sceneObjects = buildScene(
       canvas,
-      container.clientWidth,
-      container.clientHeight,
+      w,
+      h,
       sceneConfig
     );
     sceneRef.current = sceneObjects;
