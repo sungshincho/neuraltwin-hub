@@ -1434,8 +1434,8 @@ type 필드 설명:
 [업종별 존 구성 예시]
 
 패션 리테일:
-  entrance(입구/감압), power_wall(파워 월), main_floor(의류 메인),
-  fitting_room(피팅룸), checkout(계산대), accessory(액세서리)
+  decompression(입구/감압), powerWall(파워 월), clothingMain(의류 메인),
+  fittingRoom(피팅룸), checkout(계산대), accessory(액세서리)
 
 F&B / 카페 / 베이커리:
   entrance(입구/포토존), display(진열대/쇼케이스), counter(주문 카운터),
@@ -1595,16 +1595,16 @@ stage가 불분명하면 필드를 생략하세요.
 {
   "vizState": "exploration",
   "zones": [
-    { "id": "entrance", "label": "입구/감압 구간", "x": 0, "z": 8, "w": 8, "d": 3, "color": "#ff6b00" },
-    { "id": "power_wall", "label": "파워 월", "x": 7, "z": 5, "w": 4, "d": 5, "color": "#22c55e" },
-    { "id": "main_floor", "label": "의류 메인", "x": 0, "z": 0, "w": 10, "d": 8, "color": "#0ea5e9" },
-    { "id": "fitting_room", "label": "피팅룸", "x": -6, "z": -4, "w": 5, "d": 4, "color": "#8b5cf6" },
+    { "id": "decompression", "label": "감압 구간", "x": 0, "z": 8, "w": 8, "d": 3, "color": "#ff6b00" },
+    { "id": "powerWall", "label": "파워 월", "x": 7, "z": 5, "w": 4, "d": 5, "color": "#22c55e" },
+    { "id": "clothingMain", "label": "의류 메인", "x": 0, "z": 0, "w": 10, "d": 8, "color": "#0ea5e9" },
+    { "id": "fittingRoom", "label": "피팅룸", "x": -6, "z": -4, "w": 5, "d": 4, "color": "#8b5cf6" },
     { "id": "checkout", "label": "계산대", "x": 6, "z": 7, "w": 4, "d": 3, "color": "#ef4444" },
     { "id": "accessory", "label": "액세서리", "x": -6, "z": 4, "w": 4, "d": 4, "color": "#f59e0b" }
   ],
-  "highlights": ["fitting_room", "main_floor"],
+  "highlights": ["fittingRoom", "clothingMain"],
   "annotations": [
-    { "zone": "fitting_room", "text": "전환율 67%\\n핵심 구역", "color": "#8b5cf6" }
+    { "zone": "fittingRoom", "text": "전환율 67%\\n핵심 구역", "color": "#8b5cf6" }
   ],
   "flowPath": false,
   "kpis": [
@@ -1667,7 +1667,7 @@ stage가 불분명하면 필드를 생략하세요.
 특정 존에 대해 집중 설명할 때 focusZone과 cameraAngle을 사용:
 
 {
-  "focusZone": "fitting_room",
+  "focusZone": "fittingRoom",
   "cameraAngle": "front"
 }
 
@@ -1679,7 +1679,7 @@ stage가 불분명하면 필드를 생략하세요.
   · perspective: 사선 앵글 (기본, 종합적 뷰)
 
 [사용 조건]
-- 답변이 특정 존 1개에 집중할 때만 사용 (예: "피팅룸 전환율" → focusZone: "fitting_room")
+- 답변이 특정 존 1개에 집중할 때만 사용 (예: "피팅룸 전환율" → focusZone: "fittingRoom")
 - 전체 매장 레이아웃 설명 시에는 focusZone 생략 (기존 vizState 프리셋 사용)
 
 ───────────────────────────────────────
@@ -1689,7 +1689,7 @@ stage가 불분명하면 필드를 생략하세요.
 flowPath를 존 ID 배열로 지정하면 해당 순서대로 동선을 그림:
 
 {
-  "flowPath": ["entrance", "power_wall", "main_floor", "fitting_room", "checkout"]
+  "flowPath": ["decompression", "powerWall", "clothingMain", "fittingRoom", "checkout"]
 }
 
 - true: 기본 선형 동선 (입구→안쪽 순서, z좌표 기반 자동 정렬)
@@ -1720,8 +1720,8 @@ flowPath를 존 ID 배열로 지정하면 해당 순서대로 동선을 그림:
 예시: "피팅룸을 좀 더 크게 하면?" →
 {
   "updateMode": "partial",
-  "changedZones": ["fitting_room"],
-  "zones": [이전과 동일한 전체 zones, fitting_room만 w/d 수정]
+  "changedZones": ["fittingRoom"],
+  "zones": [이전과 동일한 전체 zones, fittingRoom만 w/d 수정]
 }
 
 [viz 블록 생략 조건]

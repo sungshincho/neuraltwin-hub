@@ -1074,6 +1074,18 @@ const Chat = () => {
     return turns;
   };
 
+  // 존 라벨의 띄어쓰기 변형(variant) 생성 — "파워 월"↔"파워월", "피팅룸"↔"피팅 룸"
+  const generateZoneLabelVariants = (label: string): string[] => {
+    const variants: string[] = [];
+    // 공백 제거 버전: "파워 월" → "파워월"
+    const noSpace = label.replace(/\s+/g, '');
+    if (noSpace !== label && noSpace.length >= 2) variants.push(noSpace);
+    // 한글 사이 공백 추가 버전: "피팅룸" → "피팅 룸"
+    const withSpace = label.replace(/([가-힣]{2,})([가-힣]{2,})/g, '$1 $2');
+    if (withSpace !== label && withSpace.length >= 3) variants.push(withSpace);
+    return variants;
+  };
+
   // Phase 6 B-7: 어시스턴트 메시지에서 존 이름을 감지하고 클릭 가능한 링크로 변환
   const renderMessageWithZoneLinks = useCallback((content: string) => {
     // vizDirective가 없으면 텍스트만 반환
@@ -1081,12 +1093,12 @@ const Chat = () => {
       return content;
     }
 
-    // 존 라벨 → ID 맵 생성 (동적 존 + 정적 존 모두 포함)
+    // 존 라벨 → ID 맵 생성 (비주얼라이저에 실제 표시된 zone만 사용)
     const zoneLabels: Array<{ label: string; id: string; color: string }> = [];
     const addedLabels = new Set<string>(); // 중복 방지
 
-    // 1. 동적 존 (AI 생성) — 우선순위 높음
     if (vizDirective.zones && vizDirective.zones.length > 0) {
+      // 동적 존이 있으면 동적 존만 사용 (비주얼라이저와 1:1 대응)
       for (const z of vizDirective.zones) {
         if (!addedLabels.has(z.label)) {
           zoneLabels.push({ label: z.label, id: z.id, color: z.color });
@@ -1099,15 +1111,27 @@ const Chat = () => {
           addedLabels.add(baseName);
         }
       }
-    }
-
-    // 2. 정적 존 (storeData.ts) — 동적 존에 없는 경우 추가
-    for (const [zoneId, label] of Object.entries(ZONE_LABELS_KO)) {
-      if (!addedLabels.has(label)) {
-        zoneLabels.push({ label, id: zoneId, color: getZoneColorHex(zoneId) });
-        addedLabels.add(label);
+    } else {
+      // 동적 존이 없을 때만 정적 존 사용 (fallback)
+      for (const [zoneId, label] of Object.entries(ZONE_LABELS_KO)) {
+        if (!addedLabels.has(label)) {
+          zoneLabels.push({ label, id: zoneId, color: getZoneColorHex(zoneId) });
+          addedLabels.add(label);
+        }
       }
     }
+
+    // 띄어쓰기 변형(variant) 추가 — "파워 월"↔"파워월", "피팅룸"↔"피팅 룸" 등
+    const variantLabels: typeof zoneLabels = [];
+    for (const z of zoneLabels) {
+      for (const variant of generateZoneLabelVariants(z.label)) {
+        if (!addedLabels.has(variant)) {
+          variantLabels.push({ label: variant, id: z.id, color: z.color });
+          addedLabels.add(variant);
+        }
+      }
+    }
+    zoneLabels.push(...variantLabels);
 
     if (zoneLabels.length === 0) return content;
 

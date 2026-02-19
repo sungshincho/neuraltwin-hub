@@ -142,26 +142,30 @@ interface TopicClassification {
 export function generateVizDirective(
   classification: TopicClassification,
   turnCount: number
-): VizDirective | null {
-  const { primaryTopic, confidence } = classification;
+): VizDirective {
+  const { primaryTopic } = classification;
 
-  // 신뢰도가 매우 낮으면 비주얼라이저 미표시 (임계값 0.05)
-  // 참고: topicRouter의 confidence = score/20 이므로 키워드 1개 매칭 시 0.1
-  if (confidence < 0.05) {
-    return null;
-  }
-
-  // 첫 인사에는 비주얼라이저 미표시
-  if (turnCount === 0 && primaryTopic === 'general_retail') {
-    return null;
-  }
-
+  // 항상 vizDirective 생성 (모든 응답에서 zone 인터랙션 활성화)
   const result = generateTopicVizDirective(primaryTopic, turnCount);
 
   // 토픽 기반 fallback: 업종에 맞는 기본 존 포함
   if (result && !result.zones) {
     const industry = detectIndustry(primaryTopic);
     result.zones = DEFAULT_ZONES_BY_INDUSTRY[industry] || DEFAULT_GENERAL_ZONES;
+  }
+
+  // null이면 기본 overview 반환
+  if (!result) {
+    return {
+      vizState: 'overview',
+      highlights: ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'],
+      flowPath: false,
+      zones: DEFAULT_FASHION_ZONES,
+      kpis: [
+        { label: '전환율', value: '15-25%', sub: '패션 평균' },
+        { label: '객단가', value: '₩85,000', sub: '업계 평균' }
+      ]
+    };
   }
 
   return result;
@@ -410,12 +414,9 @@ function generateTopicVizDirective(
     // ─────────────────────────────────────────
     case 'general_retail':
     default:
-      if (turnCount < 1) {
-        return null;
-      }
       return {
         vizState: 'overview',
-        highlights: [],
+        highlights: ['decompression', 'powerWall', 'clothingMain', 'fittingRoom', 'checkout', 'accessory'],
         flowPath: false,
         kpis: [
           { label: '전환율', value: '15-25%', sub: '패션 평균' },
