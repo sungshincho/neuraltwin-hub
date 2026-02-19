@@ -34,7 +34,7 @@ import { createEmptyProfile } from './memory/types.ts';
 // Phase 2: 컨텍스트 조립
 import { assembleContext } from './contextAssembler.ts';
 // Phase 7: 레이아웃 힌트 추출 (검색 결과 → 매장 공간 정보 구조화)
-import { extractLayoutHints, formatLayoutHintForPrompt } from './search/layoutHintExtractor.ts';
+import { extractLayoutHints, formatLayoutHintForPrompt, validateAndCorrectZones, type LayoutHint } from './search/layoutHintExtractor.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -887,6 +887,7 @@ function createSSEStreamV2(
     searchSources: Array<{ title: string; url: string }>;
     factCount: number;
     onComplete: (fullContent: string, vizDirective: VizDirective | null) => void;
+    layoutHint?: LayoutHint | null;
   }
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -946,9 +947,17 @@ function createSSEStreamV2(
               const repaired = repairTruncatedJson(vizBuffer);
               if (repaired) {
                 try {
-                  const parsed = JSON.parse(repaired);
+                  JSON.parse(repaired);
                   const vizDir = extractVizDirectiveFromResponse('```viz\n' + repaired + '\n```');
                   if (vizDir) {
+                    // 레이아웃 힌트 기반 후처리 보정
+                    if (opts.layoutHint && vizDir.zones && vizDir.zones.length > 0) {
+                      const { corrected, corrections } = validateAndCorrectZones(vizDir.zones, opts.layoutHint);
+                      if (corrections.length > 0) {
+                        vizDir.zones = corrected;
+                        console.log(`[VizPostValidation] truncated recovery ${corrections.length}개 보정: ${corrections.join('; ')}`);
+                      }
+                    }
                     sendEvent(controller, 'viz', vizDir);
                   }
                 } catch { /* ignore */ }
@@ -1017,6 +1026,16 @@ function createSSEStreamV2(
                         kpis: vizDir.kpis || opts.vizDirectiveFallback?.kpis,
                         stage: vizDir.stage || opts.vizDirectiveFallback?.stage,
                       };
+
+                      // 레이아웃 힌트 기반 후처리 검증 및 보정
+                      if (opts.layoutHint && mergedViz.zones && mergedViz.zones.length > 0) {
+                        const { corrected, corrections } = validateAndCorrectZones(mergedViz.zones, opts.layoutHint);
+                        if (corrections.length > 0) {
+                          mergedViz.zones = corrected;
+                          console.log(`[VizPostValidation] ${corrections.length}개 보정: ${corrections.join('; ')}`);
+                        }
+                      }
+
                       sendEvent(controller, 'viz', mergedViz);
                       console.log(`[SSE] Sent viz event: state=${mergedViz.vizState}, zones=${mergedViz.zones?.length || 0}`);
                     } else {
@@ -1608,11 +1627,12 @@ serve(async (request: Request) => {
     // ═══════════════════════════════════════════
 
     let layoutHintContext = '';
+    let extractedLayoutHint: LayoutHint | null = null;
     if (searchContext) {
-      const layoutHint = extractLayoutHints(searchContext);
-      if (layoutHint) {
-        layoutHintContext = formatLayoutHintForPrompt(layoutHint);
-        console.log(`[LayoutHint] checkout=${layoutHint.checkoutPosition || '-'}, flow=${layoutHint.flowPattern || '-'}, zones=${layoutHint.keyZones?.length || 0}`);
+      extractedLayoutHint = extractLayoutHints(searchContext);
+      if (extractedLayoutHint) {
+        layoutHintContext = formatLayoutHintForPrompt(extractedLayoutHint);
+        console.log(`[LayoutHint] industry=${extractedLayoutHint.detectedIndustry || '-'}, checkout=${extractedLayoutHint.checkoutPosition || '-'}, flow=${extractedLayoutHint.flowPattern || '-'}, zones=${extractedLayoutHint.keyZones?.length || 0}, zonePos=${extractedLayoutHint.zonePositions?.length || 0}, confidence=${(extractedLayoutHint.confidence * 100).toFixed(0)}%`);
       }
     }
 
@@ -1744,6 +1764,7 @@ serve(async (request: Request) => {
         webSearchPerformed,
         searchSources,
         factCount,
+        layoutHint: extractedLayoutHint,
         onComplete: async (fullContent: string, vizDir: VizDirective | null) => {
           // 비동기 로깅 (스트리밍 완료 후)
           const cleanedContent = cleanResponseText(fullContent);
@@ -1808,6 +1829,15 @@ serve(async (request: Request) => {
         kpis: aiGeneratedVizDirective.kpis || vizDirective?.kpis,
         stage: aiGeneratedVizDirective.stage || vizDirective?.stage
       };
+
+      // 레이아웃 힌트 기반 후처리 검증 및 보정
+      if (extractedLayoutHint && finalVizDirective.zones && finalVizDirective.zones.length > 0) {
+        const { corrected, corrections } = validateAndCorrectZones(finalVizDirective.zones, extractedLayoutHint);
+        if (corrections.length > 0) {
+          finalVizDirective.zones = corrected;
+          console.log(`[VizPostValidation] ${corrections.length}개 보정: ${corrections.join('; ')}`);
+        }
+      }
     } else if (vizDirective) {
       finalVizDirective = vizDirective;
     }
