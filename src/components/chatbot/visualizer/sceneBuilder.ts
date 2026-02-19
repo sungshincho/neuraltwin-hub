@@ -183,12 +183,85 @@ function getFixtureDimensions(type: string, rand: () => number): { w: number; h:
   }
 }
 
+// ═══════════════════════════════════════════
+//  AABB 충돌 검사 유틸리티
+// ═══════════════════════════════════════════
+
+interface AABB {
+  minX: number; maxX: number;
+  minZ: number; maxZ: number;
+}
+
+/** 가구 → AABB 변환 (margin 포함) */
+function furnitureToAABB(x: number, z: number, w: number, d: number, margin: number): AABB {
+  const halfW = w / 2 + margin;
+  const halfD = d / 2 + margin;
+  return { minX: x - halfW, maxX: x + halfW, minZ: z - halfD, maxZ: z + halfD };
+}
+
+/** 두 AABB의 겹침 여부 */
+function aabbOverlaps(a: AABB, b: AABB): boolean {
+  return a.minX < b.maxX && a.maxX > b.minX && a.minZ < b.maxZ && a.maxZ > b.minZ;
+}
+
+// ═══════════════════════════════════════════
+//  존 타입별 가구 수량 / 종류 / 배치 규칙
+// ═══════════════════════════════════════════
+
+interface ZoneFurnitureRule {
+  maxCount: number;              // 최대 가구 수
+  densityPerSqm: number;        // m² 당 가구 밀도
+  fixtures: FixtureType[];       // 배치 가능 집기 목록 (순서 = 우선순위)
+}
+
+function getZoneFurnitureRule(zoneType: string | undefined, label: string): ZoneFurnitureRule {
+  const lc = label.toLowerCase();
+  const effectiveType = zoneType || inferZoneTypeFromLabel(lc);
+
+  switch (effectiveType) {
+    case 'entrance':
+    case 'corridor':
+      return { maxCount: 0, densityPerSqm: 0, fixtures: [] };
+    case 'checkout':
+      return { maxCount: 2, densityPerSqm: 0.08, fixtures: ['counter', 'kiosk'] };
+    case 'seating':
+      return { maxCount: 3, densityPerSqm: 0.06, fixtures: ['seating_set', 'table'] };
+    case 'experience':
+      return { maxCount: 2, densityPerSqm: 0.04, fixtures: ['showcase', 'kiosk'] };
+    case 'storage':
+      return { maxCount: 3, densityPerSqm: 0.08, fixtures: ['shelf', 'shelf'] };
+    case 'display':
+    default:
+      // 라벨 기반 세부 분류
+      if (/패션|의류|옷|행거/.test(lc)) return { maxCount: 4, densityPerSqm: 0.08, fixtures: ['rack', 'mannequin', 'display_case'] };
+      if (/냉장|음료/.test(lc)) return { maxCount: 3, densityPerSqm: 0.07, fixtures: ['refrigerator', 'shelf'] };
+      if (/식료|마트|grocery/.test(lc)) return { maxCount: 4, densityPerSqm: 0.08, fixtures: ['gondola', 'shelf'] };
+      if (/카페|베이커리|쇼케이스/.test(lc)) return { maxCount: 3, densityPerSqm: 0.06, fixtures: ['showcase', 'table', 'counter'] };
+      if (/피팅|fitting/.test(lc)) return { maxCount: 2, densityPerSqm: 0.05, fixtures: ['mannequin'] };
+      if (/액세서리|accessory/.test(lc)) return { maxCount: 3, densityPerSqm: 0.07, fixtures: ['showcase', 'display_case'] };
+      return { maxCount: 3, densityPerSqm: 0.07, fixtures: ['display_case', 'shelf'] };
+  }
+}
+
+function inferZoneTypeFromLabel(lc: string): string {
+  if (/입구|감압|통로|복도|entrance|corridor|decompression/.test(lc)) return 'entrance';
+  if (/계산|checkout|카운터|counter/.test(lc)) return 'checkout';
+  if (/좌석|seating|카페|소파/.test(lc)) return 'seating';
+  if (/체험|experience|포토/.test(lc)) return 'experience';
+  if (/창고|storage|백오피스/.test(lc)) return 'storage';
+  return 'display';
+}
+
 /**
  * 동적 존 내부에 자동 와이어프레임 집기(fixture) 생성
- * 각 존에 2~4개의 박스를 배치하여 시각적 밀도 확보
+ * - AABB 충돌 검사로 겹침 방지
+ * - 존 타입/라벨 기반 가구 수량·종류 결정
+ * - 그리드 기반 배치 + 약간의 랜덤 오프셋
  */
 function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
   const furniture: FurnitureConfig[] = [];
+  const placedAABBs: AABB[] = [];    // 전역 충돌 리스트 (존 간 겹침도 방지)
+  const COLLISION_MARGIN = 0.3;       // 가구 간 최소 간격 (m)
 
   // 시드 기반 의사 난수 (같은 존에 항상 같은 배치)
   const seededRandom = (seed: number) => {
@@ -197,37 +270,93 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
   };
 
   for (const zone of zones) {
-    // entrance/corridor 타입은 비어있어야 하므로 가구 생성 스킵
     const zoneType = (zone as { type?: string }).type;
-    if (zoneType === 'entrance' || zoneType === 'corridor') continue;
+    const rule = getZoneFurnitureRule(zoneType, zone.label);
 
-    // 라벨 기반 추가 스킵 판단 (type 미설정 시 라벨로 추론)
-    const labelLc = zone.label.toLowerCase();
-    if (!zoneType && /입구|감압|통로|복도|entrance|corridor|decompression/.test(labelLc)) continue;
+    // 가구 0개 존은 스킵
+    if (rule.maxCount === 0) continue;
 
     const zw = Math.max(2, Math.min(15, zone.w));
     const zd = Math.max(2, Math.min(15, zone.d));
+    const area = zw * zd;
     const seed = zone.id.length * 7 + zone.x * 13 + zone.z * 17;
 
-    // 존 크기에 따라 집기 개수 결정
-    const area = zw * zd;
-    // seating/experience는 가구 밀도 낮게, display는 높게
-    const densityFactor = (zoneType === 'seating' || zoneType === 'experience') ? 0.6 : 1;
-    const baseCount = area < 10 ? 3 : area < 20 ? 4 : 5;
-    const count = Math.max(1, Math.round(baseCount * densityFactor));
+    // 가구 수: 밀도 × 면적, 최소 1 ~ 최대 rule.maxCount
+    const countByDensity = Math.round(area * rule.densityPerSqm);
+    const count = Math.max(1, Math.min(rule.maxCount, countByDensity));
+
+    // 존 내 배치 가능 영역 (존 테두리로부터 margin)
+    const edgeMargin = 0.5;
+    const placeMinX = zone.x - zw / 2 + edgeMargin;
+    const placeMaxX = zone.x + zw / 2 - edgeMargin;
+    const placeMinZ = zone.z - zd / 2 + edgeMargin;
+    const placeMaxZ = zone.z + zd / 2 - edgeMargin;
 
     for (let i = 0; i < count; i++) {
       const s = seed + i * 31;
-      // 존 내부 랜덤 위치 (테두리에서 안쪽으로 margin 유지)
-      const marginX = zw * 0.15;
-      const marginZ = zd * 0.15;
-      const fx = zone.x + (seededRandom(s) - 0.5) * (zw - marginX * 2);
-      const fz = zone.z + (seededRandom(s + 1) - 0.5) * (zd - marginZ * 2);
 
-      // 존 타입 + 라벨 기반 집기 타입 추론
-      const fixtureType = inferFixtureType(zone.label, zoneType);
+      // 집기 타입 선택: fixtures 목록에서 순환
+      const fixtureType = rule.fixtures[i % rule.fixtures.length];
       const fixtureRand = () => seededRandom(s + 3 + furniture.length);
       const { w: fw, h: fh, d: fd } = getFixtureDimensions(fixtureType, fixtureRand);
+
+      // 그리드 기반 배치: 존을 count 등분하고 각 셀 중앙에 배치 + 랜덤 오프셋
+      let fx: number, fz: number;
+      let placed = false;
+
+      // 가구를 가로 방향으로 균등 배치 시도
+      const usableW = placeMaxX - placeMinX - fw;
+      const usableD = placeMaxZ - placeMinZ - fd;
+
+      if (count === 1) {
+        // 1개면 존 중앙
+        fx = zone.x;
+        fz = zone.z;
+      } else if (count <= 3) {
+        // 2~3개: 가로 균등 배치
+        const t = count > 1 ? i / (count - 1) : 0.5;
+        fx = placeMinX + fw / 2 + t * Math.max(0, usableW);
+        fz = zone.z + (seededRandom(s + 1) - 0.5) * Math.max(0, usableD) * 0.3;
+      } else {
+        // 4개+: 2열 그리드
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const cols = 2;
+        const rows = Math.ceil(count / 2);
+        fx = placeMinX + fw / 2 + (col / Math.max(1, cols - 1)) * Math.max(0, usableW);
+        fz = placeMinZ + fd / 2 + (rows > 1 ? (row / (rows - 1)) * Math.max(0, usableD) : usableD / 2);
+      }
+
+      // 충돌 검사 + 리트라이 (최대 8회)
+      const candidateAABB = furnitureToAABB(fx, fz, fw, fd, COLLISION_MARGIN);
+
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const testAABB = attempt === 0 ? candidateAABB :
+          furnitureToAABB(
+            fx + (seededRandom(s + attempt * 7) - 0.5) * Math.max(1, usableW * 0.5),
+            fz + (seededRandom(s + attempt * 7 + 1) - 0.5) * Math.max(1, usableD * 0.5),
+            fw, fd, COLLISION_MARGIN
+          );
+
+        // 존 경계 내 확인
+        if (testAABB.minX < placeMinX || testAABB.maxX > placeMaxX + edgeMargin ||
+            testAABB.minZ < placeMinZ || testAABB.maxZ > placeMaxZ + edgeMargin) {
+          continue;
+        }
+
+        // 기존 가구와 충돌 확인
+        const hasCollision = placedAABBs.some(existing => aabbOverlaps(testAABB, existing));
+        if (!hasCollision) {
+          fx = (testAABB.minX + testAABB.maxX) / 2;
+          fz = (testAABB.minZ + testAABB.maxZ) / 2;
+          placed = true;
+          placedAABBs.push(furnitureToAABB(fx, fz, fw, fd, COLLISION_MARGIN));
+          break;
+        }
+      }
+
+      // 충돌 해소 불가 시 해당 가구 스킵 (겹치는 것보다 비우는 게 나음)
+      if (!placed) continue;
 
       furniture.push({
         x: fx,
@@ -235,7 +364,7 @@ function generateFurnitureForZones(zones: DynamicZone[]): FurnitureConfig[] {
         w: fw,
         h: fh,
         d: fd,
-        label: `${zone.label} 집기`
+        label: `${zone.label} ${fixtureType}`
       });
     }
   }
