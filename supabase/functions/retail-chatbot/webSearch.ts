@@ -222,7 +222,19 @@ export function buildSearchQuery(
       return `${entity} 브랜드 매장 리뷰 소개`;
     }
 
-    // 리테일 맥락 추가
+    // 리테일 맥락 추가 (세분화)
+    if (/전략\s*(분석|리서치|조사)/.test(msgLower)) {
+      return `${entity} 리테일 전략 분석 성공 사례`;
+    }
+    if (/오프라인/.test(msgLower)) {
+      return `${entity} 오프라인 매장 전략 VMD 레이아웃`;
+    }
+    if (/리서치|조사/.test(msgLower)) {
+      return `${entity} 브랜드 리서치 분석 리포트`;
+    }
+    if (/유통|현황|분석|전략/.test(msgLower)) {
+      return `${entity} 브랜드 유통 현황 분석`;
+    }
     if (msgLower.includes('팝업') || msgLower.includes('popup')) {
       return `${entity} 브랜드 공식 사이트 제품 카테고리`;
     }
@@ -265,13 +277,17 @@ export async function dualSearch(
   const entity = koreanEntity || longEnglishEntity || detectedEntities[0] || message.slice(0, 30);
   const msgLower = message.toLowerCase();
 
-  // 메시지 맥락에 맞는 웹 검색 쿼리 구성
+  // 메시지 맥락에 맞는 웹 검색 쿼리 구성 (세분화)
   let webQuery: string;
-  if (msgLower.includes('팝업') || msgLower.includes('popup')) {
+  if (/전략.*(분석|리서치)|오프라인.*매장/.test(msgLower)) {
+    webQuery = `${entity} 오프라인 매장 전략 분석 사례`;
+  } else if (/리서치|조사|분석/.test(msgLower)) {
+    webQuery = `${entity} 브랜드 리서치 분석 리포트 현황`;
+  } else if (msgLower.includes('팝업') || msgLower.includes('popup')) {
     webQuery = `${entity} 브랜드 공식 사이트 제품 카테고리`;
   } else if (msgLower.includes('수입') || msgLower.includes('import')) {
     webQuery = `${entity} brand official products`;
-  } else if (/유통|현황|분석|전략/.test(msgLower)) {
+  } else if (/유통|현황|전략/.test(msgLower)) {
     webQuery = `${entity} 브랜드 유통 현황 분석`;
   } else if (/매장|공간|인테리어|동선/.test(msgLower)) {
     webQuery = `${entity} 매장 공간 인테리어 컨셉`;

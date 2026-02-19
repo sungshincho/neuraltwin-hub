@@ -59,8 +59,10 @@ const ADVANCED_SEARCH_BOOST_PATTERNS = [
   /(벤치마크|benchmark|기준\s*수치|업계\s*평균)/i,
   /(사례|케이스\s*스터디|case\s*study)/i,
   /(글로벌|해외|미국|유럽|일본)\s*(사례|트렌드|현황)/,
-  /(리서치|조사|검색)\s*해/,
+  /(리서치|조사|검색)(\s*해)?/,  // "해" 없이도 매칭
   /(데이터|통계|수치|근거)/,
+  /(전략|사례)\s*(분석|리서치|비교)/,
+  /오프라인\s*(매장|전략|현황)/,
 ];
 
 // 뉴스 검색 트리거 — 최신 정보/트렌드 요청 시
@@ -250,15 +252,22 @@ function buildQueriesFromRoute(
     // SNS 맥락 감지
     const isSnsQuery = /인스타|instagram|페이스북|facebook|유튜브|youtube|틱톡|tiktok|sns|소셜|블로그/i.test(message);
 
-    // 웹 검색 쿼리
-    if (msgLower.includes('팝업') || msgLower.includes('popup')) {
+    // 웹 검색 쿼리: 유저 메시지 핵심 키워드 반영
+    const coreKeywords = extractQueryKeywords(message, entity);
+    if (coreKeywords.length > 2) {
+      // 엔티티 + 유저 핵심 키워드 (예: "올리브영 오프라인 매장 전략")
+      queries.push({ query: `${entity} ${coreKeywords}`, type: 'web', priority: 1 });
+    } else if (msgLower.includes('팝업') || msgLower.includes('popup')) {
       queries.push({ query: `${entity} 브랜드 공식 사이트 제품 카테고리`, type: 'web', priority: 1 });
-    } else if (/유통|현황|분석|전략/.test(msgLower)) {
-      queries.push({ query: `${entity} 브랜드 유통 현황 분석`, type: 'web', priority: 1 });
     } else if (/매장|공간|인테리어|동선/.test(msgLower)) {
       queries.push({ query: `${entity} 매장 공간 인테리어 컨셉`, type: 'web', priority: 1 });
     } else {
       queries.push({ query: `${entity} 브랜드 소개 제품`, type: 'web', priority: 1 });
+    }
+
+    // 리서치/분석 맥락 → 산업 분석 보충 쿼리 추가
+    if (/전략|분석|리서치|사례/.test(message)) {
+      queries.push({ query: `${entity} 리테일 전략 성공 사례 분석 2025`, type: 'web', priority: 2 });
     }
 
     // SNS 검색 (엔티티가 있으면 항상 병렬)
@@ -330,6 +339,19 @@ function appendContextualQueries(
       });
     }
   }
+}
+
+/**
+ * 메시지에서 엔티티와 일반 조사를 제거하고 핵심 키워드만 추출
+ * "올리브영 오프라인 매장 전략 리서치 및 분석" → "오프라인 매장 전략 리서치 및 분석"
+ */
+function extractQueryKeywords(message: string, entity: string): string {
+  return message
+    .replace(new RegExp(entity, 'gi'), '')
+    .replace(/[?？!！.,~\n]/g, '')
+    .replace(/(해줘|알려줘|분석해|조사해|리서치해)/g, '')
+    .trim()
+    .slice(0, 40);
 }
 
 function buildAdvancedSupplementQueries(
