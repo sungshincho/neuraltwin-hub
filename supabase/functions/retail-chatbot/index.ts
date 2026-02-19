@@ -33,6 +33,8 @@ import { loadMemory, saveMemory, loadUserProfileHistory, loadSessionProfileHisto
 import { createEmptyProfile } from './memory/types.ts';
 // Phase 2: 컨텍스트 조립
 import { assembleContext } from './contextAssembler.ts';
+// Phase 7: 레이아웃 힌트 추출 (검색 결과 → 매장 공간 정보 구조화)
+import { extractLayoutHints, formatLayoutHintForPrompt } from './search/layoutHintExtractor.ts';
 
 // ═══════════════════════════════════════════
 //  VizDirective 타입 및 파싱 유틸리티
@@ -1602,6 +1604,19 @@ serve(async (request: Request) => {
     }
 
     // ═══════════════════════════════════════════
+    // 레이아웃 힌트 추출 — 검색 결과에서 매장 공간 정보 구조화
+    // ═══════════════════════════════════════════
+
+    let layoutHintContext = '';
+    if (searchContext) {
+      const layoutHint = extractLayoutHints(searchContext);
+      if (layoutHint) {
+        layoutHintContext = formatLayoutHintForPrompt(layoutHint);
+        console.log(`[LayoutHint] checkout=${layoutHint.checkoutPosition || '-'}, flow=${layoutHint.flowPattern || '-'}, zones=${layoutHint.keyZones?.length || 0}`);
+      }
+    }
+
+    // ═══════════════════════════════════════════
     // 컨텍스트 조립 (Layer 1~3 통합 + 토큰 예산 관리)
     // ═══════════════════════════════════════════
 
@@ -1622,7 +1637,7 @@ serve(async (request: Request) => {
     const assembled = assembleContext({
       systemPrompt: baseSystemPrompt,
       knowledgeContext,
-      searchContext: searchContext + vizStateContext,
+      searchContext: searchContext + vizStateContext + layoutHintContext,
       profileContext,
       insightsContext,
       depthInstruction,
