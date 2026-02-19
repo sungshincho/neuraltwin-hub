@@ -812,57 +812,83 @@ export default function StoreVisualizer({
         </div>
       )}
 
-      {/* ── 우측 중앙: ZONES 범례 (하이라이트 활성 시) ── */}
-      {highlights.length > 0 && (
-        <div
-          className="absolute rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
-          style={{
-            top: '50%',
-            transform: 'translateY(-50%)',
-            right: 'clamp(6px, 1vw, 12px)',
-            padding: 'clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 14px)',
-          }}
-        >
+      {/* ── 우측 중앙: ZONES 범례 (전체 존 표시) ── */}
+      {(() => {
+        // 동적 존이 있으면 전체 동적 존 표시, 없으면 하이라이트된 정적 존만 표시
+        const legendZones: Array<{ id: string; color: string; label: string; isHighlighted: boolean }> = [];
+        const highlightSet = new Set(highlights);
+
+        if (zones && zones.length > 0) {
+          // 동적 존: 전체 표시
+          for (const z of zones) {
+            legendZones.push({
+              id: z.id,
+              color: z.color,
+              label: z.label.replace(/\s*\(.*?\)\s*$/, '').trim() || z.label,
+              isHighlighted: highlightSet.has(z.id),
+            });
+          }
+        } else if (highlights.length > 0) {
+          // 정적 존: 하이라이트된 것만 표시 (기존 동작 유지)
+          for (const zoneId of highlights) {
+            legendZones.push({
+              id: zoneId,
+              color: getZoneColorHex(zoneId),
+              label: ZONE_LABELS_KO[zoneId] || zoneId,
+              isHighlighted: true,
+            });
+          }
+        }
+
+        if (legendZones.length === 0) return null;
+
+        return (
           <div
-            className="text-[#94a3b8] font-semibold tracking-wider"
+            className="absolute rounded bg-[#030712dd] border border-[#1e293b] backdrop-blur-sm z-10"
             style={{
-              fontFamily: "'Fira Code', monospace",
-              fontSize: 'clamp(8px, 1.4vw, 10px)',
-              marginBottom: 'clamp(4px, 0.6vw, 8px)',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              right: 'clamp(6px, 1vw, 12px)',
+              padding: 'clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 14px)',
             }}
           >
-            ZONES
-          </div>
-          <div className="flex flex-col" style={{ gap: 'clamp(3px, 0.5vw, 6px)' }}>
-            {highlights.map((zoneId) => {
-              const dynZone = zoneMap?.[zoneId];
-              const color = dynZone ? dynZone.color : getZoneColorHex(zoneId);
-              const label = dynZone ? dynZone.label : (ZONE_LABELS_KO[zoneId] || zoneId);
-              return (
-                <div key={zoneId} className="flex items-center" style={{ gap: 'clamp(4px, 0.6vw, 8px)' }}>
+            <div
+              className="text-[#94a3b8] font-semibold tracking-wider"
+              style={{
+                fontFamily: "'Fira Code', monospace",
+                fontSize: 'clamp(8px, 1.4vw, 10px)',
+                marginBottom: 'clamp(4px, 0.6vw, 8px)',
+              }}
+            >
+              ZONES
+            </div>
+            <div className="flex flex-col" style={{ gap: 'clamp(3px, 0.5vw, 6px)' }}>
+              {legendZones.map((zone) => (
+                <div key={zone.id} className="flex items-center" style={{ gap: 'clamp(4px, 0.6vw, 8px)' }}>
                   <div
                     className="rounded-full"
                     style={{
-                      backgroundColor: color,
+                      backgroundColor: zone.color,
                       width: 'clamp(6px, 1vw, 10px)',
                       height: 'clamp(6px, 1vw, 10px)',
+                      opacity: zone.isHighlighted ? 1 : 0.5,
                     }}
                   />
                   <span
-                    className="text-[#cbd5e1]"
                     style={{
                       fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
                       fontSize: 'clamp(9px, 1.6vw, 12px)',
+                      color: zone.isHighlighted ? '#cbd5e1' : '#64748b',
                     }}
                   >
-                    {label}
+                    {zone.label}
                   </span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── 하단 영역: VIEW 라벨 + 조작힌트 → StageProgress 순서 ── */}
       <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
