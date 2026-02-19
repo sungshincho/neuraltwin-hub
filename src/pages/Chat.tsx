@@ -11,6 +11,7 @@ import "@/styles/chat.css";
 import { StoreVisualizer, CompareVisualizer } from "@/components/chatbot/visualizer";
 import type { VizDirective, VizState, CustomerStage, VizKPI, VizAnnotation, StoreParams, ZoneScale } from "@/components/chatbot/visualizer";
 import { mergeVizDirective } from "@/components/chatbot/visualizer";
+import { ZONE_LABELS_KO, getZoneColorHex } from "@/components/chatbot/visualizer/storeData";
 
 // Export 유틸리티
 import { exportAsMarkdown, exportAsPDF, exportAsDocx } from "@/shared/chat/utils/exportConversation";
@@ -728,11 +729,15 @@ const Chat = () => {
     setShowLeadForm(false);
   };
 
-  // A-7: 3D 존 클릭 → 채팅 입력에 자동 질문 삽입
+  // A-7: 3D 존 클릭 → 채팅 입력에 자동 질문 삽입 (전체화면/인라인 모드 동기화)
   const handleZoneClick = useCallback((zoneId: string, zoneLabel: string) => {
     const question = `${zoneLabel} 존에 대해 더 자세히 알려주세요`;
-    setInputValue(question);
-  }, []);
+    if (isFullscreen) {
+      setFsInputValue(question);
+    } else {
+      setInputValue(question);
+    }
+  }, [isFullscreen]);
 
   // 비회원 세션 초기화 (턴 제한 후 새 대화)
   const handleResetSession = useCallback(() => {
@@ -1065,19 +1070,41 @@ const Chat = () => {
 
   // Phase 6 B-7: 어시스턴트 메시지에서 존 이름을 감지하고 클릭 가능한 링크로 변환
   const renderMessageWithZoneLinks = useCallback((content: string) => {
-    if (!vizDirective?.zones || vizDirective.zones.length === 0) {
+    // vizDirective가 없으면 텍스트만 반환
+    if (!vizDirective) {
       return content;
     }
-    // 존 라벨 → ID 맵 생성 (풀 라벨 + 괄호 제거 기본 이름 모두 포함)
+
+    // 존 라벨 → ID 맵 생성 (동적 존 + 정적 존 모두 포함)
     const zoneLabels: Array<{ label: string; id: string; color: string }> = [];
-    for (const z of vizDirective.zones) {
-      zoneLabels.push({ label: z.label, id: z.id, color: z.color });
-      // 괄호 부분 제거한 기본 이름도 매칭 대상에 추가 (예: "파워 월 (봄 신상)" → "파워 월")
-      const baseName = z.label.replace(/\s*\(.*?\)\s*$/, '').trim();
-      if (baseName && baseName !== z.label && baseName.length >= 2) {
-        zoneLabels.push({ label: baseName, id: z.id, color: z.color });
+    const addedLabels = new Set<string>(); // 중복 방지
+
+    // 1. 동적 존 (AI 생성) — 우선순위 높음
+    if (vizDirective.zones && vizDirective.zones.length > 0) {
+      for (const z of vizDirective.zones) {
+        if (!addedLabels.has(z.label)) {
+          zoneLabels.push({ label: z.label, id: z.id, color: z.color });
+          addedLabels.add(z.label);
+        }
+        // 괄호 부분 제거한 기본 이름도 매칭 대상에 추가 (예: "파워 월 (봄 신상)" → "파워 월")
+        const baseName = z.label.replace(/\s*\(.*?\)\s*$/, '').trim();
+        if (baseName && baseName !== z.label && baseName.length >= 2 && !addedLabels.has(baseName)) {
+          zoneLabels.push({ label: baseName, id: z.id, color: z.color });
+          addedLabels.add(baseName);
+        }
       }
     }
+
+    // 2. 정적 존 (storeData.ts) — 동적 존에 없는 경우 추가
+    for (const [zoneId, label] of Object.entries(ZONE_LABELS_KO)) {
+      if (!addedLabels.has(label)) {
+        zoneLabels.push({ label, id: zoneId, color: getZoneColorHex(zoneId) });
+        addedLabels.add(label);
+      }
+    }
+
+    if (zoneLabels.length === 0) return content;
+
     // 라벨 길이 내림차순 정렬 (긴 라벨 우선 매칭 — 풀 라벨이 기본 이름보다 먼저 매칭)
     zoneLabels.sort((a, b) => b.label.length - a.label.length);
 
@@ -1983,7 +2010,8 @@ const Chat = () => {
             </div>
 
             {/* 우측: 3D Visualizer (55%) - vizDirective가 있을 때만 표시 */}
-            {vizDirective && (
+            {/* 전체화면 활성 시 인라인 비주얼라이저 숨김 → 두 개의 Three.js 컨텍스트 충돌 방지 + 콘텐츠 동기화 보장 */}
+            {vizDirective && !isFullscreen && !isClosingFs && (
               <div
                 className={`visualizer-container${mobileActiveTab !== "viz" ? " mobile-tab-hidden" : ""}`}
               >
