@@ -271,7 +271,7 @@ export function buildEnrichedPrompt(
   }
 
   // 5. VizDirective 생성 (3D 비주얼라이저용)
-  const vizDirective = generateVizDirective(classification, turnCount || 0);
+  const vizDirective = generateVizDirective(classification, turnCount || 0, message);
 
   return {
     systemPrompt: finalPrompt,

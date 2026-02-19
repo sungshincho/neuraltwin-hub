@@ -92,6 +92,25 @@ const DEFAULT_GROCERY_ZONES: DynamicZone[] = [
   { id: 'checkout', label: '계산대', x: -6, z: 7, w: 5, d: 3, color: '#ef4444' },
 ];
 
+const DEFAULT_BEAUTY_ZONES: DynamicZone[] = [
+  { id: 'entrance', label: '입구', x: 0, z: 8, w: 8, d: 3, color: '#ff6b00' },
+  { id: 'promotion', label: '프로모션/신상', x: 5, z: 5, w: 5, d: 4, color: '#22c55e' },
+  { id: 'testerBar', label: '테스터 바', x: -4, z: 4, w: 5, d: 4, color: '#ec4899' },
+  { id: 'skincare', label: '스킨케어', x: -4, z: -1, w: 6, d: 5, color: '#0ea5e9' },
+  { id: 'makeup', label: '메이크업', x: 4, z: -1, w: 6, d: 5, color: '#8b5cf6' },
+  { id: 'checkout', label: '계산대', x: 0, z: -6, w: 6, d: 3, color: '#ef4444' },
+];
+
+const DEFAULT_ELECTRONICS_ZONES: DynamicZone[] = [
+  { id: 'entrance', label: '입구', x: 0, z: 8, w: 8, d: 3, color: '#ff6b00' },
+  { id: 'mobile', label: '모바일/태블릿', x: -4, z: 4, w: 5, d: 5, color: '#0ea5e9' },
+  { id: 'laptop', label: '노트북/PC', x: 4, z: 4, w: 5, d: 5, color: '#22c55e' },
+  { id: 'experience', label: '체험존', x: 0, z: 0, w: 8, d: 4, color: '#8b5cf6' },
+  { id: 'accessory', label: '액세서리', x: -5, z: -4, w: 5, d: 4, color: '#f59e0b' },
+  { id: 'service', label: 'AS/상담', x: 5, z: -4, w: 5, d: 4, color: '#ec4899' },
+  { id: 'checkout', label: '계산대', x: 0, z: -7, w: 5, d: 3, color: '#ef4444' },
+];
+
 const DEFAULT_POPUP_ZONES: DynamicZone[] = [
   { id: 'entrance', label: '입구', x: 0, z: 8, w: 6, d: 3, color: '#ff6b00' },
   { id: 'exhibition', label: '전시 구역', x: -4, z: 3, w: 6, d: 6, color: '#0ea5e9' },
@@ -109,6 +128,8 @@ const DEFAULT_GENERAL_ZONES: DynamicZone[] = [
 
 const DEFAULT_ZONES_BY_INDUSTRY: Record<string, DynamicZone[]> = {
   fashion: DEFAULT_FASHION_ZONES,
+  beauty: DEFAULT_BEAUTY_ZONES,
+  electronics: DEFAULT_ELECTRONICS_ZONES,
   cafe: DEFAULT_CAFE_ZONES,
   convenience: DEFAULT_CONVENIENCE_ZONES,
   grocery: DEFAULT_GROCERY_ZONES,
@@ -117,15 +138,29 @@ const DEFAULT_ZONES_BY_INDUSTRY: Record<string, DynamicZone[]> = {
 };
 
 /**
- * 토픽 분류 + 대화 키워드로부터 업종 추론
+ * 토픽 분류 + 메시지 내 브랜드/업종 키워드로부터 업종 추론
  */
-function detectIndustry(topicCategory: string): string {
-  // 토픽 기반 1차 추론
+function detectIndustry(topicCategory: string, message?: string): string {
+  const msg = (message || '').toLowerCase();
+
+  // 메시지 기반 업종 추론 (브랜드/키워드 우선)
+  if (/올리브영|세포라|랄라블라|이니스프리|뷰티|화장품|코스메틱|드럭스토어|drug\s*store|스킨케어|메이크업/.test(msg)) {
+    return 'beauty';
+  }
+  if (/삼성|애플|하이마트|전자|가전|일렉|전자제품|electronics/.test(msg)) {
+    return 'electronics';
+  }
+  if (/카페|커피|베이커리|디저트|f&b/.test(msg)) return 'cafe';
+  if (/편의점|gs25|cu|세븐일레븐|이마트24/.test(msg)) return 'convenience';
+  if (/마트|식료품|슈퍼|grocery|이마트|홈플러스|코스트코/.test(msg)) return 'grocery';
+  if (/팝업|pop-?up/.test(msg)) return 'popup';
+
+  // 토픽 기반 2차 추론
   if (/vmd|layout|staff|pricing/.test(topicCategory)) return 'fashion';
   if (/inventory|supply/.test(topicCategory)) return 'grocery';
-  // 일반 리테일은 'general'
+
   return 'general';
-};
+}
 
 // ═══════════════════════════════════════════
 //  토픽→VizDirective 매핑
@@ -141,7 +176,8 @@ interface TopicClassification {
  */
 export function generateVizDirective(
   classification: TopicClassification,
-  turnCount: number
+  turnCount: number,
+  message?: string
 ): VizDirective {
   const { primaryTopic } = classification;
 
@@ -150,7 +186,7 @@ export function generateVizDirective(
 
   // 토픽 기반 fallback: 업종에 맞는 기본 존 포함
   if (result && !result.zones) {
-    const industry = detectIndustry(primaryTopic);
+    const industry = detectIndustry(primaryTopic, message);
     result.zones = DEFAULT_ZONES_BY_INDUSTRY[industry] || DEFAULT_GENERAL_ZONES;
   }
 
