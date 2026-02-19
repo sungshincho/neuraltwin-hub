@@ -871,14 +871,14 @@ export default function StoreVisualizer({
                       backgroundColor: zone.color,
                       width: 'clamp(6px, 1vw, 10px)',
                       height: 'clamp(6px, 1vw, 10px)',
-                      opacity: zone.isHighlighted ? 1 : 0.5,
+                      opacity: 1,
                     }}
                   />
                   <span
                     style={{
                       fontFamily: "'Noto Sans KR', 'Fira Code', sans-serif",
                       fontSize: 'clamp(9px, 1.6vw, 12px)',
-                      color: zone.isHighlighted ? '#cbd5e1' : '#64748b',
+                      color: '#cbd5e1',
                     }}
                   >
                     {zone.label}
