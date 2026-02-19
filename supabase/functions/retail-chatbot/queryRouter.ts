@@ -78,6 +78,18 @@ const COMMON_RETAIL_TERMS: Set<string> = new Set([
   '인력', '교육', '서비스', '관리', '시스템', '프로세스', '구조',
 ]);
 
+// 잘 알려진 브랜드 + 리서치/분석 맥락 → 웹 검색 필요 판단 패턴
+const KNOWN_BRAND_SEARCH_PATTERNS = [
+  /리서치/,                              // "리서치" 단독 (기존은 "리서치 해"만 매칭)
+  /분석/,                                // "분석" 단독
+  /전략\s*(분석|리서치|조사|비교)/,        // "전략 분석"
+  /사례\s*(분석|연구|조사|리서치)/,        // "사례 분석"
+  /오프라인\s*(매장|전략|현황)/,           // "오프라인 매장/전략"
+  /성공\s*(사례|전략|비결|요인)/,          // "성공 사례"
+  /벤치마크|benchmark/i,                 // 벤치마크
+  /(매장|매출|실적)\s*(데이터|수치|통계)/, // "매장 데이터"
+];
+
 // 검색 트리거 패턴 (최신 정보 필요)
 const SEARCH_TRIGGER_PATTERNS = [
   /최근\s*(뉴스|동향|소식|이슈)/,
@@ -241,14 +253,29 @@ export function routeQuery(
 ): QueryRouteResult {
   const msgLower = message.toLowerCase();
 
-  // 1. 잘 알려진 브랜드는 검색 불필요
+  // 1. 잘 알려진 브랜드 감지
+  let wellKnownBrand: string | null = null;
   for (const brand of WELL_KNOWN_BRANDS) {
     if (msgLower.includes(brand)) {
+      wellKnownBrand = brand;
+      break;
+    }
+  }
+
+  // 잘 알려진 브랜드 + 리서치/분석/전략 요청 → 웹 검색 수행
+  if (wellKnownBrand) {
+    const needsSearch = SEARCH_TRIGGER_PATTERNS.some(p => p.test(message))
+      || KNOWN_BRAND_SEARCH_PATTERNS.some(p => p.test(message));
+
+    if (needsSearch) {
       return {
-        augmentation: 'none',
-        detectedEntities: [],
+        augmentation: 'web_search',
+        detectedEntities: [wellKnownBrand],
+        searchReason: `known_brand_research: ${wellKnownBrand}`,
       };
     }
+    // 트리거 미매칭 → 기존대로 검색 불필요
+    return { augmentation: 'none', detectedEntities: [] };
   }
 
   // 2. 검색 트리거 패턴 매칭 (최신 정보 필요)
