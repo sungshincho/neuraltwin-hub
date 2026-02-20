@@ -144,25 +144,25 @@ const Chat = () => {
       id: 'data-decision',
       description: '매대 위치 바꾸면 매출 오를까?',
       chatMessage: '매대 위치 바꾸면 매출 오를까?',
-      thumbnail: '/presets/preset-1.svg',
+      thumbnail: '/presets/preset-1.png',
     },
     {
       id: 'popup-planning',
       description: '팝업스토어 기획 초안 만들어줘',
       chatMessage: '팝업스토어 기획 초안 만들어줘',
-      thumbnail: '/presets/preset-2.svg',
+      thumbnail: '/presets/preset-2.png',
     },
     {
       id: 'industry-compare',
       description: '리테일 전환율 업계 평균은?',
       chatMessage: '리테일 전환율 업계 평균은?',
-      thumbnail: '/presets/preset-3.svg',
+      thumbnail: '/presets/preset-3.png',
     },
     {
       id: 'vmd-trends',
       description: '이번 시즌 VMD 트렌드 알려줘',
       chatMessage: '이번 시즌 VMD 트렌드 알려줘',
-      thumbnail: '/presets/preset-4.svg',
+      thumbnail: '/presets/preset-4.png',
     },
   ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
