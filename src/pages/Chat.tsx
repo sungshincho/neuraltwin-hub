@@ -137,6 +137,34 @@ const Chat = () => {
     "예: 리테일 전환율 업계 평균은?",
     "예: 매장 일일 보고서 양식 만들어줘",
   ];
+
+  // 랜딩 뷰 프리셋 카드 — 대화 시작 전 우측 패널에 표시
+  const LANDING_PRESETS = [
+    {
+      id: 'data-decision',
+      description: '애매한 결정, 뉴럴트윈 AI로 데이터로 판단해보세요.',
+      chatMessage: '매장 존 배치를 데이터 기반으로 최적화하는 방법을 알려줘',
+      thumbnail: '/presets/preset-1.svg',
+    },
+    {
+      id: 'popup-planning',
+      description: '팝업 전, 뉴럴트윈 AI로 간단한 초안 받으세요.',
+      chatMessage: '팝업 매장 기획 초안을 작성해줘',
+      thumbnail: '/presets/preset-2.svg',
+    },
+    {
+      id: 'industry-compare',
+      description: '우리 매장 현황, 뉴럴트윈 AI로 업계 평균과 비교해보세요.',
+      chatMessage: '우리 매장 현황을 업계 평균 KPI와 비교 분석해줘',
+      thumbnail: '/presets/preset-3.svg',
+    },
+    {
+      id: 'vmd-trends',
+      description: 'VMD 트렌드, 뉴럴트윈 AI로 30초 만에 파악해보세요.',
+      chatMessage: '이번 시즌 VMD 트렌드를 분석해줘',
+      thumbnail: '/presets/preset-4.svg',
+    },
+  ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   // SSE 스트리밍: 현재 어시스턴트 메시지 ID (점진적 업데이트용)
@@ -685,6 +713,11 @@ const Chat = () => {
       setInputValue(suggestion);
     }
     setSuggestions([]);
+  };
+
+  // 랜딩 프리셋 클릭 → 바로 API 전송
+  const handlePresetClick = (preset: typeof LANDING_PRESETS[0]) => {
+    sendChatMessage(preset.chatMessage);
   };
 
   // TASK 9: Lead Form 제출 핸들러
@@ -1836,14 +1869,14 @@ const Chat = () => {
             </div>
           )}
 
-          {/* Chat UI + Visualizer Split Layout */}
+          {/* Chat UI + Visualizer/Preset Split Layout */}
           <div
             className="hero-content"
-            style={vizDirective ? { gap: "16px", padding: "0 24px" } : undefined}
+            style={(vizDirective || messages.length === 0) ? { gap: "16px", padding: "0 24px" } : undefined}
           >
             {/* 채팅 영역 */}
             <div
-              className={`chat-container${vizDirective ? " with-viz" : ""}${vizDirective && mobileActiveTab !== "chat" ? " mobile-tab-hidden" : ""}`}
+              className={`chat-container${vizDirective ? " with-viz" : messages.length === 0 ? " with-presets" : ""}${vizDirective && mobileActiveTab !== "chat" ? " mobile-tab-hidden" : ""}`}
             >
               {/* 타이틀 + 전체화면 버튼 */}
               <div className="chat-title-row">
@@ -2096,6 +2129,26 @@ const Chat = () => {
                     onZoneClick={handleZoneClick}
                   />
                 )}
+              </div>
+            )}
+
+            {/* 우측: 랜딩 프리셋 패널 — 대화 시작 전에만 표시 */}
+            {messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
+              <div className="preset-panel">
+                <div className="preset-grid">
+                  {LANDING_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      className="preset-card"
+                      onClick={() => handlePresetClick(preset)}
+                    >
+                      <div className="preset-thumbnail-wrapper">
+                        <img src={preset.thumbnail} alt={preset.description} className="preset-thumbnail" />
+                      </div>
+                      <p className="preset-description">{preset.description}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
