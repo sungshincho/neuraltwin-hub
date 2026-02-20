@@ -142,26 +142,26 @@ const Chat = () => {
   const LANDING_PRESETS = [
     {
       id: 'data-decision',
-      description: '애매한 결정, 뉴럴트윈 AI로 데이터로 판단해보세요.',
-      chatMessage: '매장 존 배치를 데이터 기반으로 최적화하는 방법을 알려줘',
+      description: '매대 위치 바꾸면 매출 오를까?',
+      chatMessage: '매대 위치 바꾸면 매출 오를까?',
       thumbnail: '/presets/preset-1.svg',
     },
     {
       id: 'popup-planning',
-      description: '팝업 전, 뉴럴트윈 AI로 간단한 초안 받으세요.',
-      chatMessage: '팝업 매장 기획 초안을 작성해줘',
+      description: '팝업스토어 기획 초안 만들어줘',
+      chatMessage: '팝업스토어 기획 초안 만들어줘',
       thumbnail: '/presets/preset-2.svg',
     },
     {
       id: 'industry-compare',
-      description: '우리 매장 현황, 뉴럴트윈 AI로 업계 평균과 비교해보세요.',
-      chatMessage: '우리 매장 현황을 업계 평균 KPI와 비교 분석해줘',
+      description: '리테일 전환율 업계 평균은?',
+      chatMessage: '리테일 전환율 업계 평균은?',
       thumbnail: '/presets/preset-3.svg',
     },
     {
       id: 'vmd-trends',
-      description: 'VMD 트렌드, 뉴럴트윈 AI로 30초 만에 파악해보세요.',
-      chatMessage: '이번 시즌 VMD 트렌드를 분석해줘',
+      description: '이번 시즌 VMD 트렌드 알려줘',
+      chatMessage: '이번 시즌 VMD 트렌드 알려줘',
       thumbnail: '/presets/preset-4.svg',
     },
   ];
