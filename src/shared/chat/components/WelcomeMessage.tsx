@@ -94,7 +94,23 @@ export function WelcomeMessage({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="flex flex-col items-center gap-3"
         >
+          {/* CTA 안내 문구 */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className={cn(
+              'text-[11px] tracking-wide',
+              variant === 'website'
+                ? 'text-white/40'
+                : 'text-muted-foreground/60'
+            )}
+          >
+            클릭 한 번으로 바로 시작해보세요
+          </motion.p>
+
           <SuggestionChips
             suggestions={displaySuggestions}
             onSelect={onSuggestionSelect}
