@@ -2200,8 +2200,8 @@ const Chat = () => {
           {/* Semicircle Decoration */}
           <div className="hero-semicircle"></div>
 
-          {/* Caption — 3D 비주얼라이저 활성 시 숨김 (z-index 관통 방지) */}
-          {!vizDirective && (
+          {/* Caption — 3D 비주얼라이저 또는 프리셋 패널 활성 시 숨김 (겹침 방지) */}
+          {!vizDirective && messages.length > 0 && (
             <div className="hero-caption">
               <div className="dot"></div>
               <p>리테일 전문 지식으로 학습된<br />AI 어시스턴트, NEURALTWIN.</p>
