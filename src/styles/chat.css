@@ -1530,9 +1530,10 @@
 
     .preset-card {
         flex-direction: row;
-        align-items: center;
+        align-items: stretch;
         flex-wrap: wrap;
         position: relative;
+        min-height: 64px;
     }
 
     .preset-card .preset-cta-label {
@@ -1550,8 +1551,8 @@
     }
 
     .preset-thumbnail-wrapper {
-        width: 56px;
-        min-width: 56px;
+        width: 60px;
+        min-width: 60px;
         aspect-ratio: 1 / 1;
         border-bottom: none;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -1559,9 +1560,14 @@
     }
 
     .preset-description {
-        padding: 8px 10px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
         padding-top: 18px;
-        font-size: 11px;
+        font-size: 12px;
+        text-align: center;
     }
 }
 
