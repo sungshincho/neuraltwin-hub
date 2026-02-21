@@ -715,8 +715,24 @@ const Chat = () => {
     setSuggestions([]);
   };
 
-  // 랜딩 프리셋 클릭 → 바로 API 전송
+  // 랜딩 프리셋 클릭 — 데스크톱: 인라인 전송 / 모바일: 전체화면 전환 후 자동 전송
   const handlePresetClick = (preset: typeof LANDING_PRESETS[0]) => {
+    if (isGuestLimitReached) {
+      setShowTurnLimitModal(true);
+      return;
+    }
+    if (isLoading) return;
+
+    // 모바일: 전체화면 전환 후 자동 전송
+    if (isMobile) {
+      pendingMessageRef.current = preset.chatMessage;
+      setFsInputValue("");
+      setIsFullscreen(true);
+      document.body.style.overflow = "hidden";
+      return;
+    }
+
+    // 데스크톱: 인라인 직접 전송
     sendChatMessage(preset.chatMessage);
   };
 
