@@ -1902,10 +1902,11 @@ const Chat = () => {
                 {/* 모바일 전용: 프리셋 카드 인라인 (서브타이틀과 전체화면 버튼 사이) */}
                 {isMobile && messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
                   <div className="preset-inline-mobile">
+                    <p className="preset-cta-text">클릭 한 번으로 시작해보세요</p>
                     {LANDING_PRESETS.map((preset) => (
                       <button
                         key={preset.id}
-                        className="preset-card"
+                        className="preset-card preset-card--shimmer"
                         onClick={() => handlePresetClick(preset)}
                       >
                         <div className="preset-thumbnail-wrapper">
@@ -2170,11 +2171,12 @@ const Chat = () => {
             {/* 우측: 랜딩 프리셋 패널 — 대화 시작 전에만 표시 */}
             {messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
               <div className="preset-panel">
+                <p className="preset-cta-text">클릭 한 번으로 시작해보세요</p>
                 <div className="preset-grid">
                   {LANDING_PRESETS.map((preset) => (
                     <button
                       key={preset.id}
-                      className="preset-card"
+                      className="preset-card preset-card--shimmer"
                       onClick={() => handlePresetClick(preset)}
                     >
                       <div className="preset-thumbnail-wrapper">
