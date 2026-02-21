@@ -1406,14 +1406,17 @@
     color: var(--gray-100);
 }
 
-/* CTA 텍스트 — 프리셋 카드 위 안내 문구 */
-.preset-cta-text {
-    font-size: 13px;
-    font-weight: 500;
+/* CTA 라벨 — 각 프리셋 카드 상단에 개별 표시 */
+.preset-cta-label {
+    display: block;
+    width: 100%;
+    padding: 6px 12px 0;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--gray-400);
-    text-align: center;
-    letter-spacing: -0.2px;
-    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    text-transform: none;
+    text-align: left;
     opacity: 0;
     animation: heroContentIn 0.5s ease 2.0s forwards;
 }
@@ -1494,6 +1497,22 @@
     .preset-card {
         flex-direction: row;
         align-items: center;
+        flex-wrap: wrap;
+        position: relative;
+    }
+
+    .preset-card .preset-cta-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 3px 0;
+        text-align: center;
+        font-size: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 10px 10px 0 0;
+        z-index: 2;
     }
 
     .preset-thumbnail-wrapper {
@@ -1502,10 +1521,12 @@
         aspect-ratio: 1 / 1;
         border-bottom: none;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
+        margin-top: 18px;
     }
 
     .preset-description {
         padding: 10px 12px;
+        padding-top: 22px;
         font-size: 11px;
     }
 }
@@ -1524,9 +1545,9 @@
         margin: 8px 0;
     }
 
-    .preset-inline-mobile .preset-cta-text {
-        font-size: 12px;
-        margin-bottom: 4px;
+    .preset-inline-mobile .preset-cta-label {
+        font-size: 9px;
+        padding: 4px 10px 0;
         animation-delay: 1.6s;
     }
 
