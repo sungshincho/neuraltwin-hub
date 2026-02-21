@@ -1531,11 +1531,34 @@
     }
 }
 
-/* 모바일 전용: 서브타이틀과 전체화면 버튼 사이 인라인 프리셋 */
+/* 인라인 프리셋: 기본 숨김 (데스크톱 1200px+에서는 preset-panel 사용) */
 .preset-inline-mobile {
     display: none;
 }
 
+/* 태블릿 (768px ~ 1199px): 2열 그리드 인라인 프리셋 */
+.preset-inline-tablet {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin: 16px 0 8px;
+}
+
+.preset-inline-tablet .preset-cta-label {
+    font-size: 9px;
+}
+
+.preset-inline-tablet .preset-card {
+    flex-direction: column;
+}
+
+.preset-inline-tablet .preset-thumbnail-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+}
+
+/* 모바일 (768px 미만): 1열 가로형 인라인 프리셋 */
 @media (max-width: 768px) {
     .preset-inline-mobile {
         display: flex;

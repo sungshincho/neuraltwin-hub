@@ -245,8 +245,15 @@ const Chat = () => {
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' && window.innerWidth < 768
   );
+  // 태블릿+모바일: 인라인 프리셋 표시 (1200px 미만)
+  const [showInlinePresets, setShowInlinePresets] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 1200
+  );
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setShowInlinePresets(window.innerWidth < 1200);
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -1899,9 +1906,9 @@ const Chat = () => {
                 <h1 className="chat-headline">가장 강력한 AI 리테일 어시스턴트</h1>
                 <h2 className="chat-title">오늘은 어떤 업무를 도와드릴까요?</h2>
 
-                {/* 모바일 전용: 프리셋 카드 인라인 (서브타이틀과 전체화면 버튼 사이) */}
-                {isMobile && messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
-                  <div className="preset-inline-mobile">
+                {/* 모바일+태블릿: 프리셋 카드 인라인 (서브타이틀과 전체화면 버튼 사이) */}
+                {showInlinePresets && messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
+                  <div className={`preset-inline-mobile${isMobile ? '' : ' preset-inline-tablet'}`}>
                     {LANDING_PRESETS.map((preset) => (
                       <button
                         key={preset.id}
@@ -2168,8 +2175,8 @@ const Chat = () => {
               </div>
             )}
 
-            {/* 우측: 랜딩 프리셋 패널 — 대화 시작 전에만 표시 */}
-            {messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
+            {/* 우측: 랜딩 프리셋 패널 — 데스크톱(1200px+)에서만 표시 */}
+            {!showInlinePresets && messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
               <div className="preset-panel">
                 <div className="preset-grid">
                   {LANDING_PRESETS.map((preset) => (
