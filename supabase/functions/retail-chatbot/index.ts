@@ -316,7 +316,7 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
         }));
 
       // 겹침 방지: 존들이 서로 너무 많이 겹치면 자동으로 밀어냄
-      if (validatedZones.length > 1) {
+      if (validatedZones && validatedZones.length > 1) {
         for (let i = 0; i < validatedZones.length; i++) {
           for (let j = i + 1; j < validatedZones.length; j++) {
             const a = validatedZones[i];
@@ -338,7 +338,7 @@ function extractVizDirectiveFromResponse(response: string): VizDirective | null 
         }
       }
 
-      if (validatedZones.length === 0) validatedZones = undefined;
+      if (validatedZones && validatedZones.length === 0) validatedZones = undefined;
     }
 
     // 동적 존이 있으면 해당 ID 집합으로 highlights/annotations 검증
@@ -1284,7 +1284,7 @@ async function handleLogReaction(
       eventData.messagePreview = reaction.messageContent.slice(0, 200);
     }
 
-    const { error: eventError } = await supabase
+    const { error: eventError } = await (supabase as any)
       .from('chat_events')
       .insert({
         conversation_id: conversationId || null,
@@ -1309,10 +1309,10 @@ async function handleLogReaction(
         .single();
 
       if (recentMsg) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('chat_messages')
           .update({ user_feedback: reaction.type })
-          .eq('id', recentMsg.id);
+          .eq('id', (recentMsg as any).id);
 
         if (updateError) {
           console.error('[Reaction] Message feedback update error:', updateError);
@@ -1381,7 +1381,7 @@ serve(async (request: Request) => {
     }
 
     if (action === 'log_reaction') {
-      return handleLogReaction(supabase, body, corsHeaders);
+      return handleLogReaction(supabase as any, body, corsHeaders);
     }
 
     // ═══════════════════════════════════════════
