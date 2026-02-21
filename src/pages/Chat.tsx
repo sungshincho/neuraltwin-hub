@@ -1898,6 +1898,25 @@ const Chat = () => {
               <div className="chat-title-row">
                 <h1 className="chat-headline">가장 강력한 AI 리테일 어시스턴트</h1>
                 <h2 className="chat-title">오늘은 어떤 업무를 도와드릴까요?</h2>
+
+                {/* 모바일 전용: 프리셋 카드 인라인 (서브타이틀과 전체화면 버튼 사이) */}
+                {isMobile && messages.length === 0 && !vizDirective && !isFullscreen && !isClosingFs && (
+                  <div className="preset-inline-mobile">
+                    {LANDING_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        className="preset-card"
+                        onClick={() => handlePresetClick(preset)}
+                      >
+                        <div className="preset-thumbnail-wrapper">
+                          <img src={preset.thumbnail} alt={preset.description} className="preset-thumbnail" />
+                        </div>
+                        <p className="preset-description">{preset.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <button
                   className="chat-expand-fullscreen-btn"
                   onClick={openFullscreen}

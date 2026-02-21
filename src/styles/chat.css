@@ -1424,6 +1424,11 @@
 
 /* 프리셋 반응형: 768px 이하 */
 @media (max-width: 768px) {
+    /* 기존 preset-panel(채팅창 아래)은 모바일에서 숨김 — preset-inline-mobile로 대체 */
+    .preset-panel {
+        display: none !important;
+    }
+
     .preset-grid {
         grid-template-columns: 1fr;
         gap: 8px;
@@ -1445,6 +1450,21 @@
     .preset-description {
         padding: 10px 12px;
         font-size: 11px;
+    }
+}
+
+/* 모바일 전용: 서브타이틀과 전체화면 버튼 사이 인라인 프리셋 */
+.preset-inline-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .preset-inline-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        margin: 8px 0;
     }
 }
 
