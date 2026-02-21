@@ -351,7 +351,7 @@
     align-items: center;
     padding: 0 48px;
     position: relative;
-    z-index: 2;
+    z-index: 3;
     flex: 1;
     min-height: 0;
 }
