@@ -175,6 +175,7 @@
 /* ===================== HERO SECTION ===================== */
 .hero {
     min-height: 100vh;
+    min-height: 100dvh;
     position: relative;
     display: grid;
     grid-template-rows: auto 1fr auto auto;
@@ -681,6 +682,8 @@
     .hero {
         display: flex;
         flex-direction: column;
+        min-height: 100vh;
+        min-height: 100dvh;
     }
     .hero-nav { padding: 16px 20px; }
     .hero-nav-links { display: none; }
@@ -769,6 +772,7 @@
     opacity: 0;
     animation: heroContentIn 0.6s ease 1.6s forwards;
     max-height: calc(100vh - 340px);
+    max-height: calc(100dvh - 340px);
 }
 
 /* 메인 헤드라인 — "가장 강력한 AI 리테일 어시스턴트" */
@@ -858,6 +862,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .chat-input-row {
@@ -1484,8 +1489,8 @@
     to   { opacity: 1; }
 }
 
-/* 프리셋 반응형: 1200px 이하 (태블릿) */
-@media (max-width: 1200px) {
+/* 프리셋 반응형: 태블릿 전용 (769px ~ 1200px) — 모바일은 768px 블록에서 별도 처리 */
+@media (min-width: 769px) and (max-width: 1200px) {
     .chat-container.with-presets {
         width: 100% !important;
         max-width: none;
@@ -1502,6 +1507,7 @@
     /* 태블릿: 프리셋 카드 추가로 인한 높이 보정 */
     .chat-container {
         max-height: calc(100vh - 200px);
+        max-height: calc(100dvh - 200px);
     }
 
     /* 태블릿: hero-brand 폰트 축소 */
@@ -1544,17 +1550,17 @@
     }
 
     .preset-thumbnail-wrapper {
-        width: 80px;
-        min-width: 80px;
+        width: 56px;
+        min-width: 56px;
         aspect-ratio: 1 / 1;
         border-bottom: none;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
-        margin-top: 18px;
+        margin-top: 14px;
     }
 
     .preset-description {
-        padding: 10px 12px;
-        padding-top: 22px;
+        padding: 8px 10px;
+        padding-top: 18px;
         font-size: 11px;
     }
 }
@@ -1591,9 +1597,13 @@
     .preset-inline-mobile {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         width: 100%;
         margin: 8px 0;
+        max-height: 30vh;
+        max-height: 30dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .preset-inline-mobile .preset-cta-label {
@@ -1730,6 +1740,7 @@
 
     .chat-messages {
         max-height: 40vh;
+        max-height: 40dvh;
     }
 
     .chat-message {
