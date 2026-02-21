@@ -167,7 +167,7 @@ function calculateRelevance(
   snippet: string,
   url: string,
   message: string,
-  sourceType: 'web' | 'sns'
+  sourceType: 'web' | 'sns' | 'news'
 ): number {
   let score = 0.5; // 기본 점수
 
