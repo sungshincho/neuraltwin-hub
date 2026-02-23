@@ -883,3 +883,442 @@ Otherwise                  → 표시하지 않음
 - 7개 카테고리: cost_pressure(3), efficiency_gap(2), staffing_challenge(2), technology_barrier(2), data_insight_lack(2), compliance_risk(1), competition_threat(2)
 - 부정적 표현 감지 (문제, 어렵, 고민 등) → confidence +0.2 부스트
 - Lead score 계산에 pain weight 반영
+
+---
+
+## Section 6: Design System / Styling
+
+### 6.1 Tailwind Custom Configuration
+
+**File**: `tailwind.config.ts`
+
+**Dark Mode**: `class` 기반 (수동 토글)
+
+**Color System**: CSS 변수 기반 HSL 토큰 — `hsl(var(--variable))` 패턴
+
+| Token | Purpose |
+|-------|---------|
+| `--background` / `--foreground` | Base page colors |
+| `--primary` / `--primary-foreground` / `--primary-glow` | Primary action color + glow effect |
+| `--secondary`, `--accent`, `--muted` | Supporting colors |
+| `--card`, `--popover` | Card/popup surfaces |
+| `--destructive` | Error/danger actions |
+| `--border`, `--input`, `--ring` | Form & interactive borders |
+| `--sidebar-*` (7 tokens) | Sidebar-specific theme |
+
+**Custom Colors** (non-variable):
+| Token | Value | Usage |
+|-------|-------|-------|
+| `chrome.light` | `hsl(0 0% 95%)` | Chrome/metallic light |
+| `chrome.DEFAULT` | `hsl(0 0% 85%)` | Chrome base |
+| `chrome.dark` | `hsl(0 0% 15%)` | Chrome dark |
+| `glass.DEFAULT` | `hsl(0 0% 100% / 0.7)` | Glassmorphism bg |
+| `glass.dark` | `hsl(0 0% 100% / 0.5)` | Glass dark variant |
+
+**Border Radius**: CSS 변수 `--radius: 1rem` 기반 (`lg`, `md`, `sm` 파생)
+
+**Custom Keyframes** (6개):
+- `accordion-down/up`: 아코디언 열기/닫기
+- `fade-in`: 아래에서 올라오며 페이드 인
+- `fade-in-up`: fade-in 변형 (더 큰 이동)
+- `scale-in`: 확대하며 페이드 인
+- `glow-pulse`: 글로우 펄스 반복
+- `float`: 위아래 부유 반복
+- `counter`: 카운터 숫자 등장
+
+**Plugins**: `tailwindcss-animate` (1개)
+
+### 6.2 Global CSS Files
+
+| File | Lines | Theme | Purpose |
+|------|-------|-------|---------|
+| `src/index.css` | 231 | Light (Studio Chrome) | 글로벌 디자인 시스템 정의, CSS 변수, glassmorphism/chrome 유틸리티 |
+| `src/App.css` | 43 | N/A | Vite 기본 템플릿 잔여 (미사용, 제거 가능) |
+| `src/styles/chat.css` | 2,837 | Dark (#0a0a0a) | Chat 전용 다크 테마 + 전체 UI (인라인/풀스크린/프리셋/리드폼) |
+| `src/styles/about.css` | ~800 | Dark (#0a0a0a) | About 페이지 전용 다크 테마 |
+| `src/styles/auth.css` | ~200 | N/A | 인증 페이지 커스텀 스타일 |
+| `src/styles/contact.css` | ~300 | N/A | 연락처 페이지 커스텀 스타일 |
+| `src/styles/legal.css` | ~200 | N/A | 이용약관/개인정보 페이지 스타일 |
+
+**Design System 구조**:
+- `index.css`: 라이트 테마 (Studio Chrome & Glass) — `:root` + `.light` variant
+- `chat.css`: 다크 테마 — `.chat-page` 스코프 CSS 변수 오버라이드
+- 두 테마가 **공존**: 마케팅 페이지는 라이트, Chat/About은 다크
+
+**Key Utility Classes** (index.css):
+| Class | Effect |
+|-------|--------|
+| `.glass` | Glassmorphism (backdrop-blur + gradient + inner shadow) |
+| `.chrome` | Chrome metallic effect (gradient + shadow) |
+| `.metallic` | Metallic text (gradient + text-fill-transparent) |
+| `.sharp-shadow` | Sharp box shadow |
+| `.gradient-text` | Gradient text (primary gradient) |
+| `.transition-smooth` | 0.3s cubic-bezier transition |
+
+### 6.3 Font Configuration
+
+**로딩 방식**: Google Fonts CDN (`@import url(...)` in `index.css`)
+
+| Font | Weight | Usage | Source |
+|------|--------|-------|--------|
+| **Pretendard** | 전체 | 본문 기본 (한글 우선) | cdn.jsdelivr.net/gh/orioncactus/pretendard |
+| **Inter** | 300-800 | 제목 기본 (영문 우선) | fonts.googleapis.com |
+| **Fira Code** | N/A | Chat UI monospace | chat.css에서 직접 선언 |
+| **Noto Sans KR** | N/A | Chat UI 한글 보조 | chat.css에서 직접 선언 |
+
+**Font Stack**:
+- **Body**: `'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
+- **Headings**: `'Inter', 'Pretendard', sans-serif` (weight: 700, letter-spacing: -0.02em)
+- **Chat UI**: `'Fira Code', 'Noto Sans KR', monospace` (weight: 600)
+
+> **Note**: `next/font` 미사용 (Vite 프로젝트). Google Fonts CDN 직접 import.
+
+### 6.4 Design Token Location
+
+| Token Type | Location |
+|------------|----------|
+| Color CSS variables | `src/index.css` `:root` 및 `.light` |
+| Chat dark theme variables | `src/styles/chat.css` `.chat-page` |
+| Tailwind color tokens | `tailwind.config.ts` → `theme.extend.colors` |
+| Border radius tokens | `tailwind.config.ts` → `theme.extend.borderRadius` |
+| Animation tokens | `tailwind.config.ts` → `theme.extend.keyframes/animation` |
+| Shadow tokens | `src/index.css` `--shadow-*` custom properties |
+| Gradient tokens | `src/index.css` `--gradient-*` custom properties |
+
+---
+
+## Section 7: Supabase Connection
+
+### 7.1 Tables Read/Written
+
+#### Chat Tables (7개, chat_schema.sql 마이그레이션)
+
+| Table | Read | Write | Location | Purpose |
+|-------|------|-------|----------|---------|
+| `chat_conversations` | Backend | Backend | retail-chatbot/index.ts | 대화 세션 (channel ENUM: website/os_app) |
+| `chat_messages` | Backend | Backend | retail-chatbot/index.ts, _shared/chatLogger.ts | 개별 메시지 (role, content, tokens, feedback) |
+| `chat_leads` | Backend | Backend | retail-chatbot/index.ts | 리드 수집 (email, company, role, pain_points) |
+| `chat_events` | Backend | Backend | _shared/chatLogger.ts | 이벤트 로그 (session_handover, reaction 등) |
+| `chat_daily_analytics` | Backend | Backend | _shared/chatLogger.ts | 일별 집계 메트릭 |
+| `chat_context_memory` | Backend | Backend | retail-chatbot/memory/ | 사용자 프로필 + 대화 인사이트 (JSONB) |
+| `assistant_command_cache` | Backend | Backend | (OS 챗봇용, 미구현) | 커맨드 인텐트 캐시 |
+
+#### Knowledge Table
+
+| Table | Read | Write | Location | Purpose |
+|-------|------|-------|----------|---------|
+| `retail_knowledge_chunks` | Backend (RPC) | Backend (admin) | knowledge/vectorStore.ts, knowledge-admin/ | 768-dim 벡터 임베딩 + 토픽 태그 지식 |
+
+#### Core Business Tables (Frontend에서 직접 접근)
+
+| Table | Read | Write | Frontend Location |
+|-------|------|-------|-------------------|
+| `organizations` | Y | Y | Auth.tsx, Profile.tsx |
+| `organization_members` | Y | Y | useAuth.ts, Auth.tsx, Profile.tsx, Dashboard.tsx, Subscribe.tsx |
+| `profiles` | Y | Y | Header.tsx, Profile.tsx |
+| `subscriptions` | Y | N | Auth.tsx, Profile.tsx, Dashboard.tsx |
+| `licenses` | Y | N | Profile.tsx |
+
+#### Storage Buckets
+
+| Bucket | Purpose | Location |
+|--------|---------|----------|
+| `chat-attachments` | 채팅 파일 업로드 | shared/chat/utils/fileUpload.ts |
+| `avatars` | 프로필 이미지 | Profile.tsx, Header.tsx |
+
+### 7.2 Edge Functions Called
+
+| Edge Function | Caller | Method | Actions |
+|---------------|--------|--------|---------|
+| `retail-chatbot` | Chat.tsx | POST | `chat` (default), `capture_lead`, `handover_session`, `log_reaction` |
+| `submit-contact` | Contact.tsx | POST | 연락처 폼 제출 |
+| `knowledge-admin` | (Admin only) | POST | 지식 베이스 관리 (seed, migrate, search) |
+| `test-embedding` | (Dev/test) | POST | 벡터 임베딩 테스트 |
+| `upscale-image` | (Utility) | POST | 이미지 업스케일 |
+
+**RPC Functions**:
+| Function | Location | Purpose |
+|----------|----------|---------|
+| `search_knowledge` | vectorStore.ts | pgvector 유사도 검색 (768-dim) |
+| `search_knowledge_trgm` | vectorStore.ts | pg_trgm 텍스트 검색 (폴백) |
+| `increment_message_count` | index.ts | 대화 메시지 카운터 증가 |
+| `handover_chat_session` | index.ts, chatLogger.ts | 비회원→회원 세션 인계 |
+
+### 7.3 Realtime Subscriptions
+
+**없음**. 채팅은 SSE (Server-Sent Events) 기반 스트리밍으로 실시간 통신. Supabase Realtime (`.channel()`, `.subscribe()`, `postgres_changes`)은 사용하지 않음.
+
+### 7.4 Auth Usage
+
+**Frontend (React)**:
+```
+supabase.auth.signUp() / signInWithPassword() / signInWithOAuth()
+supabase.auth.getUser() / getSession()
+supabase.auth.onAuthStateChange() — 상태 리스너
+supabase.auth.resetPasswordForEmail() — 비밀번호 재설정
+supabase.auth.signOut()
+useAuth() — 커스텀 훅 (user, isAuthenticated, signOut 제공)
+```
+
+**Backend (Edge Functions)**:
+- JWT 토큰 추출 (Authorization: Bearer)
+- Service role (`SUPABASE_SERVICE_ROLE_KEY`)로 RLS 우회
+- 웹사이트 챗봇: `--no-verify-jwt` 배포 (비인증 허용, JWT 있으면 user_id 추출)
+- OS 챗봇: 인증 필수 (user_id required)
+
+**RLS Policies**: Channel-aware + User-aware
+- `website`: session_id OR user_id 허용
+- `os_app`: user_id 필수
+- `chat_leads`, `chat_daily_analytics`: service_role 전용
+
+---
+
+## Section 8: Shareable Code (Monorepo Analysis)
+
+### 8.1 OS Dashboard Shareable Components
+
+#### Chat UI Kit (높은 재사용성)
+
+| Component | Path | OS 재사용 | Notes |
+|-----------|------|-----------|-------|
+| ChatBubble | `src/shared/chat/components/` | Y | variant='os' 이미 지원 |
+| ChatInput | `src/shared/chat/components/` | Y | variant='os' 이미 지원 |
+| ChatScrollArea | `src/shared/chat/components/` | Y | variant 무관 |
+| FeedbackButtons | `src/shared/chat/components/` | Y | variant 무관 |
+| SuggestionChips | `src/shared/chat/components/` | Y | variant='os' 이미 지원 |
+| TypingIndicator | `src/shared/chat/components/` | Y | variant='os' 이미 지원 |
+| WelcomeMessage | `src/shared/chat/components/` | Y | variant='os' 이미 지원 |
+| useChatSession | `src/shared/chat/hooks/` | Y | sessionId/conversationId 관리 |
+| useStreaming | `src/shared/chat/hooks/` | Y | SSE 스트리밍 처리 |
+| chat.types.ts | `src/shared/chat/types/` | Y | ChatVariant='website'\|'os' 이미 정의 |
+| exportConversation | `src/shared/chat/utils/` | Y | md/pdf/docx 내보내기 |
+| fileUpload | `src/shared/chat/utils/` | Y | Supabase Storage 연동 |
+
+> `src/shared/chat/`는 이미 OS 재사용을 고려하여 설계됨. variant 시스템으로 테마 분리 완료.
+
+#### Chart / Graph Components (중간 재사용성)
+
+| Component | Path | OS 재사용 | Notes |
+|-----------|------|-----------|-------|
+| ConversionFunnel | `src/components/features/` | Y | Recharts 기반, 데이터만 교체 |
+| DemandForecast | `src/components/features/` | Y | 판매 예측 차트 |
+| ProductPerformance | `src/components/features/` | Y | 제품 성과 테이블+차트 |
+| StaffEfficiency | `src/components/features/` | Y | 직원 성과 레이더 차트 |
+| InventoryOptimizer | `src/components/features/` | Y | 재고 상태 시각화 |
+| TrafficHeatmap | `src/components/features/` | Partial | 2D 전용 (3D 버전은 Three.js 의존) |
+| CustomerJourney | `src/components/features/` | Partial | 동선 시뮬레이션 (데이터 의존성) |
+
+#### 3D Visualizer (높은 재사용성, 단 Three.js 의존)
+
+| Component | Path | OS 재사용 | Notes |
+|-----------|------|-----------|-------|
+| StoreVisualizer | `src/components/chatbot/visualizer/` | Y | 947 LOC, 코어 3D 뷰어 |
+| CompareVisualizer | `src/components/chatbot/visualizer/` | Y | Before/After 비교 |
+| KPIBar | `src/components/chatbot/visualizer/` | Y | KPI 오버레이 |
+| sceneBuilder.ts | `src/components/chatbot/visualizer/` | Y | Pure Three.js (React 독립) |
+
+#### Layout / Navigation (낮은 재사용성)
+
+| Component | Path | OS 재사용 | Notes |
+|-----------|------|-----------|-------|
+| Header | `src/components/layout/Header.tsx` | N | 웹사이트 전용 디자인 |
+| ProtectedRoute | `src/components/ProtectedRoute.tsx` | Y | 인증 라우팅 |
+| LanguageToggle | `src/components/LanguageToggle.tsx` | Y | i18n 토글 |
+
+### 8.2 Supabase Client Separation
+
+**현재 상태**: `src/integrations/supabase/client.ts` — 단일 파일, URL+Key **하드코딩**
+
+```typescript
+// 현재 구조 (자동생성 파일, Lovable 플랫폼에서 관리)
+const SUPABASE_URL = "https://bdrvowacecxnraaivlhr.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJ...";
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {...});
+```
+
+**모노레포 이동 시 필요 사항**:
+- 하드코딩된 URL/Key → 환경변수로 교체 필요
+- `Database` 타입 (11,603 LOC) → 별도 `@neuraltwin/types` 패키지로 분리
+- Supabase client → `@neuraltwin/supabase-client` 공유 패키지
+
+### 8.3 Shared Type Definitions
+
+| Type File | Lines | OS 공유 필요 | Notes |
+|-----------|-------|-------------|-------|
+| `src/integrations/supabase/types.ts` | 11,603 | Y (필수) | DB 스키마 전체 타입 (244 테이블) |
+| `src/shared/chat/types/chat.types.ts` | ~100 | Y | ChatMessageUI, ChatVariant |
+| `src/types/auth.ts` | ~50 | Y | LicenseType, UserRole |
+| `supabase/functions/_shared/chatTypes.ts` | ~80 | Y | Backend 공용 채팅 타입 |
+| `src/components/chatbot/visualizer/vizDirectiveTypes.ts` | 265 | Y | VizDirective, VizState, VizKPI |
+
+### 8.4 Tailwind Config Differences for OS
+
+**현재 웹사이트 tailwind.config.ts 특징**:
+- Studio Chrome & Glass 디자인 시스템 (모노크롬 무채색 중심)
+- Glassmorphism 유틸리티 (`.glass`, `.chrome`, `.metallic`)
+- shadcn/ui CSS 변수 연동
+
+**OS 대시보드와 다를 점**:
+- OS는 어두운 관리자 테마 (다크 모드 기본) → `:root`에서 다크 CSS 변수 필요
+- OS는 사이드바 + 대시보드 레이아웃 → `sidebar-*` 토큰 활용도가 더 높음
+- OS는 glassmorphism 불필요 → `.glass`, `.chrome`, `.metallic` 유틸리티 제거 가능
+
+**권장 모노레포 구조**:
+```
+packages/
+├── @neuraltwin/tailwind-preset   # 공유 color tokens, radius, fonts
+├── apps/website/tailwind.config  # extends preset + glass/chrome utilities
+└── apps/os/tailwind.config       # extends preset + dashboard utilities
+```
+
+---
+
+## Section 9: Build & Deploy
+
+### 9.1 Build Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | `vite` — 개발 서버 (port 8080, host `::`) |
+| `npm run build` | `vite build` — 프로덕션 빌드 |
+| `npm run build:dev` | `vite build --mode development` — 개발 모드 빌드 |
+| `npm run lint` | `eslint .` — 린트 체크 |
+| `npm run preview` | `vite preview` — 빌드 결과 미리보기 |
+
+### 9.2 Vite Configuration
+
+```typescript
+// vite.config.ts
+export default defineConfig(({ mode }) => ({
+  server: { host: "::", port: 8080 },
+  plugins: [react(), mode === "development" && componentTagger()],
+  resolve: { alias: { "@": "./src" } },
+}));
+```
+
+- **Compiler**: SWC (`@vitejs/plugin-react-swc`)
+- **Dev Plugin**: `lovable-tagger` (개발 모드에서만 컴포넌트 태깅)
+- **Path Alias**: `@` → `./src`
+- **최적화 설정 없음**: terser, compression, bundle split 미설정 (Vite 기본값 사용)
+
+### 9.3 Deploy Target
+
+**현재 배포**: **Lovable 플랫폼** (자동 배포)
+- Supabase Edge Functions: Lovable이 자동 배포 관리
+- Frontend: Lovable 호스팅
+- `.env` 파일의 Supabase client가 자동생성 (`client.ts` 헤더: "automatically generated")
+
+**별도 배포 설정 없음**:
+- No `vercel.json`
+- No `netlify.toml`
+- No `Dockerfile`
+- No `railway.json`
+
+### 9.4 CI/CD Configuration
+
+**GitHub Actions**: **없음** (`.github/workflows/` 디렉토리 부재)
+
+**현재 `.github/` 내용**:
+- `CODEOWNERS`: 코드 소유권 정의 (PR 리뷰어 자동 할당)
+- `pull_request_template.md`: PR 템플릿 (인터페이스 변경 추적 포함)
+
+**Missing CI/CD**:
+- PR 시 빌드 검증 없음
+- 린트 체크 자동화 없음
+- 테스트 자동 실행 없음
+- 배포 파이프라인 없음
+
+---
+
+## Section 10: Notable Issues & Tech Debt
+
+### 10.1 Monorepo Migration Breakage Risks
+
+| Risk | Location | Impact | Fix |
+|------|----------|--------|-----|
+| **Hardcoded Supabase URL** | `src/integrations/supabase/client.ts:5` | 환경별 URL 교체 불가 | 환경변수로 교체 |
+| **Hardcoded CORS origins** | `supabase/functions/retail-chatbot/index.ts:637-645` + `_shared/streamingResponse.ts` | 도메인 변경 시 코드 수정 필요, DRY 위반 (2곳 중복) | 환경변수 또는 공유 상수로 추출 |
+| **Hardcoded Gateway URL** | `supabase/functions/retail-chatbot/index.ts:820` | Gateway URL 변경 시 재배포 필요 | 환경변수화 |
+| **`@` alias 의존** | `vite.config.ts`, 전체 소스 | 모노레포 패키지 간 import path 충돌 | 패키지별 alias 재설정 |
+| **Lovable tagger 의존** | `vite.config.ts:4` | Lovable 플랫폼 외 빌드 시 제거 필요 | 조건부 import 유지 |
+| **Auto-generated client.ts** | `src/integrations/supabase/client.ts` | Lovable이 자동 덮어쓰기 → 수동 수정 불가 | 환경변수 기반으로 전환 |
+| **OG 이미지 Lovable 도메인** | `index.html:13,17` | `lovable.dev/opengraph-image-*.png` 하드코딩 | 자체 도메인으로 교체 |
+| **Chat.tsx 2,250 LOC 모놀리스** | `src/pages/Chat.tsx` | 컴포넌트 분리 시 state 공유 복잡 | 커스텀 훅 + 컨텍스트로 리팩토링 |
+
+### 10.2 Hardcoded Paths & Values
+
+| Value | File | Line |
+|-------|------|------|
+| `https://bdrvowacecxnraaivlhr.supabase.co` | `src/integrations/supabase/client.ts` | 5 |
+| Supabase anon JWT (full key) | `src/integrations/supabase/client.ts` | 6 |
+| `https://ai.gateway.lovable.dev/v1/chat/completions` | `supabase/functions/retail-chatbot/index.ts` | 820 |
+| `neuraltwin.com` / `neuraltwin.website` CORS | `retail-chatbot/index.ts` | 637-645 |
+| `neuraltwin.com` CORS (duplicate) | `_shared/streamingResponse.ts` | 10-18 |
+| `lovable.dev/opengraph-image` | `index.html` | 13, 17 |
+| `contact@neuraltwin.com` | `src/i18n/locales/en.ts` | 내부 |
+| `neuraltwin_chat_session_id` localStorage key | `src/pages/Chat.tsx` | 66 |
+
+### 10.3 Core vs Non-Core Directory Classification
+
+#### Core Directories (비즈니스 로직)
+
+| Directory | LOC | Purpose |
+|-----------|-----|---------|
+| `src/pages/Chat.tsx` | 2,250 | AI 챗봇 메인 페이지 (핵심 매출 기능) |
+| `supabase/functions/retail-chatbot/` | ~8,000 | AI 백엔드 전체 (지식, 메모리, 검색, 스트리밍) |
+| `src/shared/chat/` | ~1,200 | 공유 Chat UI Kit |
+| `src/components/chatbot/visualizer/` | ~2,600 | 3D 매장 시각화 |
+| `supabase/functions/_shared/` | ~1,200 | Edge Function 공유 유틸 |
+| `src/hooks/useAuth.ts` | ~150 | 인증 훅 |
+
+#### Supporting Directories (부가 기능)
+
+| Directory | LOC | Purpose |
+|-----------|-----|---------|
+| `src/components/features/` | ~6,000 | 대시보드 시각화 컴포넌트 (14개) |
+| `src/pages/` (Chat 제외) | ~5,500 | 마케팅/인증/프로필/구독 페이지 |
+| `src/i18n/` | ~1,500 | 국제화 (한/영) |
+| `src/lib/` | ~1,500 | 유틸리티 (analytics, pathfinding, permissions) |
+
+#### Non-Core (자동생성/라이브러리)
+
+| Directory | LOC | Purpose |
+|-----------|-----|---------|
+| `src/integrations/supabase/types.ts` | 11,603 | 자동생성 DB 타입 (수동 편집 불가) |
+| `src/components/ui/` | ~8,000 | shadcn/ui 라이브러리 (48개, 수동 편집 불필요) |
+| `docs/` | ~10,600 | 문서 (마크다운 + 참조 TS) |
+| `supabase/migrations/` | ~1,400 | SQL 마이그레이션 (실행 완료 후 읽기 전용) |
+
+### 10.4 TypeScript & Code Quality
+
+| Issue | Details |
+|-------|---------|
+| `strict: false` | `tsconfig.app.json` — 전체 앱 strict mode 비활성 |
+| `noImplicitAny: false` | 암묵적 any 허용 → 타입 안전성 부재 |
+| `@ts-ignore` 사용 | ~92개 인스턴스 (src/ 내) |
+| `no-unused-vars` 비활성 | `eslint.config.js` — 미사용 변수/import 감지 안 됨 |
+| Dual lock files | `package-lock.json` + `bun.lockb` 공존 → 버전 드리프트 위험 |
+| `App.css` 잔여 | Vite 기본 템플릿 CSS (43 LOC, 미사용) |
+| `.env` git 추적 | `.gitignore`에 `.env` 미포함 → 민감 정보 노출 위험 |
+
+### 10.5 TODO / Incomplete Features
+
+| Location | TODO | Status |
+|----------|------|--------|
+| `src/pages/Subscribe.tsx:137` | Stripe 결제 연동 | 미구현 (데모 모드 mock) |
+| `src/components/chatbot/visualizer/StoreVisualizer.tsx:248` | 프리셋 전환 애니메이션 속도 조절 | 미적용 |
+| CLAUDE.md: `src/components/assistant/` | OS 챗봇 프론트엔드 | 미구현 (디렉토리 미생성) |
+| CLAUDE.md: `supabase/functions/neuraltwin-assistant/` | OS 챗봇 Edge Function | 미구현 (디렉토리 미생성) |
+
+### 10.6 Large Files Requiring Refactoring
+
+| File | Lines | Issue |
+|------|-------|-------|
+| `src/integrations/supabase/types.ts` | 11,603 | 자동생성이나 도메인별 분리 권장 |
+| `src/pages/Chat.tsx` | 2,250 | 모놀리스 — 컴포넌트 추출 필요 |
+| `supabase/functions/retail-chatbot/index.ts` | 1,915 | 핸들러 로직 분리 필요 |
+| `supabase/functions/retail-chatbot/systemPrompt.ts` | 1,906 | 프롬프트 길이 자체는 정상 |
+| `src/components/chatbot/visualizer/StoreVisualizer.tsx` | 947 | Three.js 로직 분리 고려 |
+| `src/components/chatbot/visualizer/sceneBuilder.ts` | 884 | 이미 React 독립 (양호) |
+| `src/pages/Auth.tsx` | 847 | 다중 인증 플로우 혼재 |
+| `src/styles/chat.css` | 2,837 | CSS 모듈 또는 분리 고려 |
