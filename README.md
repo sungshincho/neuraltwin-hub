@@ -2,6 +2,9 @@
 
 ## Project info
 
+******26.02.25 부로 전체 시스템이 모노레포로 통합되었습니다. 
+**통합 모노레포 URL : https://github.com/sungshincho/NEURALTWIN_INTEGRATED.git
+
 **URL**: https://lovable.dev/projects/959a004d-8bf2-4075-9b0d-5411c81dd4c5
 
 ## How can I edit this code?
